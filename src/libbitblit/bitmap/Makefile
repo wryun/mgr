@@ -1,6 +1,6 @@
 include ../../../Configfile
 
-CFLAGS=		$(CCFLAGS) $(CPPFLAGS)
+CFLAGS=		$(CCFLAGS) $(CPPFLAGS) $(BLITLIBFLAGS)
 OBJS=		bitmaphead.o bit_create.o bit_alloc.o bit_open.o
 
 all:		$(OBJS)
