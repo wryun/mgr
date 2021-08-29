@@ -9,7 +9,7 @@ int main(argc,argv) int argc; char **argv;
 {
   register BITMAP *screen;
   BITMAP *src,*dst;
-  int wait=1;
+  int wait=0;
   int x0;
   register int i;
 
@@ -37,6 +37,9 @@ int main(argc,argv) int argc; char **argv;
     bit_blit(screen,10+x0%(screen->high),100+(SIZE+10)*(x0/(screen->high)),SIZE,SIZE,BIT_SET,0,0,0);
     if (wait) sleep(1);
   }
+  bit_present(screen);
+  sleep(10);
+
   /* 16 dst patterns */
   for(i=0;i<16;i++) 
   {
@@ -44,6 +47,9 @@ int main(argc,argv) int argc; char **argv;
     bit_blit(screen,12+x0%(screen->high),102+(SIZE+10)*(x0/(screen->high)),SIZE-4,SIZE-4,BIT_SRC,dst,2,2);
     if (wait) sleep(1);
   }
+  bit_present(screen);
+  sleep(10);
+
   /* 16 bit-blt functions */
   for(i=0;i<16;i++) 
   {
@@ -51,6 +57,9 @@ int main(argc,argv) int argc; char **argv;
     bit_blit(screen,12+x0%(screen->high),102+(SIZE+10)*(x0/(screen->high)),SIZE-4,SIZE-4,i,src,2,2);
     if (wait) sleep(1);
   }
+  bit_present(screen);
+  sleep(10);
+
   bit_destroy(screen);
   exit(0);
 }

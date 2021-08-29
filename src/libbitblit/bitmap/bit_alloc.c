@@ -3,20 +3,16 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#ifdef USE_X11
-#include "../x11/bitmap.h"
-#endif
 #include <mgr/bitblit.h>
 #include <mgr/share.h>
+
+#include "sdl.h"
 /*}}}  */
 
 /*{{{  bit_alloc -- allocate space for, and create a memory bitmap*/
 BITMAP *bit_alloc(int wide, int high, DATA *data, unsigned char depth)
 {
   register BITMAP *result;
-#ifdef USE_X11
-  xdinfo *xd;
-#endif
 
 #ifdef DEBUG
   if (wide<=0 || high <=0 || !(depth==8 || depth==1))
@@ -25,16 +21,8 @@ BITMAP *bit_alloc(int wide, int high, DATA *data, unsigned char depth)
     return(NULL);
   }
 #endif
-#ifdef USE_X11
-  if ((result=(BITMAP*)malloc(sizeof(BITMAP)+sizeof(xdinfo)))==(BITMAP*)0) return (result);
-  result->deviceinfo = result+1;
-  xd = result->deviceinfo;
-  xd->d = 0;
-#else
-  if ((result=(BITMAP*)malloc(sizeof(BITMAP)))==(BITMAP*)0) return (result);
-  result->deviceinfo = NULL;
-#endif
 
+  if ((result=(BITMAP*)malloc(sizeof(BITMAP)))==(BITMAP*)0) return (result);
   result->x0=0;
   result->y0=0;
   result->high=high;
@@ -43,27 +31,15 @@ BITMAP *bit_alloc(int wide, int high, DATA *data, unsigned char depth)
   result->cache=NULL;
   result->color=0;
 
-  if (data != (DATA *) 0)
-  {
+  if (data != NULL) {
     result->data = data;
-    /* convert from external to internal format (if required) */
-#ifdef MOVIE
-    log_alloc(result);
-#endif
+  } else {
+    result->data = sdl_create_texture_target(sdl_renderer, wide, high);
   }
-  else
-  {
-    register int size=bit_size(wide,high,depth);
 
-    if ((result->data = (DATA *) malloc(size)) == (DATA *) 0)
-    {
-      free(result);
-      return ((BITMAP *) 0);
-    }
 #ifdef MOVIE
   log_alloc(result);
 #endif
-  }
 
   result->primary = result;
   result->type = _MEMORY;
