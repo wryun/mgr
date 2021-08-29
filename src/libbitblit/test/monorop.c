@@ -13,8 +13,8 @@ int main(argc,argv) int argc; char **argv;
   int x0;
   register int i;
 
-  screen = bit_open(SCREEN_DEV);
-  setscreen();
+  screen = bit_open("dummy");
+  //setscreen();
   /* make src and dst */
 
   src = bit_alloc(SIZE,SIZE,0,1);

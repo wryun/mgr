@@ -15,8 +15,8 @@ int main(argc,argv) int argc; char **argv;
     exit(1);
   }
 
-  screen = bit_open(SCREEN_DEV);
-  setscreen();
+  screen = bit_open("dummy");
+  //setscreen();
   min = atoi(argv[1]);
   max = atoi(argv[2]);
   count = atoi(argv[3]);

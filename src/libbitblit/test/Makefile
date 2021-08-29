@@ -2,6 +2,7 @@ include ../../../Configfile
 
 _CPPFLAGS=	$(CPPFLAGS) -DSCREEN_DEV=\"$(SCREEN_DEV)\"
 CFLAGS=		$(CCFLAGS) $(CPPFLAGS)
+LDFLAGS= -lSDL2
 
 all:		lines monorop rops
 
