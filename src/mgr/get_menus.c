@@ -25,10 +25,6 @@
 #include "font_subs.h"
 #include "icon_server.h"
 #include "mouse_get.h"
-#ifdef USE_X11
-#include "../libbitblit/x11/bitx11.h"
-extern int ms_prevx, ms_prevy;
-#endif
 /*}}}  */
 /*{{{  #defines*/
 #define MAX_LIST	100	/* max number of choices */
@@ -242,16 +238,13 @@ int exit;			/* off-menu exit codes */
    y_position = state->bar_sizey*(inverse+1) + state->bar_sizey/2;
 
    /* track the mouse */
-#ifdef USE_X11
-   ms_prevx = inside->x0+x_position-HOT;
-   ms_prevy = inside->y0+y_position-HOT;
-   XWarpPointer(bit_xinfo.d, None, bit_xinfo.w, 0,0,0,0,
-	ms_prevx, ms_prevy);
-   XFlush(bit_xinfo.d);
-#endif
+   /* TODO - remove warp support from MOUSE_ON, and add a warp function or something...
+    * or make MOUSE_ON support warp. Or... ? Just use SDL's cursor support?
+    */
+   bit_warpmouse(x_position-HOT, y_position-HOT);
    MOUSE_ON(inside,x_position-HOT,y_position-HOT);		/* on */
    do {
-      push = mouse_get(mouse,&x_mouse,&y_mouse);
+      push = mouse_get_wait(&x_mouse,&y_mouse);
       MOUSE_OFF(inside,x_position-HOT,y_position-HOT);		/* off */
       x_position += x_mouse;
       y_position -= y_mouse;

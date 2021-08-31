@@ -61,21 +61,20 @@ int type;			/* rectangle or line */
    newx = *dx;
    newy = *dy;
 
-   Box(screen,x,y,*dx,*dy);
-   do {
-      button=mouse_get(mouse,&x_mouse,&y_mouse);
-      if (skip)
-         Box(screen,x,y,*dx,*dy);
-      newx += x_mouse<<1;
-      newy -= y_mouse<<1;
-      *dx = BETWEEN(-x,newx,(int) BIT_WIDE(screen)-x);
-      *dy = BETWEEN(-y,newy,(int) BIT_HIGH(screen)-y);
-      if ((skip = !mouse_count()))
-         Box(screen,x,y,*dx,*dy);
-      }
-   while (button!=0);
-
-   if (skip)
+   for (;;) {
       Box(screen,x,y,*dx,*dy);
+      button = mouse_get_wait(&x_mouse, &y_mouse);
+      do {
+         newx += x_mouse<<1;
+         newy -= y_mouse<<1;
+         *dx = BETWEEN(-x,newx,(int) BIT_WIDE(screen)-x);
+         *dy = BETWEEN(-y,newy,(int) BIT_HIGH(screen)-y);
+
+         if (button == 0) {
+            Box(screen,x,y,*dx,*dy);
+            return;
+         }
+      } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
+   }
    }
 /*}}}  */

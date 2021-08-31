@@ -48,18 +48,12 @@
 #include "erase_win.h"
 #include "font_subs.h"
 #include "icon_server.h"
-#include "kbd.h"
-#include "mouse.h"
 #include "mouse_get.h"
 #include "put_window.h"
 #include "sigdata.h"
 #include "set_mode.h"
 #include "startup.h"
 #include "subs.h"
-#ifdef USE_X11
-#include "../libbitblit/x11/bitx11.h"
-extern XEvent cur_event;
-#endif
 /*}}}  */
 
 /*{{{  variables*/
@@ -69,8 +63,8 @@ static char *mouse_dev = MOUSE_DEV;
 static char *mouse_type = NULL;
 BITMAP *pattern=&def_pattern;
 #ifdef MOVIE
-char *log_command=NULL;		/* process to pipe logging info to */
-FILE *log_file=NULL;		/* file pointer for logging */
+char *log_command=NULL;         /* process to pipe logging info to */
+FILE *log_file=NULL;            /* file pointer for logging */
 static int log_now=0;
 #endif
 /*}}}  */
@@ -86,14 +80,14 @@ static void sig_child(sig) int sig;
 
   dbgprintf('d',(stderr,"Looking for dead windows\r\n"));
 
-#ifdef WSTOPSIG	/* POSIX */
+#ifdef WSTOPSIG /* POSIX */
   pid = waitpid(-1,&status,WUNTRACED);
   someonedied = pid > 0 && !WIFSTOPPED(status);
 #else
-#ifdef WUNTRACED	/* BSD */
+#ifdef WUNTRACED        /* BSD */
   pid = wait3(&status,WUNTRACED,(void *)NULL);
   someonedied = pid > 0 && !WIFSTOPPED(status);
-#else			/* other Unix */
+#else                   /* other Unix */
   pid = wait(&status);
   someonedied = pid > 0;
 #endif
@@ -104,9 +98,9 @@ static void sig_child(sig) int sig;
     {
       if (W(pid)==pid && !(W(flags)&W_NOKILL) && kill(W(pid),0) != 0)
       {
-	W(flags) |= W_DIED;
-	dbgprintf('d',(stderr, "window %d, tty %s, pid %d\r\n",
-		      W(num),W(tty),W(pid)));
+        W(flags) |= W_DIED;
+        dbgprintf('d',(stderr, "window %d, tty %s, pid %d\r\n",
+                      W(num),W(tty),W(pid)));
       }
     }
   }
@@ -122,46 +116,6 @@ static void sig_share(int n)
 # endif
 }
 /*}}}  */
-#ifdef USE_X11
-int evx, evy;
-#endif
-/*{{{  proc_mouse -- process mouse*/
-static int
-proc_mouse(mouse)
-int mouse;
-   {
-   int dx, dy;
-   register int button, done = 0;
-
-   do {
-      button = mouse_get(mouse,&dx,&dy);
-      MOUSE_OFF(screen,mousex,mousey);
-#ifdef USE_X11
-	  mousex = evx;
-	  mousey = evy;
-#else
-      mousex += 2*dx;
-      mousey -= 2*dy;
-#endif
-      mousex = BETWEEN(0,mousex,BIT_WIDE(screen)-1);
-      mousey = BETWEEN(0,mousey,BIT_HIGH(screen)-1);
-      if (button != button_state) {
-         do_button( button );
-         done++;
-         }
-      MOUSE_ON(screen,mousex,mousey);
-      } while (mouse_count() && !done);
-   return(done);
-   }
-/*}}}  */
-/*{{{  mouse_reopen -- reopen the mouse after suspend*/
-int mouse_reopen()
-{
-  mfd=open(mouse_dev,O_RDWR);
-  ms_init(BIT_WIDE(screen),BIT_HIGH(screen),mouse_type);
-  return(mfd);
-}
-/*}}}  */
 
 /* could use faster longs instead of chars if sizeof(fd_set)%sizeof(long)==0 */
 typedef char FDword;
@@ -175,7 +129,7 @@ FD_COMMON( fd_set *left, fd_set *right) {
 
    while( lp < ep)
       if( *lp++ & *rp++)
-	 return 1;
+         return 1;
    return 0;
 }
 
@@ -198,21 +152,21 @@ FD_SET_DIFF( fd_set *target, fd_set *left, fd_set *right) {
 /*{{{  main*/
 int main(argc,argv) int argc; char **argv;
    {
-   register WINDOW *win;		/* current window to update */
-   register int i;			/* counter */
-   register int count;			/* # chars read from shell */
-   int maxbuf = MAXBUF;			/* # chars processed per window */
-   int shellbuf = MAXSHELL;		/* # chars processed per shell */
-   fd_set reads;			/* masks, result of select */
+   register WINDOW *win;                /* current window to update */
+   register int i;                      /* counter */
+   register int count;                  /* # chars read from shell */
+   int maxbuf = MAXBUF;                 /* # chars processed per window */
+   int shellbuf = MAXSHELL;             /* # chars processed per shell */
+   fd_set reads;                        /* masks, result of select */
    struct timeval *poll_time;
    int flag;
-   unsigned char c;			/* reads from kbd go here */
-   char start_file[MAX_PATH];		/* name of startup file */
-   char *screen_dev = SCREEN_DEV;	/* name of frame buffer */
-   char *default_font = (char * )0;	/* default font */
+   unsigned char c;                     /* reads from kbd go here */
+   char start_file[MAX_PATH];           /* name of startup file */
+   char *screen_dev = SCREEN_DEV;       /* name of frame buffer */
+   char *default_font = (char * )0;     /* default font */
    int touch_colormap = 1;
 
-   timestamp();					/* initialize the timestamp */
+   timestamp();                                 /* initialize the timestamp */
    SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
 
    sprintf(start_file,"%s/%s",getenv("HOME"),STARTFILE);
@@ -364,12 +318,6 @@ int main(argc,argv) int argc; char **argv;
    count=getdtablesize();
    for (i=3; i<count; i++) close(i);
    /*}}}  */
-   /*{{{  initialize the keyboard; sometimes a special device*/
-   initkbd();
-   /*}}}  */
-   /*{{{  initialize the bell; sometimes a special device requiring funnys*/
-   initbell();
-   /*}}}  */
    /*{{{  get the default font file*/
    if (default_font || (default_font = getenv(DEFAULT_FONT)))
       font = open_font(default_font);
@@ -378,41 +326,32 @@ int main(argc,argv) int argc; char **argv;
       font = open_font("");
    font->ident = 0;
    /*}}}  */
-#if 0
-   /*{{{  open the mouse*/
-   if ((mouse=open(mouse_dev,O_RDWR)) <0) {
-      perror("mgr: Can't find the mouse, or it is already in use.\n");
-      exit(1);
-      }
-   mfd=mouse;
-   /*}}}  */
-#endif
    /*{{{  find screen*/
    if ((screen = bit_open(screen_dev)) == (BITMAP *) 0)
    {
       perror("mgr: Can't open the screen.");
       exit(2);
    }
-#if 0
-   ms_init(BIT_WIDE(screen),BIT_HIGH(screen),mouse_type);
-#endif
    mousex=mousey=32;
 
-   bit_grafscreen();
    if (getenv("MGRSIZE"))
    {
         int x, y, w, h;
 
         prime=screen;
-   	sscanf(getenv("MGRSIZE"),"%d %d %d %d",&x,&y,&w,&h);
-     	screen = bit_create(prime,x,y,w,h);
+        sscanf(getenv("MGRSIZE"),"%d %d %d %d",&x,&y,&w,&h);
+        screen = bit_create(prime,x,y,w,h);
    }
    else prime=(BITMAP*)0;
    init_colors( screen);
    if( touch_colormap)
       fill_colormap( screen);
    /*}}}  */
-   set_tty(0);
+
+   /* SDL init */
+   SDL_StartTextInput();
+   SDL_ShowCursor(SDL_DISABLE);
+
    /*{{{  catch the right interrupts*/
    for (i=0; i<NSIG; i++) switch(i)
    {
@@ -421,9 +360,9 @@ int main(argc,argv) int argc; char **argv;
                         break;
       case SIGCHLD:     signal(SIGCHLD,sig_child);
                         break;
-      case SIGILL:	/* <= 3.0 abort gererates this one */
+      case SIGILL:      /* <= 3.0 abort gererates this one */
       case SIGCONT:
-      case SIGIOT:	/* 3.2 abort generates this (gee thanks, SUN!) */
+      case SIGIOT:      /* 3.2 abort generates this (gee thanks, SUN!) */
       case SIGQUIT:
                         break;
       case SIGTTIN:
@@ -438,13 +377,6 @@ int main(argc,argv) int argc; char **argv;
    SETMOUSEICON(&mouse_cup);
    /*{{{  always look for keyboard and mouse input*/
    FD_ZERO( &mask);
-#ifdef USE_X11
-   FD_SET( bit_xinfo.fd, &mask);
-   XSelectInput(bit_xinfo.d, bit_xinfo.w, ExposureMask|KeyPressMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask);
-#else
-   FD_SET( mouse, &mask);
-   FD_SET( 0, &mask);
-#endif
    FD_ZERO( &to_poll);
    FD_ZERO( &reads);
    memcpy(&set_poll_save,&set_poll,sizeof(set_poll));
@@ -459,8 +391,8 @@ int main(argc,argv) int argc; char **argv;
 #   ifdef MOVIE
    /*{{{  start logging*/
    if (log_now) {
-     log_noinitial = 1;			/* no need to save initial display image */
-     do_buckey('S' | 0x80);		/* simulate the key-press */
+     log_noinitial = 1;                 /* no need to save initial display image */
+     do_buckey('S' | 0x80);             /* simulate the key-press */
    }
    /*}}}  */
 #   endif
@@ -472,9 +404,6 @@ int main(argc,argv) int argc; char **argv;
       MOUSE_OFF(screen,mousex,mousey);
       erase_win(screen);
       MOUSE_ON(screen,mousex,mousey);
-#ifdef USE_X11
-	  XFlush(bit_xinfo.d);
-#endif
    }
    /*}}}  */
    /*{{{  turn on mouse cursor*/
@@ -499,100 +428,79 @@ int main(argc,argv) int argc; char **argv;
 
       /* wait for input */
 
-      FD_SET_DIFF( &reads, &mask, &to_poll);	/* reads = mask & ~to_poll */
+      FD_SET_DIFF( &reads, &mask, &to_poll);    /* reads = mask & ~to_poll */
 
       dbgprintf('l',(stderr,"select: mask=0x%lx to_poll=0x%lx 0x%lx got\r\n",
-		    (unsigned)HD(mask),(unsigned)HD(to_poll),(unsigned)HD(reads)));
+                    (unsigned)HD(mask),(unsigned)HD(to_poll),(unsigned)HD(reads)));
 #ifdef MOVIE
       log_time();
 #endif
       if(FD_COMMON(&to_poll,&mask)) {
-	 (void) memcpy(&set_poll,&set_poll_save,sizeof(set_poll));
-	 poll_time = &set_poll;
+         (void) memcpy(&set_poll,&set_poll_save,sizeof(set_poll));
+         poll_time = &set_poll;
       }
       else
-	 poll_time = NULL;
+         poll_time = NULL;
       if (select(FD_SETSIZE,&reads,0,0,poll_time) <0) {
 #ifdef DEBUG
          dbgprintf('l',(stderr,"select failed %ld->%ld\r\n",
-		       (int)HD(reads), (int) (HD(mask) & ~HD(to_poll))));
+                       (int)HD(reads), (int) (HD(mask) & ~HD(to_poll))));
          if (debug)
             perror("Select:");
 #endif
-         FD_SET_DIFF( &reads, &mask, &to_poll);	/* reads = mask & ~to_poll */
+         FD_SET_DIFF( &reads, &mask, &to_poll); /* reads = mask & ~to_poll */
          continue;
          }
       dbgprintf('l',(stderr,"reads=0x%lx\r\n",(unsigned long)HD(reads)));
 
-#ifdef USE_X11
-      if (FD_ISSET(bit_xinfo.fd, &reads)) {
-	    XEvent ev;
-		XNextEvent(bit_xinfo.d, &ev);
-		if (ev.type == KeyPress) {
-			XLookupString(&ev, &c, 1, NULL, NULL);
-			if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+      /* Should this be if? That's what X11 was doing.
+       * Want to rewrite to use WaitEvent (and PushEvent or mutexes) anyway.
+       * See franko's SDL WaitEventTimeout pull request for info.
+       */
+      SDL_Event event;
+      while (SDL_PollEvent(&event)) {
+         switch (event.type) {
+         case SDL_QUIT:
+            // TODO
+            exit(1);
+         case SDL_TEXTINPUT:
+            if (!active) {
 #ifdef BUCKEY
-				if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
-					write(ACTIVE(to_fd),&c,1);
-#else
-				write(ACTIVE(to_fd),&c,1);
+               do_buckey(c);
 #endif
-				if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
-					write(ACTIVE(to_fd),&c,1);
-				continue;
-			} else if (!active) {
+               break;
+            }
+            int len = strlen(event.text.text);
+            if (!(ACTIVE(flags)&W_NOINPUT)) {
 #ifdef BUCKEY
-				do_buckey(c);
-#endif
-			}
-
-		} else if (ev.type == ButtonPress ||
-			ev.type == ButtonRelease ||
-			ev.type == MotionNotify) {
-				cur_event = ev;
-				evx = ev.xbutton.x;
-				evy = ev.xbutton.y;
-				mouse = -1;
-				proc_mouse(mouse);
-		} else if (ev.type == Expose) {
-			XSetFunction(bit_xinfo.d, bit_xinfo.gc, GXcopy);
-			XCopyArea(bit_xinfo.d, bit_xinfo.p, bit_xinfo.w, bit_xinfo.gc,
-				ev.xexpose.x, ev.xexpose.y, ev.xexpose.width, ev.xexpose.height,
-				ev.xexpose.x, ev.xexpose.y);
-			if (!ev.xexpose.count)
-				XFlush(bit_xinfo.d);
-		}
-	}
+               if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
+                  write(ACTIVE(to_fd),&event.text.text, len);
 #else
-      /* process mouse */
-
-      if (FD_ISSET( mouse, &reads)) {
-	 do {
-	    proc_mouse(mouse);
-	 } while(mouse_count() > 0);
-      }
-      /* process keyboard input */
-
-      if (FD_ISSET( 0, &reads) && active && !(ACTIVE(flags)&W_NOINPUT))
-      {
-         read(0,&c,1);
-#ifdef BUCKEY
-         if ( (ACTIVE(flags)&W_NOBUCKEY)  ||  !do_buckey(c) )
-            write(ACTIVE(to_fd),&c,1);
-#else
-         write(ACTIVE(to_fd),&c,1);
+               write(ACTIVE(to_fd),&event.text.text, len);
 #endif
-		if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
-         	write(ACTIVE(to_fd),&c,1);
-         continue;
+               if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
+                  write(ACTIVE(to_fd), &event.text.text, len);
+            }
+            break;
+         case SDL_KEYDOWN:
+            /* TODO buckey, alt, ctrl, ... */
+            write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+            break;
+         case SDL_MOUSEBUTTONDOWN:
+            int dx, dy;
+            do_button(mouse_get_sdl(event, &dx, &dy));
+            break;
+         case SDL_MOUSEMOTIONEVENT:
+            MOUSE_OFF(screen,mousex,mousey);
+            mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen)-1);
+            mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen)-1);
+            /* Mouse is turned back on below, in case we have more motion events */
+            break;
+         default:
+            break;
          }
-       else if (FD_ISSET( 0, &reads) && !active) {	/* toss the input */
-         read(0,&c,1);
-#ifdef BUCKEY
-         do_buckey(c);
-#endif
-	 }
-#endif /* USE_X11 */
+      }
+      MOUSE_ON(screen,mousex,mousey);
 
       /* process shell output */
 
@@ -600,13 +508,13 @@ int main(argc,argv) int argc; char **argv;
       {
          /* read data into buffer */
 
-	 if (W(from_fd) && FD_ISSET( W(from_fd), &reads)
-			&& !FD_ISSET( W(from_fd), &to_poll)) {
+         if (W(from_fd) && FD_ISSET( W(from_fd), &reads)
+                        && !FD_ISSET( W(from_fd), &to_poll)) {
             W(current) = 0;
             if ((W(max) = read(W(from_fd),W(buff),shellbuf)) > 0) {
                FD_SET( W(from_fd), &to_poll);
                dbgprintf('p',(stderr,"%s: reading %d [%.*s]\r\n",W(tty),
-			     W(max),W(max),W(buff)));
+                             W(max),W(max),W(buff)));
                }
             else {
                FD_CLR( W(from_fd), &to_poll);
@@ -626,7 +534,7 @@ int main(argc,argv) int argc; char **argv;
          /* check for window to auto-expose */
 
          if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
-	     && W(flags)&W_EXPOSE && !(W(flags)&W_ACTIVE)) {
+             && W(flags)&W_EXPOSE && !(W(flags)&W_ACTIVE)) {
             dbgprintf('o',(stderr,"%s: activating self\r\n",W(tty)));
             MOUSE_OFF(screen,mousex,mousey);
             cursor_off();
@@ -640,32 +548,31 @@ int main(argc,argv) int argc; char **argv;
          /* write data into the window */
 
          if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
-	     && W(flags)&(W_ACTIVE|W_BACKGROUND)) {
+             && W(flags)&(W_ACTIVE|W_BACKGROUND)) {
 
-#ifdef PRIORITY			/* use priority scheduling */
+#ifdef PRIORITY                 /* use priority scheduling */
             if (win==active)
                count = Min(maxbuf,W(max)-W(current));
             else if (W(flags)&W_ACTIVE)
                count = Min(maxbuf>>1,W(max)-W(current));
             else
                count = Min(maxbuf>>2,W(max)-W(current));
-#else				/* use round robin scheduling */
+#else                           /* use round robin scheduling */
             count = Min(maxbuf,W(max)-W(current));
 #endif
 
             i = put_window(win,W(buff)+W(current),count);
-#ifdef USE_X11
-			XFlush(bit_xinfo.d);
-#endif
             dbgprintf('w',(stderr,"%s: writing %d/%d %.*s [%.*s]\r\n",
-			  W(tty),i,count,i,W(buff)+W(current),count-i,
-			  W(buff)+W(current)+i));
+                          W(tty),i,count,i,W(buff)+W(current),count-i,
+                          W(buff)+W(current)+i));
 
             W(current) += i;
             if (W(current) >= W(max))
                FD_CLR( W(from_fd), &to_poll);
             }
          }
+
+         bit_present(screen);
       }
    }
 /*}}}  */

@@ -9,14 +9,14 @@ install:	all
 		install -c -m 644 fonttoc.1 $(MANDIR)/man1
 
 bitmaptoc:	bitmaptoc.c ../libbitblit/libbitblit.a screen.h
-		$(CC) $(CFLAGS) bitmaptoc.c ../libbitblit/libbitblit.a $(EXTRALIBS) -o $@
+		$(CC) $(CFLAGS) bitmaptoc.c ../libbitblit/libbitblit.a $(EXTRALIBS) $(BLITLIBFLAGS) -o $@
 
 ../libbitblit/libbitblit.a:
 		(cd ../libbitblit; make all)
 
-screen.h:	../libbitblit/$(BITBLIT)/$(SCREEN).h
+screen.h:	../libbitblit/bitmap/screen.h
 		$(RMF) screen.h
-		$(LNS) ../libbitblit/$(BITBLIT)/$(SCREEN).h screen.h
+		$(LNS) ../libbitblit/bitmap/screen.h screen.h
 
 fonttoc:	fonttoc.c
 		$(CC) $(CFLAGS) fonttoc.c -o $@

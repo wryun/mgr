@@ -39,7 +39,6 @@
 #include "get_menus.h"
 #include "icon_server.h"
 #include "intersect.h"
-#include "kbd.h"
 #include "new_window.h"
 #include "scroll.h"
 #include "shape.h"
@@ -1350,7 +1349,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  C_BELL -- ring the bell*/
         case C_BELL:
-                   bell_on();
+                   /* TODO */
                    if (!bell++) {
                       CLEAR(W(window),BIT_NOT(BIT_DST));
                       CLEAR(W(window),BIT_NOT(BIT_DST));

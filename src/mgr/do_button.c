@@ -28,7 +28,6 @@
 #include "font_subs.h"
 #include "get_menus.h"
 #include "intersect.h"
-#include "kbd.h"
 #include "mouse_get.h"
 #include "set_mode.h"
 #include "startup.h"
@@ -51,11 +50,6 @@ void _quit(void)
 
    MOUSE_OFF(screen,mousex,mousey);
 
-   sleep(1);		/* let the key (if any) un-press before resetting
-			the kbd */
-   set_kbd(0);		/* fix up keyboard modes */
-   kbd_reset();		/* reset the keyboard */
-   reset_tty(0);	/* fix up console tty modes */
 #ifdef MOVIE
    log_end(); 		/* turn off logging */
 #endif
@@ -125,10 +119,8 @@ static void lock_screen(void) {
     }
 
     /* flush and ignore intervening mouse events */
-    while( mouse_count() > 0) {
-	int x, y;
-	(void) mouse_get( mouse, &x, &y);
-    }
+    int x, y;
+    while( mouse_get_poll( &x, &y) != -1 ) { }
 }
 /*{{{  quit -- quit with confirm*/
 void quit(void)

@@ -41,7 +41,6 @@
 #include "font_subs.h"
 #include "icon_server.h"
 #include "intersect.h"
-#include "kbd.h"
 #include "mgr.h"
 #include "mouse_get.h"
 #include "set_mode.h"
@@ -289,7 +288,7 @@ int how;
    int dx,dy;
    MOUSE_ON(screen,mx,my);
    do {
-      button=mouse_get(mouse,&dx,&dy);
+      button=mouse_get_wait(&dx,&dy);
       MOUSE_OFF(screen,mx,my);
       mx += dx;
       my -= dy;
@@ -390,19 +389,6 @@ void set_console(WINDOW *win, int on)
 
   /*{{{  TIOCCONS*/
 #  ifdef TIOCCONS
-#  ifdef sun
-  /*{{{  make sure kbd is in direct mode*/
-  {
-  int kbd;
-  int mode = 0;
-
-  if ((kbd = open("/dev/kbd",O_RDONLY)) < 0 ) fprintf(stderr,"can't open keyboard\n");
-  else if (ioctl(kbd,KIOCGDIRECT,&mode) < 0 ) fprintf(stderr,"can't get keyboard status\n");
-  else if (mode != 1) fprintf(stderr,"keyboard not in direct mode\n");
-  close(kbd);
-  }
-  /*}}}  */
-#  endif
   cfd=open("/dev/console",O_RDWR);
 #  ifndef linux
   if (!on)
@@ -434,20 +420,12 @@ void suspend(void)
    register WINDOW *win;
 
    MOUSE_OFF(screen,mousex,mousey);
-   sleep(1);	/* give the key time to go up */
-   set_kbd(0);	/* fix up keyboard modes */
 
    for(win=active;win!=(WINDOW *) 0;win=win->next) {
       killpg(W(pid),SIGSTOP);
       if (W(flags)&W_ACTIVE)
          save_win(win);
       }
-
-   bit_textscreen();
-   reset_tty(0);
-   kbd_reset();
-   close(mouse);
-   reset_tty(0);
 
    do_cmd( 's' );	/* do the suspention command */
 
@@ -457,16 +435,6 @@ void suspend(void)
    sleep(1);				/* wait for CONT signal */
    signal(SIGTSTP, catch);
 
-   if (set_kbd(1) != 0) {	/* reopen kbd (as 0) */
-      _quit();
-      fprintf(stderr,"Sorry, Can't reopen kbd\n");
-      exit(1);
-      }
-   mouse = mouse_reopen();
-   set_tty(0);
-   bell_on();	/* this resets the keyboard! */
-
-   bit_grafscreen();
    do_cmd( 'r' );	/* do the resumption command */
 
    erase_win(screen);

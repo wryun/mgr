@@ -30,21 +30,21 @@ int how;					/* termination condition */
   int x_mouse, y_mouse;
   register int button, skip=1;
 
-  box(screen,*x,*y,dx,dy);
-  do 
-  {
-    button=mouse_get(mouse,&x_mouse,&y_mouse);
-    if (skip)
+  for (;;) {
     box(screen,*x,*y,dx,dy);
-    *x += x_mouse;
-    *y -= y_mouse;
-    *x = BETWEEN(0,*x,BIT_WIDE(screen)-dx);
-    *y = BETWEEN(0,*y,BIT_HIGH(screen)-dy);
-    if ((skip = !mouse_count())) box(screen,*x,*y,dx,dy);
-  }
-  while (how ? button!=0 : button==0); 
+    button = mouse_get_wait(&x_mouse, &y_mouse);
+    do {
+      *x += x_mouse;
+      *y -= y_mouse;
+      *x = BETWEEN(0,*x,BIT_WIDE(screen)-dx);
+      *y = BETWEEN(0,*y,BIT_HIGH(screen)-dy);
 
-  if (skip)
-  box(screen,*x,*y,dx,dy);
+      if (how ? button == 0 : button != 0) {
+        box(screen,*x,*y,dx,dy);
+        return;
+      }
+    } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
+  }
+
 }
 /*}}}  */

@@ -29,16 +29,6 @@ int start,end,delta,op;	/* starting line, ending line, # of lines */
    register int ems = end-start;
    if (delta > 0) {
       if (end-start > delta)
-#if 0 /* def MGR_ALIGN */
-         if (win->window == map) {
-            dbgprintf('F',(stderr,"fast scroll %s\r\n",W(tty)));
-            /* special high-speed byte-aligned scroller */
-
-            bit_bytescroll(map,BIT_X(map),BIT_Y(map) + start,
-                     BIT_WIDE(map) + W(borderwid), end-start, delta);
-            }
-         else
-#endif MGR_ALIGN
             bit_blit(map,0,start,BIT_WIDE(map),ems-delta,BIT_SRC,map,0,start+delta);
       bit_blit(map,0,end-delta,BIT_WIDE(map),delta,op,0,0,0);
       }

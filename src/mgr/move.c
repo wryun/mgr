@@ -51,7 +51,7 @@ void move_window()
    /* wait till button is released */
 
    do {
-      button=mouse_get(mouse,&sx,&sy);
+      button=mouse_get_wait(&sx,&sy);
       }
    while (button!=0);
    }

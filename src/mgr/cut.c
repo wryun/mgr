@@ -274,7 +274,7 @@ int cut(mode)
     int b, x, y;
 
     do
-      b = mouse_get(mouse, &x, &y);
+      b = mouse_get_wait(&x, &y);
     while (b != 0);
   }
 #endif /* 0 */

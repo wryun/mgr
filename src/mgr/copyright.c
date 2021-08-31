@@ -37,9 +37,7 @@ without paying fees.
 #include "proto.h"
 #include "colormap.h"
 #include "icon_server.h"
-#ifdef USE_X11
-#include "../libbitblit/x11/bitx11.h"
-#endif
+#include <SDL.h>
 /*}}}  */
 /*{{{  #defines*/
 #define SSIZE	3		/* star size */
@@ -68,11 +66,6 @@ static RECT clip1, clip2, clip3;	/* holes in the galaxy */
 /*{{{  variables*/
 static BITMAP *logo[] =
 { &ball_1, &ball_2, &ball_3, &ball_4, &ball_5, &ball_6, &ball_7, &ball_8};
-
-static struct timeval delay = 
-{
-  0L, 100000L
-};
 
 static short maxv, maxh; /* display size */
 static short hmaxv, hmaxh;	/* 1/2 display size */
@@ -226,16 +219,12 @@ static void dofly (where) BITMAP *where;
 void copyright(BITMAP *where, char *password)
 {
   BITMAP *notice = &cr;
-  fd_set mask;
   int i = 0;
   char rbuf[64], *readp = rbuf;
   char *crypt();
   unsigned int ind, r, g, b, maxi;
   int at_startup = (*password == 0);
 
-#ifdef USE_X11
-  XSelectInput(bit_xinfo.d, bit_xinfo.w, KeyPressMask);
-#endif
   /* find w/o claiming the colors we want on the startup screen */
   r = 255; g = 180; b = 60; maxi = 255; /* sun yellow */
   findcolor( screen, &ind, &r, &g, &b, &maxi);
@@ -304,48 +293,49 @@ void copyright(BITMAP *where, char *password)
   /* kick off stars */
 
   fly(where);
-  FD_ZERO(&mask);
+  bit_present(where);
   /* keep drawing stars until enough read from kb to stop */
   for(;;)
   {
-    int sel;
-    struct timeval tmpdelay = delay;
-
-#ifdef USE_X11
-    FD_SET( bit_xinfo.fd, &mask);
-#else
-    FD_SET( STDIN_FILENO, &mask);
-#endif
-    sel = select( FD_SETSIZE, &mask, (fd_set*)0, (fd_set*)0, &tmpdelay);
-    if( sel > 0) {
-#ifdef USE_X11
-	  XEvent ev;
-	  XNextEvent(bit_xinfo.d, &ev);
-	  if (ev.type == KeyPress)
-	    XLookupString(&ev, readp, 1, NULL, NULL);
-	  else
-	    continue;
-#else
-      read( STDIN_FILENO, readp, 1);
-#endif
-      if( at_startup)
-	break;		/* any char at all */
-      if( *readp == '\r' || *readp == '\n') {
-	*readp = 0;
-	if( strcmp( password, crypt( rbuf, password)) == 0)
-	  break;	/* password matched, done */
-	else {
-	  readp = rbuf;
-	  flip();
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+      switch (event.type) {
+      case SDL_QUIT:
+        // TODO
+        exit(1);
+      case SDL_TEXTINPUT:
+        if (at_startup) {
+          return;
+        }
+	int len = strlen(event.text.text);
+        memcpy(readp, event.text.text, len);
+	readp += len;
+	if (*(readp - 1) == '\n' || *(readp - 1) == '\r') {
+	  *readp = '\0';
+	  if (strcmp(password, crypt(rbuf, password)) == 0) {
+            memset(rbuf, 0, sizeof(rbuf));
+	    return;	/* password matched, done */
+	  } else {
+	    readp = rbuf;
+	    flip();
+	  }
 	}
-      } else if( *readp == '\b' || *readp == 0177) {
-	/* erase a char */
-	if( readp > rbuf)
+        break;
+      case SDL_KEYDOWN:
+        if (at_startup) {
+          return;
+        }
+	if (event.key.keysym.sym == SDLK_BACKSPACE && readp != rbuf) {
 	  readp -= 1;
-      } else {
-	/* normal char read */
-	if( readp < rbuf + sizeof( rbuf) - 1)
-	  readp += 1;
+        }
+	break;
+      case SDL_MOUSEBUTTONDOWN:
+        if (at_startup) {
+	  return;
+        }
+	break;
+      default:
+        break;
       }
     }
 
@@ -355,7 +345,8 @@ void copyright(BITMAP *where, char *password)
 	       BIT_WIDE(logo[0]),BIT_HIGH(logo[0]),
 	       BUILDOP(BIT_SRC,color_map[LOGO_COLOR],color_map[LOGO_COLOR_BG]),
 	       logo[i++%8],0,0);
+
+    bit_present(where);
   }
-  memset( rbuf, 0, sizeof( rbuf));
 }
 /*}}}  */

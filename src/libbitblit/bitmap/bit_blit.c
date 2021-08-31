@@ -45,16 +45,26 @@ void bit_blit(
   // printf("bit_blit(%p, %d, %d, %d, %d, %d, %p, %d, %d)\n", dst_map, x_dst, y_dst, wide, high, op, src_map, x_src, y_src);
   sdl_use_func(op);
   SDL_Rect dst_rect = {.x = x_dst, .y = y_dst, .w = wide, .h = high};
-  SDL_SetRenderTarget(sdl_renderer, (SDL_Texture *)dst_map->data);
+  SDL_Texture *dst_texture = (SDL_Texture *)dst_map->data;
 
   if (src_map == NULL) {
-    // TODO - Use RenderDrawRect - this apparently means 'just perform the op on this bitmap'
+    SDL_SetRenderTarget(sdl_renderer, dst_texture);
     SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0x00);
     SDL_RenderFillRect(sdl_renderer, &dst_rect);
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
-    // TODO - if src_texture == dest_texture, probably won't work?
     SDL_Rect src_rect = {.x = x_src, .y = y_src, .w = wide, .h = high};
+    if (src_texture == dst_texture) {
+      SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
+      SDL_SetRenderTarget(sdl_renderer, new_src_texture);
+      SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = wide, .h = high};
+      SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &new_src_rect);
+
+      src_rect = new_src_rect;
+      src_texture = new_src_texture;
+    }
+
+    SDL_SetRenderTarget(sdl_renderer, dst_texture);
     SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
   }
 }
@@ -83,3 +93,6 @@ BITMAP *bit_shrink(
   return NULL;
 }
 /*}}}  */
+
+void bit_bytescroll(BITMAP *map, int x, int y, int wide, int high, int delta) {
+}

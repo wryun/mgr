@@ -212,7 +212,6 @@ int main(int argc, char *argv[])
     reset_tty(0);
     exit(EX_NOPERM);
   }
-  bit_grafscreen();
   /*}}}  */
   /*{{{  load font*/
   if (fontname)

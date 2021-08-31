@@ -77,3 +77,7 @@ BITMAP *bit_open(char *name)
   return result;
 }
 /*}}}  */
+
+void bit_warpmouse(int x, int y) {
+  SDL_WarpMouseInWindow(sdl_window, x, y);
+}

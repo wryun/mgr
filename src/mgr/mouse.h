@@ -16,16 +16,4 @@
 #define P_PS2		5
 #define P_BM		6
 
-struct ms_event {
-    enum { MS_NONE, MS_BUTUP, MS_BUTDOWN, MS_MOVE, MS_DRAG } ev_code;
-    char ev_butstate;
-    int ev_x, ev_y;
-    int ev_dx, ev_dy;
-};
-
-extern int mfd;
-
-int get_ms_event(struct ms_event *ev);
-void ms_init(int screen_w, int screen_h, char *mouse_type);
-
 #endif /* MOUSE_H */
