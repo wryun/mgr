@@ -318,14 +318,6 @@ int main(argc,argv) int argc; char **argv;
    count=getdtablesize();
    for (i=3; i<count; i++) close(i);
    /*}}}  */
-   /*{{{  get the default font file*/
-   if (default_font || (default_font = getenv(DEFAULT_FONT)))
-      font = open_font(default_font);
-
-   if (font == (struct font *) 0)
-      font = open_font("");
-   font->ident = 0;
-   /*}}}  */
    /*{{{  find screen*/
    if ((screen = bit_open(screen_dev)) == (BITMAP *) 0)
    {
@@ -351,6 +343,15 @@ int main(argc,argv) int argc; char **argv;
    /* SDL init */
    SDL_StartTextInput();
    SDL_ShowCursor(SDL_DISABLE);
+
+   /*{{{  get the default font file*/
+   if (default_font || (default_font = getenv(DEFAULT_FONT)))
+      font = open_font(default_font);
+
+   if (font == (struct font *) 0)
+      font = open_font("");
+   font->ident = 0;
+   /*}}}  */
 
    /*{{{  catch the right interrupts*/
    for (i=0; i<NSIG; i++) switch(i)
@@ -465,7 +466,6 @@ int main(argc,argv) int argc; char **argv;
             // TODO
             exit(1);
          case SDL_TEXTINPUT:
-            puts("SDL_TEXTINPUT");
             // TODO fix buckey - what is c anyway? ;)
             // (err, it's the old character thing - i.e. now event.text.text, sorta)
             if (!active) {
@@ -480,10 +480,8 @@ int main(argc,argv) int argc; char **argv;
                //if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
                //   write(ACTIVE(to_fd),event.text.text, len);
                write(ACTIVE(to_fd),event.text.text, len);
-               puts(event.text.text);
 #else
                write(ACTIVE(to_fd),event.text.text, len);
-               puts(event.text.text);
 #endif
                // ???
                //if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
@@ -494,7 +492,6 @@ int main(argc,argv) int argc; char **argv;
             if (isprint(event.key.keysym.sym)) {
               break;
             }
-            puts("SDL_KEYDOWN");
             putchar(event.key.keysym.sym);
             /* TODO buckey, alt, ctrl, ... */
             write(ACTIVE(to_fd), &event.key.keysym.sym, 1);

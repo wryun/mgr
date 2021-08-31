@@ -36,7 +36,9 @@ without paying fees.
 
 #include "proto.h"
 #include "colormap.h"
+#include "font_subs.h"
 #include "icon_server.h"
+extern BITMAP default_font;
 #include <SDL.h>
 /*}}}  */
 /*{{{  #defines*/
@@ -294,9 +296,13 @@ void copyright(BITMAP *where, char *password)
 
   fly(where);
       bit_blit(where,0,0,
-	       BIT_WIDE(&mouse_bull),BIT_HIGH(&mouse_bull),
+	       BIT_WIDE(&default_font),BIT_HIGH(&default_font),
 	       BIT_SRC,
-	       &mouse_bull,0,0);
+	       &default_font,0,0);
+      bit_blit(where,30,30,
+	       BIT_WIDE(font->glyph['a']),BIT_HIGH(font->glyph['a']),
+	       BIT_SRC,
+	       font->glyph['a'],0,0);
   bit_present(where);
   /* keep drawing stars until enough read from kb to stop */
   for(;;)

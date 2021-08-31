@@ -43,7 +43,7 @@ void bit_blit(
 {
   // printf("bit_blit(%p, %d, %d, %d, %d, %d, %p, %d, %d)\n", dst_map, x_dst, y_dst, wide, high, op, src_map, x_src, y_src);
   sdl_use_func(op);
-  SDL_Rect dst_rect = {.x = x_dst, .y = y_dst, .w = wide, .h = high};
+  SDL_Rect dst_rect = {.x = dst_map->x0 + x_dst, .y = dst_map->y0 + y_dst, .w = wide, .h = high};
   SDL_Texture *dst_texture = (SDL_Texture *)dst_map->data;
 
   if (src_map == NULL) {
@@ -52,22 +52,26 @@ void bit_blit(
     SDL_RenderFillRect(sdl_renderer, &dst_rect);
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
-    if (src_texture == NULL) { // Temp hack to see if things will work
-      return;
-    }
-    SDL_Rect src_rect = {.x = x_src, .y = y_src, .w = wide, .h = high};
+    SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
     if (src_texture == dst_texture) {
       SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
+      sdl_use_func(SRC);
       SDL_SetRenderTarget(sdl_renderer, new_src_texture);
       SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = wide, .h = high};
       SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &new_src_rect);
 
       src_rect = new_src_rect;
       src_texture = new_src_texture;
+      sdl_use_func(op);
+
+      SDL_SetRenderTarget(sdl_renderer, dst_texture);
+      SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
+      SDL_DestroyTexture(new_src_texture);
+    } else {
+      SDL_SetRenderTarget(sdl_renderer, dst_texture);
+      SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
     }
 
-    SDL_SetRenderTarget(sdl_renderer, dst_texture);
-    SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
   }
 }
 /*}}}  */

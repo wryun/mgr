@@ -145,5 +145,8 @@ void sdl_use_func(int func) {
    * Black and white here we come, for now...
    * Probably should just dump the raster ops and use textures for everything, once I've
    * got something minimally working.
+   *
+   * This all seems really broken. If I enable logic ops, I get reversed colors?
+   * and fonts are ... not there.
    */
 }

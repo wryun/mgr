@@ -58,6 +58,7 @@ static void glyph_create(font,glyph,offset) struct font *font; BITMAP **glyph; i
   {
     glyph[i] = bit_create(font->data, x, 0, wide, high);
     x += wide;
+    dbgprintf('f', (stderr,"Creating glyph for %c\n",i));
   }
 }
 /*}}}  */

@@ -5,6 +5,10 @@
 #include <stdlib.h>
 /*}}}  */
 
+#include <SDL.h>
+
+SDL_Texture *get_texture(BITMAP *map);
+
 /*{{{  bit_create -- create a bitmap as a sub-rectangle of another bitmap*/
 BITMAP *bit_create(map, x, y, wide, high) BITMAP *map; int x, y, wide, high;
 {
@@ -15,7 +19,7 @@ BITMAP *bit_create(map, x, y, wide, high) BITMAP *map; int x, y, wide, high;
   if (wide < 1 || high < 1) return (BITMAP*)0;
 
   if ((result=(BITMAP*)malloc(sizeof(BITMAP)))==(BITMAP*)0) return (BITMAP*)0;
-  result->data = map->data;
+  result->data = get_texture(map);
   result->x0 = map->x0 + x;
   result->y0 = map->y0 + y;
   result->wide = wide;
