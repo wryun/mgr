@@ -28,10 +28,11 @@ register int dx,dy;             /* box size */
 int how;					/* termination condition */
 {
   int x_mouse, y_mouse;
-  register int button, skip=1;
+  register int button;
 
   for (;;) {
     box(screen,*x,*y,dx,dy);
+    bit_present(screen);
     button = mouse_get_wait(&x_mouse, &y_mouse);
     do {
       *x += x_mouse;

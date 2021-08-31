@@ -156,6 +156,7 @@ int c;				/* E_SWTEXT or E_SWTEXTT */
 
    do_box(screen,x,y,dx,dy,top,left,cols,rows,gx,gy);	 /* on */
    do {
+      bit_present(screen);
       button=mouse_get_wait(&x_mouse,&y_mouse);
       newx += x_mouse<<1;
       newy -= y_mouse<<1;

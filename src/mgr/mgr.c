@@ -440,7 +440,7 @@ int main(argc,argv) int argc; char **argv;
          poll_time = &set_poll;
       }
       else
-         poll_time = NULL;
+         poll_time = &set_poll; // TODO - should be null, but using SDL event loop...
       if (select(FD_SETSIZE,&reads,0,0,poll_time) <0) {
 #ifdef DEBUG
          dbgprintf('l',(stderr,"select failed %ld->%ld\r\n",
@@ -458,39 +458,52 @@ int main(argc,argv) int argc; char **argv;
        * See franko's SDL WaitEventTimeout pull request for info.
        */
       SDL_Event event;
+      int dx, dy;
       while (SDL_PollEvent(&event)) {
          switch (event.type) {
          case SDL_QUIT:
             // TODO
             exit(1);
          case SDL_TEXTINPUT:
+            puts("SDL_TEXTINPUT");
+            // TODO fix buckey - what is c anyway? ;)
+            // (err, it's the old character thing - i.e. now event.text.text, sorta)
             if (!active) {
 #ifdef BUCKEY
-               do_buckey(c);
+               //do_buckey(c);
 #endif
                break;
             }
             int len = strlen(event.text.text);
             if (!(ACTIVE(flags)&W_NOINPUT)) {
 #ifdef BUCKEY
-               if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
-                  write(ACTIVE(to_fd),&event.text.text, len);
+               //if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
+               //   write(ACTIVE(to_fd),event.text.text, len);
+               write(ACTIVE(to_fd),event.text.text, len);
+               puts(event.text.text);
 #else
-               write(ACTIVE(to_fd),&event.text.text, len);
+               write(ACTIVE(to_fd),event.text.text, len);
+               puts(event.text.text);
 #endif
-               if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
-                  write(ACTIVE(to_fd), &event.text.text, len);
+               // ???
+               //if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
+               //   write(ACTIVE(to_fd), event.text.text, len);
             }
             break;
          case SDL_KEYDOWN:
+            if (isprint(event.key.keysym.sym)) {
+              break;
+            }
+            puts("SDL_KEYDOWN");
+            putchar(event.key.keysym.sym);
             /* TODO buckey, alt, ctrl, ... */
             write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
             break;
          case SDL_MOUSEBUTTONDOWN:
-            int dx, dy;
-            do_button(mouse_get_sdl(event, &dx, &dy));
+         case SDL_MOUSEBUTTONUP:
+            do_button(mouse_get_sdl(&event, &dx, &dy));
             break;
-         case SDL_MOUSEMOTIONEVENT:
+         case SDL_MOUSEMOTION:
             MOUSE_OFF(screen,mousex,mousey);
             mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen)-1);
             mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen)-1);

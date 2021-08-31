@@ -19,7 +19,7 @@ void bit_line(BITMAP *dest, int x0, int y0, int x1, int y1, int func)
   sdl_use_func(func);
 
   SDL_SetRenderTarget(sdl_renderer, (SDL_Texture *)dest->data);
-  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0x00);
+  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   SDL_RenderDrawLine(sdl_renderer, x0, y0, x1, y1);
 }
 
@@ -28,7 +28,7 @@ int bit_point(BITMAP *dest, int x, int y, int func)
   sdl_use_func(func);
 
   SDL_SetRenderTarget(sdl_renderer, (SDL_Texture *)dest->data);
-  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0x00);
+  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   SDL_RenderDrawPoint(sdl_renderer, x, y);
 
   /* TODO - read pix at location??? */

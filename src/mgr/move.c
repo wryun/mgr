@@ -41,6 +41,7 @@ void move_window()
    mousey += sy-ACTIVE(y0);
 
    shape(sx,sy,dx,dy);
+   bit_present(screen);
 #ifdef MGR_ALIGN
    if (dx != BIT_WIDE(ACTIVE(border)) || dy != BIT_HIGH(ACTIVE(border)))
       do_event(EVENT_SHAPE,active,E_MAIN);
@@ -48,8 +49,8 @@ void move_window()
 #endif
       do_event(EVENT_MOVE,active,E_MAIN);
 
-   /* wait till button is released */
 
+   /* wait till button is released */
    do {
       button=mouse_get_wait(&sx,&sy);
       }

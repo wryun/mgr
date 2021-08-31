@@ -244,6 +244,7 @@ int exit;			/* off-menu exit codes */
    bit_warpmouse(x_position-HOT, y_position-HOT);
    MOUSE_ON(inside,x_position-HOT,y_position-HOT);		/* on */
    do {
+      bit_present(screen);
       push = mouse_get_wait(&x_mouse,&y_mouse);
       MOUSE_OFF(inside,x_position-HOT,y_position-HOT);		/* off */
       x_position += x_mouse;

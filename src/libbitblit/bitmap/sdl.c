@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <signal.h>
 #include <assert.h>
 
 #include <GL/gl.h>
@@ -18,6 +19,10 @@
 
 static SDL_PixelFormatEnum static_bitmap_pixel_format = SDL_PIXELFORMAT_INDEX1MSB;
 static SDL_PixelFormatEnum preferred_pixel_format = SDL_PIXELFORMAT_ABGR8888;
+static const SDL_Color bitmap_palette_colors[] = {
+  {0x00, 0x00, 0x00, 0x00},
+  {0xFF, 0xFF, 0xFF, 0xFF},
+};
 
 static void (APIENTRY *glLogicOp_f)(int);
 static void (APIENTRY *glEnable_f)(int);
@@ -30,6 +35,9 @@ int sdl_helper_setup(SDL_Renderer *renderer) {
   glEnable_f(GL_COLOR_LOGIC_OP);
 
   SDL_RendererInfo rendererInfo;
+  // Below code fails anyway.
+  return 1;
+
   int err;
   if (!(err = SDL_GetRendererInfo(renderer, &rendererInfo))) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't interrogate renderer: %s", SDL_GetError());
@@ -51,7 +59,7 @@ int sdl_helper_setup(SDL_Renderer *renderer) {
 SDL_Texture *sdl_create_texture_target(SDL_Renderer *renderer, int x, int y) {
   SDL_Texture *texture = SDL_CreateTexture(renderer, preferred_pixel_format, SDL_TEXTUREACCESS_TARGET, x, y);
   if (texture == NULL) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s", SDL_GetError());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create dynamic texture: %s", SDL_GetError());
     return NULL;
   }
 
@@ -64,17 +72,23 @@ SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void 
 
   SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, wide * depth / 8, static_bitmap_pixel_format);
   if (surface == NULL) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface: %s", SDL_GetError());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface for static texture: %s", SDL_GetError());
     return NULL;
   }
 
+  if (SDL_SetPaletteColors(surface->format->palette, bitmap_palette_colors, 0, 2) < 0) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set surface palette colors for static texture: %s", SDL_GetError());
+    return NULL;
+  }
+
+  glLogicOp_f(GL_COPY);
   SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_FreeSurface(surface);
-
   if (texture == NULL) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s", SDL_GetError());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create static texture %d: %s", renderer, SDL_GetError());
     return NULL;
   }
+
+  SDL_FreeSurface(surface);
 
   return texture;
 }

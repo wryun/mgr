@@ -56,13 +56,13 @@ int type;			/* rectangle or line */
    register int button;
    register int newx;
    register int newy;
-   register int skip=1;
 
    newx = *dx;
    newy = *dy;
 
    for (;;) {
       Box(screen,x,y,*dx,*dy);
+      bit_present(screen);
       button = mouse_get_wait(&x_mouse, &y_mouse);
       do {
          newx += x_mouse<<1;

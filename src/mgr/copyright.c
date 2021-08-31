@@ -293,6 +293,10 @@ void copyright(BITMAP *where, char *password)
   /* kick off stars */
 
   fly(where);
+      bit_blit(where,0,0,
+	       BIT_WIDE(&mouse_bull),BIT_HIGH(&mouse_bull),
+	       BIT_SRC,
+	       &mouse_bull,0,0);
   bit_present(where);
   /* keep drawing stars until enough read from kb to stop */
   for(;;)

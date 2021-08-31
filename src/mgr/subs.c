@@ -288,6 +288,7 @@ int how;
    int dx,dy;
    MOUSE_ON(screen,mx,my);
    do {
+      bit_present(screen);
       button=mouse_get_wait(&dx,&dy);
       MOUSE_OFF(screen,mx,my);
       mx += dx;

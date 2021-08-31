@@ -65,6 +65,46 @@ where:
 }
 /*}}}  */
 
+/*{{{  bit_alloc -- allocate space for, and create a memory bitmap*/
+BITMAP *bit_fake_alloc(int wide, int high, DATA *data, unsigned char depth)
+{
+  register BITMAP *result;
+  register int size;
+
+  if ((result=(BITMAP*)malloc(sizeof(BITMAP)))==(BITMAP*)0) return (result);
+
+  result->x0=0;
+  result->y0=0;
+  result->high=high;
+  result->wide=wide;
+  result->depth=depth;
+  result->cache=NULL;
+  result->color=0;
+
+  size=bit_size(wide,high,depth);
+
+  if (data != (DATA *) 0)
+  {
+    result->data = data;
+    /* convert from external to internal format (if required) */
+  }
+  else
+  {
+    if ((result->data = (DATA *) malloc(size)) == (DATA *) 0)
+    {
+      free(result);
+      return ((BITMAP *) 0);
+    }
+  }
+
+  result->primary = result;
+  result->type = _MEMORY;
+  result->id = 0;	/* assign elsewhere? */
+  result->deviceinfo = NULL;
+  return (result);
+}
+/*}}}  */
+
 /*{{{  bitmapread*/
 BITMAP *bitmapread(FILE *fp)
 {
@@ -84,7 +124,7 @@ BITMAP *bitmapread(FILE *fp)
       size1diff = sizefile1 - sizemem1;
       sizefile1 = sizemem1;
     }
-    if ((bp=bit_alloc(w,h,(DATA*)0,d))==(BITMAP*)0) return (BITMAP*)0;
+    if ((bp=bit_fake_alloc(w,h,(DATA*)0,d))==(BITMAP*)0) return (BITMAP*)0;
 #ifdef MOVIE
     SET_DIRTY(bp);
 #endif
@@ -124,3 +164,5 @@ BITMAP *bitmapread(FILE *fp)
   return bp;
 }
 /*}}}  */
+
+

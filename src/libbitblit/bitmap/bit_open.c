@@ -37,7 +37,7 @@ BITMAP *bit_open(char *name)
   if ((result=malloc(sizeof(BITMAP)))==(BITMAP*)0) return (BITMAP*)0;
   result->primary = result;
 
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) < 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
     return NULL;
   }

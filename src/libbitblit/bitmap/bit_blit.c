@@ -23,8 +23,7 @@ SDL_Texture *get_texture(BITMAP *bitmap) {
 
   SDL_Texture *texture = sdl_create_texture_from_static_bitmap(sdl_renderer, bitmap->data, bitmap->wide, bitmap->high, bitmap->depth);
   if (texture == NULL) {
-    /* TODO */
-    exit(1);
+    return NULL;
   }
 
   bitmap->data = texture;
@@ -53,6 +52,9 @@ void bit_blit(
     SDL_RenderFillRect(sdl_renderer, &dst_rect);
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
+    if (src_texture == NULL) { // Temp hack to see if things will work
+      return;
+    }
     SDL_Rect src_rect = {.x = x_src, .y = y_src, .w = wide, .h = high};
     if (src_texture == dst_texture) {
       SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);

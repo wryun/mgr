@@ -17,7 +17,7 @@ void bit_destroy(BITMAP *bitmap)
 {
   printf("bit_destroy(%p)\n", bitmap);
 
-  if (bitmap == NULL) {
+  if (bitmap == NULL || IS_STATIC(bitmap)) {
     return;
   }
 
@@ -25,14 +25,14 @@ void bit_destroy(BITMAP *bitmap)
   printf("  -> IS_PRIMARY? %d\n", IS_PRIMARY(bitmap));
   printf("  -> IS_SCREEN? %d\n", IS_SCREEN(bitmap));
 
-  if (!IS_STATIC(bitmap)) {
+  if (IS_PRIMARY(bitmap)) {
     SDL_DestroyTexture(bitmap->data);
-  }
 
-  if (IS_SCREEN(bitmap)) {
-    SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(sdl_window);
-    SDL_Quit();
+    if (IS_SCREEN(bitmap) && bitmap->primary == bitmap) {
+      SDL_DestroyRenderer(sdl_renderer);
+      SDL_DestroyWindow(sdl_window);
+      SDL_Quit();
+    }
   }
 
   free(bitmap);
