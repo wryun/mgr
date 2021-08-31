@@ -1,0 +1,55 @@
+version=	0.69
+
+INCLUDEDIR=	/home/jamesh/mgr/include
+BINDIR=	/home/jamesh/mgr/bin$(ARCHITECTURE)
+SHBINDIR=	/home/jamesh/mgr/bin
+FONTDIR=	/home/jamesh/mgr/font
+HFONTDIR=	/home/jamesh/mgr/hfont
+ICONDIR=	/home/jamesh/mgr/icon
+SERVERICONDIR=	/home/jamesh/mgr/icon/server
+LIBDIR=	/home/jamesh/mgr/lib$(ARCHITECTURE)
+MANDIR=	/home/jamesh/mgr/man
+XBDDIR=	/home/jamesh/mgr/mgrbd
+
+DEFAULT_FONT=	$(FONTDIR)/is8859-1-8x14
+EXAMPLES=	examples
+
+GROPBM=	gropbm
+GROFFFONTDIR=	/usr/share/groff/current/font
+MS=		-mgs
+
+
+FONT_DPI_DEF=   -DFONT_DPI=300
+ZILCH=		>
+RMF=		rm -f
+DEPFILE=	.depend
+
+LEX=		flex
+CC=		gcc
+CCFLAGS=	-Wall -Og -g
+CPPFLAGS=	-I$(INCLUDEDIR) -I/usr/include/SDL2
+MKDEP=		gcc -MM -w
+MKDEPOUT=	$(DEPFILE)
+AWK=		awk
+ROFF=		groff
+ROFFDEVICE=	-Tascii
+ROFFONLY=	-Z
+TBL=		tbl
+LNS=		ln -s
+MKDIR=          install -d
+
+MGRFLAGS=	-DWHO -DVI -DKILL -DMGR_ALIGN -DTERMNAME=\"mgr-linux\" -DDEBUG -DSTRETCH -DXMENU -DBUCKEY -DCUT
+SYSTEM=	linux
+BLITLIBFLAGS=   
+#-fomit-frame-pointer -fexpensive-optimizations -frerun-cse-after-loop -fstrength-reduce
+
+SERVER=		mgr
+SERVER_PERM=	4755
+BITBLIT_PERM=	4755
+
+
+EXTRALIBS=-lSDL2
+
+
+
+
