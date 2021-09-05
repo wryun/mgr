@@ -34,6 +34,7 @@ int how;					/* termination condition */
     box(screen,*x,*y,dx,dy);
     bit_present(screen);
     button = mouse_get_wait(&x_mouse, &y_mouse);
+    box(screen,*x,*y,dx,dy);
     do {
       *x += x_mouse;
       *y -= y_mouse;
@@ -41,7 +42,6 @@ int how;					/* termination condition */
       *y = BETWEEN(0,*y,BIT_HIGH(screen)-dy);
 
       if (how ? button == 0 : button != 0) {
-        box(screen,*x,*y,dx,dy);
         return;
       }
     } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);

@@ -64,6 +64,7 @@ int type;			/* rectangle or line */
       Box(screen,x,y,*dx,*dy);
       bit_present(screen);
       button = mouse_get_wait(&x_mouse, &y_mouse);
+      Box(screen,x,y,*dx,*dy);
       do {
          newx += x_mouse<<1;
          newy -= y_mouse<<1;
@@ -71,7 +72,6 @@ int type;			/* rectangle or line */
          *dy = BETWEEN(-y,newy,(int) BIT_HIGH(screen)-y);
 
          if (button == 0) {
-            Box(screen,x,y,*dx,*dy);
             return;
          }
       } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);

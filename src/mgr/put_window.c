@@ -425,7 +425,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
           int mode = *W(esc);
 
           if (mode) {
-             enhance_font(W(font));
+             //enhance_font(W(font));
              done++;
           }
           offset=0;
@@ -436,6 +436,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
           else {
              standend(win);
           }
+#if 0
           if (mode&2) { /* bold */
             W(flags)|=W_BOLD;
             offset|=2;
@@ -450,6 +451,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
           else {
 	     W(flags) &= ~W_UNDER;
 	  }
+#endif
           offset *= MAXGLYPHS;
 
           break;
