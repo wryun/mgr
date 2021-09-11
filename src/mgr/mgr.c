@@ -57,8 +57,7 @@
 /*}}}  */
 
 /*{{{  variables*/
-static struct timeval set_poll = { (long)0, (long)POLL_INT };
-static struct timeval set_poll_save;
+static struct timespec set_poll = { (long)0, (long)(POLL_INT * 1000) };
 static char *mouse_dev = MOUSE_DEV;
 static char *mouse_type = NULL;
 BITMAP *pattern=&def_pattern;
@@ -149,18 +148,212 @@ FD_SET_DIFF( fd_set *target, fd_set *left, fd_set *right) {
 #endif
 
 
-/*{{{  main*/
-int main(argc,argv) int argc; char **argv;
-   {
+/* protected by mutex */
+static fd_set reads;                        /* masks, result of select */
+static struct timespec *poll_time;
+
+
+void read_fds_into_windows() {
    register WINDOW *win;                /* current window to update */
+   int shellbuf = MAXSHELL;             /* # chars processed per shell */
+
+   /* process shell output */
+
+   for (win=active;win != (WINDOW *) 0;win=W(next)) {
+      /* read data into buffer */
+
+      if (W(from_fd) && FD_ISSET( W(from_fd), &reads)
+                     && !FD_ISSET( W(from_fd), &to_poll)) {
+         W(current) = 0;
+         if ((W(max) = read(W(from_fd),W(buff),shellbuf)) > 0) {
+            FD_SET( W(from_fd), &to_poll);
+            dbgprintf('p',(stderr,"%s: reading %d [%.*s]\r\n",W(tty),
+                          W(max),W(max),W(buff)));
+         } else {
+            FD_CLR( W(from_fd), &to_poll);
+#ifdef KILL
+            if (W(flags)&W_NOKILL) W(flags) |= W_DIED;
+#endif
+#ifdef DEBUG
+            if(debug) {
+               fprintf(stderr,"%s: read failed after select on fd(%d) returning %d\r\n",
+                       W(tty),W(from_fd),W(max));
+               perror(W(tty));
+            }
+#endif
+         }
+      }
+   }
+}
+
+int update_windows() {
+   register WINDOW *win;                /* current window to update */
+   register int count;                  /* # chars read from shell */
+   register int i;                      /* counter */
+   int maxbuf = MAXBUF;                 /* # chars processed per window */
+   int dirty = 0;
+
+   /* see if any window died */
+   for(win=active;win != (WINDOW *) 0; )
+      if (W(flags)&W_DIED) {
+         dbgprintf('d',(stderr,"Destroying %s-%d\r\n",W(tty),W(num)));
+         destroy(win);
+         win = active;
+         dirty = 1;
+         }
+      else
+         win = W(next);
+
+   for (win=active;win != (WINDOW *) 0;win=W(next)) {
+      /* check for window to auto-expose */
+
+      if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
+          && W(flags)&W_EXPOSE && !(W(flags)&W_ACTIVE)) {
+         dbgprintf('o',(stderr,"%s: activating self\r\n",W(tty)));
+         MOUSE_OFF(screen,mousex,mousey);
+         cursor_off();
+         ACTIVE_OFF();
+         expose(win);
+         ACTIVE_ON();
+         cursor_on();
+         MOUSE_ON(screen,mousex,mousey);
+
+         dirty = 1;
+      }
+
+      /* write data into the window */
+
+      if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
+          && W(flags)&(W_ACTIVE|W_BACKGROUND)) {
+
+#ifdef PRIORITY                 /* use priority scheduling */
+         if (win==active)
+            count = Min(maxbuf,W(max)-W(current));
+         else if (W(flags)&W_ACTIVE)
+            count = Min(maxbuf>>1,W(max)-W(current));
+         else
+            count = Min(maxbuf>>2,W(max)-W(current));
+#else                           /* use round robin scheduling */
+         count = Min(maxbuf,W(max)-W(current));
+#endif
+
+         i = put_window(win,W(buff)+W(current),count);
+         dirty = 1;
+         dbgprintf('w',(stderr,"%s: writing %d/%d %.*s [%.*s]\r\n",
+                       W(tty),i,count,i,W(buff)+W(current),count-i,
+                       W(buff)+W(current)+i));
+
+         W(current) += i;
+         if (W(current) >= W(max)) {
+            FD_CLR( W(from_fd), &to_poll);
+         }
+      }
+   }
+
+#ifdef MOVIE
+   log_time();
+#endif
+
+   return dirty;
+}
+
+
+static void *sdl_die_if_null(void *result) {
+   if (result == NULL) {
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s", SDL_GetError());
+      SDL_Quit();
+   }
+
+   return result;
+}
+
+
+static Uint32 sdl_die_if_negative(Uint32 result) {
+   if (result < 0) {
+      SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s", SDL_GetError());
+      SDL_Quit();
+   }
+
+   return result;
+}
+
+
+static SDL_Event select_event;
+static SDL_mutex *select_mutex;
+static SDL_cond *select_cond;
+
+
+static void setup_select_args() {
+   SDL_LockMutex(select_mutex);
+
+   FD_SET_DIFF( &reads, &mask, &to_poll); /* reads = mask & ~to_poll */
+   dbgprintf('l',(stderr,"select: mask=0x%lx to_poll=0x%lx 0x%lx got\r\n",
+              (unsigned)HD(mask),(unsigned)HD(to_poll),(unsigned)HD(reads)));
+
+   if(FD_COMMON(&to_poll,&mask)) {
+      poll_time = &set_poll;
+   }
+   else
+      poll_time = NULL;
+
+   SDL_UnlockMutex(select_mutex);
+
+   SDL_CondSignal(select_cond);
+}
+
+
+/* Use a separate thread to select on our fds so we don't have to poll
+ * in the SDL event loop.
+ *
+ * Err, figure out how signals actually work...
+ */
+static int watch_for_select(void *ignored) {
+   SDL_LockMutex(select_mutex);
+
+   while (1) {
+      if (pselect(FD_SETSIZE, &reads, 0, 0, poll_time, NULL) <0) {
+         /* In case of error, reads is left unmodified */
+#ifdef DEBUG
+         dbgprintf('l',(stderr,"select failed %ld->%ld\r\n",
+                       (int)HD(reads), (int) (HD(mask) & ~HD(to_poll))));
+         if (debug)
+            perror("Select:");
+#endif
+         continue;
+         }
+      dbgprintf('l',(stderr,"reads=0x%lx\r\n",(unsigned long)HD(reads)));
+
+      SDL_PushEvent(&select_event);
+
+      /* Wait until the main thread has picked this up and reset 'reads' appropriately.
+       */
+      SDL_CondWait(select_cond, select_mutex);
+   }
+
+   SDL_UnlockMutex(select_mutex);
+
+   return 1; /* not used - required by sdl thread definition */
+}
+
+static void setup_select() {
+   select_cond = sdl_die_if_null(SDL_CreateCond());
+   select_mutex = sdl_die_if_null(SDL_CreateMutex());
+   select_event.type = sdl_die_if_negative(SDL_RegisterEvents(1));
+   // Construct pipe
+   // register 
+   setup_select_args();
+
+   SDL_DetachThread(sdl_die_if_null(SDL_CreateThread(watch_for_select, "watch_for_select", NULL)));
+}
+
+
+/*{{{  main*/
+int main(int argc, char **argv) {
    register int i;                      /* counter */
    register int count;                  /* # chars read from shell */
    int maxbuf = MAXBUF;                 /* # chars processed per window */
    int shellbuf = MAXSHELL;             /* # chars processed per shell */
-   fd_set reads;                        /* masks, result of select */
-   struct timeval *poll_time;
    int flag;
-   unsigned char c;                     /* reads from kbd go here */
    char start_file[MAX_PATH];           /* name of startup file */
    char *screen_dev = SCREEN_DEV;       /* name of frame buffer */
    char *default_font = (char * )0;     /* default font */
@@ -240,7 +433,7 @@ int main(argc,argv) int argc; char **argv;
      /*}}}  */
      /*{{{  P -- set polling timeout*/
      case 'P':
-          set_poll.tv_usec = (long) atoi(optarg);
+          set_poll.tv_nsec = (long) (atoi(optarg) * 1000);
           break;
      /*}}}  */
      /*{{{  b -- set shell buffering*/
@@ -353,6 +546,8 @@ int main(argc,argv) int argc; char **argv;
    font->ident = 0;
    /*}}}  */
 
+   // TODO - this needs debugging. May need pselect?
+   // Also watch out for SDL turning things off.
    /*{{{  catch the right interrupts*/
    for (i=0; i<NSIG; i++) switch(i)
    {
@@ -380,7 +575,6 @@ int main(argc,argv) int argc; char **argv;
    FD_ZERO( &mask);
    FD_ZERO( &to_poll);
    FD_ZERO( &reads);
-   memcpy(&set_poll_save,&set_poll,sizeof(set_poll));
    /*}}}  */
    /*{{{  get default font definitions*/
       {
@@ -410,179 +604,112 @@ int main(argc,argv) int argc; char **argv;
    /*{{{  turn on mouse cursor*/
    MOUSE_OFF(screen,mousex,mousey);
    SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
-   MOUSE_ON(screen,mousex,mousey);
    /*}}}  */
    /* main polling loop */
 
-   while(1) {
+   int dirty = 1;
+   int last_render_ticks = 0;
+   int UPDATE_INTERVAL_MS = 30; /* tweak this lower to increase frame rate */
 
-      /* see if any window died */
+   /* We use the SDL event loop, so we move the traditional
+    * 'select' handling to a thread (and have it push a userevent).
+    */
+   setup_select();
 
-      for(win=active;win != (WINDOW *) 0; )
-         if (W(flags)&W_DIED) {
-            dbgprintf('d',(stderr,"Destroying %s-%d\r\n",W(tty),W(num)));
-            destroy(win);
-            win = active;
-            }
-         else
-            win = W(next);
+   while (1) {
+      dirty |= update_windows();
 
-      /* wait for input */
+      int ticks = SDL_GetTicks();
+      int time_since_render_ms = ticks - last_render_ticks;
 
-      FD_SET_DIFF( &reads, &mask, &to_poll);    /* reads = mask & ~to_poll */
-
-      dbgprintf('l',(stderr,"select: mask=0x%lx to_poll=0x%lx 0x%lx got\r\n",
-                    (unsigned)HD(mask),(unsigned)HD(to_poll),(unsigned)HD(reads)));
-#ifdef MOVIE
-      log_time();
-#endif
-      if(FD_COMMON(&to_poll,&mask)) {
-         (void) memcpy(&set_poll,&set_poll_save,sizeof(set_poll));
-         poll_time = &set_poll;
-      }
-      else
-         poll_time = &set_poll; // TODO - should be null, but using SDL event loop...
-      if (select(FD_SETSIZE,&reads,0,0,poll_time) <0) {
-#ifdef DEBUG
-         dbgprintf('l',(stderr,"select failed %ld->%ld\r\n",
-                       (int)HD(reads), (int) (HD(mask) & ~HD(to_poll))));
-         if (debug)
-            perror("Select:");
-#endif
-         FD_SET_DIFF( &reads, &mask, &to_poll); /* reads = mask & ~to_poll */
-         continue;
-         }
-      dbgprintf('l',(stderr,"reads=0x%lx\r\n",(unsigned long)HD(reads)));
-
-      /* Should this be if? That's what X11 was doing.
-       * Want to rewrite to use WaitEvent (and PushEvent or mutexes) anyway.
-       * See franko's SDL WaitEventTimeout pull request for info.
-       */
-      SDL_Event event;
-      int dx, dy;
-      while (SDL_PollEvent(&event)) {
-         switch (event.type) {
-         case SDL_QUIT:
-            // TODO
-            exit(1);
-         case SDL_TEXTINPUT:
-            // TODO fix buckey - what is c anyway? ;)
-            // (err, it's the old character thing - i.e. now event.text.text, sorta)
-            if (!active) {
-#ifdef BUCKEY
-               //do_buckey(c);
-#endif
-               break;
-            }
-            int len = strlen(event.text.text);
-            if (!(ACTIVE(flags)&W_NOINPUT)) {
-#ifdef BUCKEY
-               //if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
-               //   write(ACTIVE(to_fd),event.text.text, len);
-               write(ACTIVE(to_fd),event.text.text, len);
-#else
-               write(ACTIVE(to_fd),event.text.text, len);
-#endif
-               // ???
-               //if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
-               //   write(ACTIVE(to_fd), event.text.text, len);
-            }
-            break;
-         case SDL_KEYDOWN:
-            if (isprint(event.key.keysym.sym)) {
-              break;
-            }
-            putchar(event.key.keysym.sym);
-            /* TODO buckey, alt, ctrl, ... */
-            write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
-            break;
-         case SDL_MOUSEBUTTONDOWN:
-         case SDL_MOUSEBUTTONUP:
-            do_button(mouse_get_sdl(&event, &dx, &dy));
-            break;
-         case SDL_MOUSEMOTION:
-            MOUSE_OFF(screen,mousex,mousey);
-            mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen)-1);
-            mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen)-1);
-            /* Mouse is turned back on below, in case we have more motion events */
-            break;
-         default:
-            break;
-         }
-      }
-      MOUSE_ON(screen,mousex,mousey);
-
-      /* process shell output */
-
-      for(win=active;win != (WINDOW *) 0;win=W(next))
-      {
-         /* read data into buffer */
-
-         if (W(from_fd) && FD_ISSET( W(from_fd), &reads)
-                        && !FD_ISSET( W(from_fd), &to_poll)) {
-            W(current) = 0;
-            if ((W(max) = read(W(from_fd),W(buff),shellbuf)) > 0) {
-               FD_SET( W(from_fd), &to_poll);
-               dbgprintf('p',(stderr,"%s: reading %d [%.*s]\r\n",W(tty),
-                             W(max),W(max),W(buff)));
-               }
-            else {
-               FD_CLR( W(from_fd), &to_poll);
-#ifdef KILL
-               if (W(flags)&W_NOKILL) W(flags) |= W_DIED;
-#endif
-#ifdef DEBUG
-               if(debug) {
-                  fprintf(stderr,"%s: read failed after select on fd(%d) returning %d\r\n",
-                          W(tty),W(from_fd),W(max));
-                  perror(W(tty));
-                  }
-#endif
-               }
-            }
-
-         /* check for window to auto-expose */
-
-         if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
-             && W(flags)&W_EXPOSE && !(W(flags)&W_ACTIVE)) {
-            dbgprintf('o',(stderr,"%s: activating self\r\n",W(tty)));
-            MOUSE_OFF(screen,mousex,mousey);
-            cursor_off();
-            ACTIVE_OFF();
-            expose(win);
-            ACTIVE_ON();
-            cursor_on();
-            MOUSE_ON(screen,mousex,mousey);
-            }
-
-         /* write data into the window */
-
-         if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
-             && W(flags)&(W_ACTIVE|W_BACKGROUND)) {
-
-#ifdef PRIORITY                 /* use priority scheduling */
-            if (win==active)
-               count = Min(maxbuf,W(max)-W(current));
-            else if (W(flags)&W_ACTIVE)
-               count = Min(maxbuf>>1,W(max)-W(current));
-            else
-               count = Min(maxbuf>>2,W(max)-W(current));
-#else                           /* use round robin scheduling */
-            count = Min(maxbuf,W(max)-W(current));
-#endif
-
-            i = put_window(win,W(buff)+W(current),count);
-            dbgprintf('w',(stderr,"%s: writing %d/%d %.*s [%.*s]\r\n",
-                          W(tty),i,count,i,W(buff)+W(current),count-i,
-                          W(buff)+W(current)+i));
-
-            W(current) += i;
-            if (W(current) >= W(max))
-               FD_CLR( W(from_fd), &to_poll);
-            }
-         }
-
+      if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
+         MOUSE_ON(screen,mousex,mousey);
          bit_present(screen);
+         MOUSE_OFF(screen,mousex,mousey);
+
+         last_render_ticks = ticks;
+         dirty = 0;
+         time_since_render_ms = 0;
       }
+
+      SDL_Event event;
+      int timeout = -1; /* i.e. never */
+      if (FD_COMMON(&to_poll, &mask)) {
+         timeout = 0;
+      } else if (dirty) {
+         timeout = UPDATE_INTERVAL_MS - time_since_render_ms;
+      }
+      if (!SDL_WaitEventTimeout(&event, timeout)) {
+         continue;
+      }
+
+      int dx, dy;
+
+      do switch (event.type) {
+      case SDL_USEREVENT:
+         /* At the moment, our only user event is the select one. */
+         read_fds_into_windows();
+         setup_select_args();
+         break;
+      case SDL_QUIT:
+         // TODO
+         exit(1);
+      case SDL_TEXTINPUT:
+         // TODO fix buckey - what is c anyway? ;)
+         // (err, it's the old character thing - i.e. now event.text.text, sorta)
+         if (!active) {
+#ifdef BUCKEY
+            //do_buckey(c);
+#endif
+            break;
+         }
+         int len = strlen(event.text.text);
+         if (!(ACTIVE(flags)&W_NOINPUT)) {
+#ifdef BUCKEY
+            //if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
+            //   write(ACTIVE(to_fd),event.text.text, len);
+            write(ACTIVE(to_fd),event.text.text, len);
+#else
+            write(ACTIVE(to_fd),event.text.text, len);
+#endif
+            // ???
+            //if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
+            //   write(ACTIVE(to_fd), event.text.text, len);
+         }
+         break;
+      case SDL_KEYDOWN:
+         if (isprint(event.key.keysym.sym)) {
+           break;
+         }
+         putchar(event.key.keysym.sym);
+         /* TODO buckey, alt, ctrl, ... */
+         write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+         break;
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
+         do_button(mouse_get_sdl(&event, &dx, &dy));
+         /* This could have caused a new window to be added, so rerender for
+          * safety.
+          */
+         dirty = 1;
+         break;
+      case SDL_MOUSEMOTION:
+         mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen)-1);
+         mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen)-1);
+         dirty = 1;
+         /* Mouse is turned back on below, in case we have more motion events */
+         break;
+      default:
+         break;
+      } while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_USEREVENT - 1));
+      /* ^ process real SDL events ASAP if they're sitting at the front of the queue.
+       * Note that only two things here can cause screen changes that require rerender:
+       *  - mouse movement - and we need to process these immediately so we get
+       *    the user to the correct location
+       *  - select (i.e. user event)
+       * If we don't do this, there's the possibility that on a slow computer the
+       * &to_poll rendering will cause laggy mouse motion as it will interrupt each event.
+       */
    }
+}
 /*}}}  */

@@ -288,8 +288,11 @@ int how;
    int dx,dy;
    MOUSE_ON(screen,mx,my);
    do {
-      bit_present(screen);
-      button=mouse_get_wait(&dx,&dy);
+      button=mouse_get_poll(&dx,&dy);
+      if (button == -1) {
+         bit_present(screen);
+         button=mouse_get_wait(&dx,&dy);
+      }
       MOUSE_OFF(screen,mx,my);
       mx += dx;
       my -= dy;
