@@ -583,7 +583,8 @@ int main(int argc, char **argv) {
    if (!(SDL_GetModState() & KMOD_CTRL)) {
       SDL_StartTextInput();
    }
-   SDL_ShowCursor(SDL_DISABLE);
+   SDL_SetCursor(SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW));
+   SDL_ShowCursor(SDL_ENABLE);
 
    /*{{{  get the default font file*/
    if (default_font || (default_font = getenv(DEFAULT_FONT)))
@@ -702,26 +703,22 @@ int main(int argc, char **argv) {
          // TODO
          exit(1);
       case SDL_TEXTINPUT:
-         // TODO fix buckey - what is c anyway? ;)
-         // (err, it's the old character thing - i.e. now event.text.text, sorta)
          if (!active) {
 #ifdef BUCKEY
-            //do_buckey(c);
+            do_buckey(event.text.text[0]);
 #endif
             break;
          }
          int len = strlen(event.text.text);
          if (!(ACTIVE(flags)&W_NOINPUT)) {
 #ifdef BUCKEY
-            //if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(c))
-            //   write(ACTIVE(to_fd),event.text.text, len);
-            write(ACTIVE(to_fd),event.text.text, len);
+            if ((ACTIVE(flags)&W_NOBUCKEY) || !do_buckey(event.text.text[0]))
+               write(ACTIVE(to_fd),event.text.text, len);
 #else
             write(ACTIVE(to_fd),event.text.text, len);
 #endif
-            // ???
-            //if (ACTIVE(flags)&W_DUPKEY && c==ACTIVE(dup))
-            //   write(ACTIVE(to_fd), event.text.text, len);
+            if (ACTIVE(flags)&W_DUPKEY && event.text.text[0]==ACTIVE(dup))
+               write(ACTIVE(to_fd), event.text.text, len);
          }
          break;
       case SDL_KEYDOWN:

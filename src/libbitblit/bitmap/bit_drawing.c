@@ -14,8 +14,6 @@
 
 void bit_line(BITMAP *dest, int x0, int y0, int x1, int y1, int func)
 {
-  printf("bit_line(%p, %d, %d, %d, %d, %d)\n", dest, x0, y0, x1, y1, func);
-
   sdl_use_func(func);
 
   SDL_SetRenderTarget(sdl_renderer, (SDL_Texture *)dest->data);

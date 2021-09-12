@@ -87,14 +87,14 @@ char *strchr();
 /* macros -- for speed */
 
 #ifdef FASTMOUSE
-#define MoUSE(m,a,b)     bit_blit(m, a, b, 16,16,BIT_XOR, m_rop,0,0)
-#define MOUSE_ON(m,a,b)	{ if (!mouse_on) { mouse_on=1; MoUSE(m,a,b); }}
-#define MOUSE_OFF(m,a,b) { if (mouse_on) { mouse_on=0; MoUSE(m,a,b); }}
+#define MoUSE(m,a,b)     0
+#define MOUSE_ON(m,a,b)	0
+#define MOUSE_OFF(m,a,b) 0
 #else
 /* turn on the mouse only if it is off */
-#define MOUSE_ON(m,a,b) { if (!mouse_on) { mouse_on=1; bit_blit(mouse_save,0,0,16,16,BIT_SRC,m,a,b); bit_blit(m,a,b,16,16,BIT_OR,m_rop,0,0); bit_blit(m,a,b,16,16,BIT_NAND,m_rop,0,16); } }
+#define MOUSE_ON(m,a,b) 0
 /* turn off the mouse only if it is on */
-#define MOUSE_OFF(m,a,b) { if (mouse_on) { mouse_on=0; bit_blit(m,a,b,16,16,BIT_SRC,mouse_save,0,0); } }
+#define MOUSE_OFF(m,a,b) 0
 #endif
 
 #define CLEAR(s,op)	bit_blit((s),0,0,BIT_WIDE(s),BIT_HIGH(s),op,0,0,0);

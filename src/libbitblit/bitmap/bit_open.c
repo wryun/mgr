@@ -17,8 +17,8 @@
 /*}}}  */
 
 
-#define WIDTH 1280 
-#define HEIGHT 1024 
+#define WIDTH 1920 
+#define HEIGHT 1080
 #define DEPTH 1  /* TODO ... colours. */
 
 

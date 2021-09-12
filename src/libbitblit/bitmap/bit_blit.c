@@ -41,7 +41,6 @@ void bit_blit(
     int x_src, int y_src  /* source coords */
     )
 {
-  // printf("bit_blit(%p, %d, %d, %d, %d, %d, %p, %d, %d)\n", dst_map, x_dst, y_dst, wide, high, op, src_map, x_src, y_src);
   sdl_use_func(op);
   SDL_Rect dst_rect = {.x = dst_map->x0 + x_dst, .y = dst_map->y0 + y_dst, .w = wide, .h = high};
   SDL_Texture *dst_texture = (SDL_Texture *)dst_map->data;
