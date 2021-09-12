@@ -399,6 +399,7 @@ int main(int argc, char **argv) {
    int maxbuf = MAXBUF;                 /* # chars processed per window */
    int shellbuf = MAXSHELL;             /* # chars processed per shell */
    int flag;
+   char c;
    char start_file[MAX_PATH];           /* name of startup file */
    char *screen_dev = SCREEN_DEV;       /* name of frame buffer */
    char *default_font = (char * )0;     /* default font */
@@ -579,7 +580,9 @@ int main(int argc, char **argv) {
    /*}}}  */
 
    /* SDL init */
-   SDL_StartTextInput();
+   if (!(SDL_GetModState() & KMOD_CTRL)) {
+      SDL_StartTextInput();
+   }
    SDL_ShowCursor(SDL_DISABLE);
 
    /*{{{  get the default font file*/
@@ -654,6 +657,7 @@ int main(int argc, char **argv) {
 
    int dirty = 1;
    int last_render_ticks = 0;
+   int ctrl_enabled = 0;
    int UPDATE_INTERVAL_MS = 30; /* tweak this lower to increase frame rate */
 
    /* We use the SDL event loop, so we move the traditional
@@ -721,12 +725,45 @@ int main(int argc, char **argv) {
          }
          break;
       case SDL_KEYDOWN:
-         if (isprint(event.key.keysym.sym)) {
-           break;
+         switch (event.key.keysym.sym) {
+         case SDLK_LCTRL:
+         case SDLK_RCTRL:
+            ctrl_enabled = 1;
+            SDL_StopTextInput();
+            break;
+         case SDLK_BACKSPACE:
+         case SDLK_TAB:
+         case SDLK_RETURN:
+         case SDLK_ESCAPE:
+            write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+            break;
+         case SDLK_UP:
+            write(ACTIVE(to_fd), &"\033[A", 3);
+            break;
+         case SDLK_DOWN:
+            write(ACTIVE(to_fd), &"\033[B", 3);
+            break;
+         case SDLK_RIGHT:
+            write(ACTIVE(to_fd), &"\033[C", 3);
+            break;
+         case SDLK_LEFT:
+            write(ACTIVE(to_fd), &"\033[D", 3);
+            break;
+         default:
+            if (ctrl_enabled) {
+               c = event.key.keysym.sym - 'a' + 1;
+               if (iscntrl(c)) {
+                  write(ACTIVE(to_fd), &c, 1);
+               }
+            }
+            break;
          }
-         putchar(event.key.keysym.sym);
-         /* TODO buckey, alt, ctrl, ... */
-         write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+         break;
+      case SDL_KEYUP:
+         if (event.key.keysym.sym == SDLK_LCTRL || event.key.keysym.sym == SDLK_RCTRL) {
+            ctrl_enabled = 0;
+            SDL_StartTextInput();
+         }
          break;
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:

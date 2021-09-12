@@ -53,7 +53,7 @@ void bit_blit(
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
     SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
-    if (src_texture == dst_texture) {
+    if (src_texture == dst_texture && 0) {
       SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
       sdl_use_func(SRC);
       SDL_SetRenderTarget(sdl_renderer, new_src_texture);
