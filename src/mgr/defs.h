@@ -20,8 +20,8 @@
 #define MAXCLIENT	25		/* max number of client windows */
 #define MAXESC		20		/* max number of leading esc. digits */
 #define TEXT_COUNT	MAXESC-1	/* text download index */
-#define MAXBUF		80		/* max chars put to window per cycle */
-#define MAXSHELL	127		/* max chars read from shell at once (128 causes an error) ?! */
+#define MAXBUF		512		/* max chars put to window per cycle */
+#define MAXSHELL	4096		/* max chars read from shell at once (128 causes an error) ?! */
 #define POLL_INT	0		/* us's of pause at each select */
 #define MAXNAME		35		/* max argv[0] length */
 #define MAXTTY		35		/* max tty device name length */

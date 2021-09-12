@@ -66,6 +66,7 @@ char *log_command=NULL;         /* process to pipe logging info to */
 FILE *log_file=NULL;            /* file pointer for logging */
 static int log_now=0;
 #endif
+void redo_select(void);
 /*}}}  */
 
 /*{{{  sig_child -- catch dead children*/
@@ -150,7 +151,6 @@ FD_SET_DIFF( fd_set *target, fd_set *left, fd_set *right) {
 
 /* protected by mutex */
 static fd_set reads;                        /* masks, result of select */
-static struct timespec *poll_time;
 
 
 void read_fds_into_windows() {
@@ -165,12 +165,13 @@ void read_fds_into_windows() {
       if (W(from_fd) && FD_ISSET( W(from_fd), &reads)
                      && !FD_ISSET( W(from_fd), &to_poll)) {
          W(current) = 0;
-         if ((W(max) = read(W(from_fd),W(buff),shellbuf)) > 0) {
+         if ((W(max) = read(W(from_fd),W(buff),shellbuf - 1)) > 0) {
             FD_SET( W(from_fd), &to_poll);
             dbgprintf('p',(stderr,"%s: reading %d [%.*s]\r\n",W(tty),
                           W(max),W(max),W(buff)));
          } else {
             FD_CLR( W(from_fd), &to_poll);
+            redo_select();
 #ifdef KILL
             if (W(flags)&W_NOKILL) W(flags) |= W_DIED;
 #endif
@@ -246,6 +247,7 @@ int update_windows() {
          W(current) += i;
          if (W(current) >= W(max)) {
             FD_CLR( W(from_fd), &to_poll);
+            redo_select();
          }
       }
    }
@@ -281,24 +283,18 @@ static Uint32 sdl_die_if_negative(Uint32 result) {
 static SDL_Event select_event;
 static SDL_mutex *select_mutex;
 static SDL_cond *select_cond;
+static int selfpipe_fds[2];
+
+
+void redo_select() {
+   write(selfpipe_fds[1], "!", 1);
+}
 
 
 static void setup_select_args() {
-   SDL_LockMutex(select_mutex);
-
    FD_SET_DIFF( &reads, &mask, &to_poll); /* reads = mask & ~to_poll */
    dbgprintf('l',(stderr,"select: mask=0x%lx to_poll=0x%lx 0x%lx got\r\n",
-              (unsigned)HD(mask),(unsigned)HD(to_poll),(unsigned)HD(reads)));
-
-   if(FD_COMMON(&to_poll,&mask)) {
-      poll_time = &set_poll;
-   }
-   else
-      poll_time = NULL;
-
-   SDL_UnlockMutex(select_mutex);
-
-   SDL_CondSignal(select_cond);
+              HD(mask),HD(to_poll),HD(reads)));
 }
 
 
@@ -308,39 +304,88 @@ static void setup_select_args() {
  * Err, figure out how signals actually work...
  */
 static int watch_for_select(void *ignored) {
+   dbgprintf('l',(stderr,"Locking mutex\n"));
    SDL_LockMutex(select_mutex);
 
    while (1) {
-      if (pselect(FD_SETSIZE, &reads, 0, 0, poll_time, NULL) <0) {
+      dbgprintf('l',(stderr,"Doing pselect\n"));
+      if (pselect(FD_SETSIZE, &reads, 0, 0, NULL, NULL) < 0) {
          /* In case of error, reads is left unmodified */
 #ifdef DEBUG
-         dbgprintf('l',(stderr,"select failed %ld->%ld\r\n",
-                       (int)HD(reads), (int) (HD(mask) & ~HD(to_poll))));
+         dbgprintf('l',(stderr,"select failed %ld->%ld\n",
+                       HD(reads), (HD(mask) & ~HD(to_poll))));
          if (debug)
             perror("Select:");
 #endif
          continue;
          }
-      dbgprintf('l',(stderr,"reads=0x%lx\r\n",(unsigned long)HD(reads)));
+      dbgprintf('l',(stderr,"reads=0x%lx\n",HD(reads)));
 
-      SDL_PushEvent(&select_event);
+      if (FD_ISSET(selfpipe_fds[0], &reads)) {
+         char c;
+         read(selfpipe_fds[0], &c, 1);
+      }
 
-      /* Wait until the main thread has picked this up and reset 'reads' appropriately.
-       */
-      SDL_CondWait(select_cond, select_mutex);
+      do {
+         select_event.user.code += 1;
+         SDL_PushEvent(&select_event);
+
+         /* Wait until the main thread has picked this up and reset 'reads' appropriately.
+          * Timeout on this in case we've missed the select event in the main loop
+          * (i.e. we haven't been processing events).
+          */
+      } while (SDL_CondWaitTimeout(select_cond, select_mutex, 1000) == SDL_MUTEX_TIMEDOUT);
    }
+
+   /* We should never arrive here, but for clarity... */
 
    SDL_UnlockMutex(select_mutex);
 
    return 1; /* not used - required by sdl thread definition */
 }
 
+
+void handle_select_event(SDL_Event *current_event) {
+   /* At the moment, our only user event is the select one. */
+   if (select_event.user.code != current_event->user.code) {
+      /* Some stinky old event. Let's drop it on the floor,
+       * since the select thread gave up waiting for us
+       * and must have sent another event, and it's important
+       * we correctly CondSignal that one so that selecting
+       * can continue.
+       */
+     return;
+   }
+
+   SDL_LockMutex(select_mutex);
+
+   read_fds_into_windows();
+   setup_select_args();
+
+   SDL_CondSignal(select_cond);
+   SDL_UnlockMutex(select_mutex);
+}
+
+
 static void setup_select() {
    select_cond = sdl_die_if_null(SDL_CreateCond());
    select_mutex = sdl_die_if_null(SDL_CreateMutex());
    select_event.type = sdl_die_if_negative(SDL_RegisterEvents(1));
-   // Construct pipe
-   // register 
+
+   if (pipe(selfpipe_fds) == -1) {
+      puts("Failed to make a pipe.");
+      SDL_Quit();
+   }
+   FD_SET(selfpipe_fds[0], &mask);
+   for (int i = 0; i < sizeof(selfpipe_fds) / sizeof(int); ++i) {
+      int flags = fcntl(selfpipe_fds[i], F_GETFL);
+      if (flags == -1) {
+         puts("Failed to set non-blocking on self-pipe.");
+         SDL_Quit();
+      }
+      fcntl(selfpipe_fds[i], F_SETFL, flags | O_NONBLOCK);
+   }
+
    setup_select_args();
 
    SDL_DetachThread(sdl_die_if_null(SDL_CreateThread(watch_for_select, "watch_for_select", NULL)));
@@ -647,9 +692,7 @@ int main(int argc, char **argv) {
 
       do switch (event.type) {
       case SDL_USEREVENT:
-         /* At the moment, our only user event is the select one. */
-         read_fds_into_windows();
-         setup_select_args();
+         handle_select_event(&event);
          break;
       case SDL_QUIT:
          // TODO
@@ -688,9 +731,6 @@ int main(int argc, char **argv) {
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
          do_button(mouse_get_sdl(&event, &dx, &dy));
-         /* This could have caused a new window to be added, so rerender for
-          * safety.
-          */
          dirty = 1;
          break;
       case SDL_MOUSEMOTION:

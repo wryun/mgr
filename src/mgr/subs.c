@@ -60,8 +60,9 @@ register WINDOW *check;			/* window to check covering against */
           save_win(win);
           do_event(EVENT_COVERED,win,E_MAIN);
           W(flags) &= ~W_ACTIVE;
-          if (!(W(flags)&W_LOOK))
+          if (!(W(flags)&W_LOOK)) {
              FD_CLR( W(to_fd), &mask);
+          }
           dbgprintf('o',(stderr,"\t%s covers %s\r\n",check->tty,W(tty)));
           }
    }
@@ -81,16 +82,19 @@ void un_covered()
       if (cover && W(flags)&W_ACTIVE) {
           do_event(EVENT_COVERED,win,E_MAIN);
           W(flags) &= ~W_ACTIVE;
-          if (!(W(flags)&W_LOOK))
+          if (!(W(flags)&W_LOOK)) {
              FD_CLR( W(to_fd), &mask);
+          }
           dbgprintf('o',(stderr,"becoming inactive (covered by %s)\r\n",
 			check->tty));
           }
       else if (!cover && !(W(flags)&W_ACTIVE)) {
           do_event(EVENT_UNCOVERED,win,E_MAIN);
           W(flags) |= W_ACTIVE;
-          if (!(W(flags)&W_DIED))
+          if (!(W(flags)&W_DIED)) {
              FD_SET( W(to_fd), &mask);
+             redo_select();
+          }
           dbgprintf('o',(stderr,"becoming active\r\n"));
           }
       else if (cover && !(W(flags)&W_ACTIVE))  {

@@ -31,6 +31,7 @@
 #include "get_rect.h"
 #include "getshell.h"
 #include "icon_server.h"
+#include "mgr.h"
 #include "put_window.h"
 #include "subs.h"
 #include "update.h"
@@ -248,6 +249,7 @@ char *start;
       fprintf(stderr,"%s: fcntl failed for fd %d\n",W(tty),W(from_fd));
 
    FD_SET( W(to_fd), &mask);
+   redo_select();
    set_size(win);
 
    /* send initial string (if any) */
