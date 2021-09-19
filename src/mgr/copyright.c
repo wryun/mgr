@@ -141,10 +141,7 @@ int state;
   if (!(x < clip2.x1 || x >= clip2.x2 || y < clip2.y1 || y >= clip2.y2 )) return(0);
   if (!(x < clip3.x1 || x >= clip3.x2 || y < clip3.y1 || y >= clip3.y2 )) return(0);
 
-  bit_blit(where,x,y,SSIZE,SSIZE, state ?
-    BUILDOP(BIT_SET,col,color_map[LOGO_COLOR_BG]) :
-    BUILDOP(BIT_CLR,col,color_map[LOGO_COLOR_BG]) ,
-  (BITMAP*)0,0,0);
+  bit_blit_color(where,x,y,SSIZE,SSIZE,state ? C_WHITE : C_BLACK,(BITMAP*)0,0,0);
   return(0);
 }
 /*}}}  */

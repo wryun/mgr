@@ -107,7 +107,7 @@ void win_make(WINDOW *win, int indx)
 
          set_covered(active);
          border(active,BORDER_THIN);
-         CLEAR(ACTIVE(window),BIT_CLR);
+         CLEAR(ACTIVE(window),C_WHITE);
 	 SETMOUSEICON( DEFAULT_MOUSE_CURSOR);	/* because active win chg */
          ACTIVE_ON();
          cursor_on();

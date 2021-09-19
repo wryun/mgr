@@ -238,11 +238,7 @@ int exit;			/* off-menu exit codes */
    y_position = state->bar_sizey*(inverse+1) + state->bar_sizey/2;
 
    /* track the mouse */
-   /* TODO - remove warp support from MOUSE_ON, and add a warp function or something...
-    * or make MOUSE_ON support warp. Or... ? Just use SDL's cursor support?
-    */
    bit_warpmouse(x_position-HOT, y_position-HOT);
-   MOUSE_ON(inside,x_position-HOT,y_position-HOT);		/* on */
    bit_present(screen);
    do {
       push = mouse_get_poll(&x_mouse,&y_mouse);
@@ -250,7 +246,6 @@ int exit;			/* off-menu exit codes */
          bit_present(screen);
          push = mouse_get_wait(&x_mouse,&y_mouse);
       }
-      MOUSE_OFF(inside,x_position-HOT,y_position-HOT);		/* off */
       x_position += x_mouse;
       y_position -= y_mouse;
       y_position = BETWEEN(HOT, y_position, (2+count)*state->bar_sizey-HOT);
@@ -266,7 +261,6 @@ int exit;			/* off-menu exit codes */
 
       x_position = BETWEEN(HOT/2, x_position, BIT_WIDE(inside) - HOT/2);
 
-      MOUSE_ON(inside,x_position-HOT,y_position-HOT);		/* on */
 
       if (done)
          break;
@@ -275,7 +269,6 @@ int exit;			/* off-menu exit codes */
 
       inverse = (2+count) * y_position / BIT_HIGH(inside) - 1;
       if (inverse != old) {
-         MOUSE_OFF(inside,x_position-HOT,y_position-HOT);		/* off */
          if (old >=0 && old < count)
             BAR(inside,old);		/* off */
          if (inverse >=0 && inverse < count)
@@ -290,13 +283,11 @@ int exit;			/* off-menu exit codes */
             state->exit = EXIT_BOTTOM;
             done++;
             }
-         MOUSE_ON(inside,x_position-HOT,y_position-HOT);		/* on */
          }
       }
       while (push != button && !done);
    state->current = inverse;
    state->x_pos = x_position;
-   MOUSE_OFF(inside,x_position-HOT,y_position-HOT);		/* off */
    bit_destroy(inside);
    SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
    return(0);

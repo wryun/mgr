@@ -169,9 +169,9 @@ register unsigned char *out;				/* output str - tabs */
 static void oops(win)
 WINDOW *win;
 {
-  CLEAR(W(window),BIT_NOT(BIT_DST));
+  //CLEAR(W(window),BIT_NOT(BIT_DST));
   write(2,"\007",1);
-  CLEAR(W(window),BIT_NOT(BIT_DST));
+  //CLEAR(W(window),BIT_NOT(BIT_DST));
 }
 /*}}}  */
 

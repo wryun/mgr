@@ -46,7 +46,6 @@ static int x[MAX_COORDS];		/* left/right edges of covering windows */
 static int y[MAX_COORDS];		/* top/bottom edges of covering windows */
 
 static rectangle *got_int(rectangle *r1,rect *r2,int bwid); /* finds intersecting rectangle */
-static void in_mouseoff(int x0,int y0,int wide,int high);
 static int in_win(WINDOW *win,int x0,int y0,int x1,int y1);
 static int cmp(const void *x,const void *y);	/* compare for qsort */
 
@@ -154,12 +153,10 @@ static int gen_list(WINDOW *window)
 			y = list->rect.y,
 			wide = list->rect.wide,
 			high = list->rect.high;
-		in_mouseoff( x, y, wide, high );
 		bit_blit(W(border), x, y, wide, high, BIT_NOT(BIT_DST),0L,0,0);
 		dbgprintf('U',(stderr,"  Rect %d,%d  %dx%d\n", x, y, wide, high ));
 		getchar();
 		bit_blit(W(border), x, y, wide, high, BIT_NOT(BIT_DST),0L,0,0);
-		MOUSE_ON(screen,mousex,mousey);
 		}
 DEBUG code, commented out! */
 
@@ -183,9 +180,7 @@ static void do_update(WINDOW *win, rect *clipp)
 					y = got->y,
 					wide = got->wide,
 					high = got->high;
-			in_mouseoff( x + W(x0), y + W(y0), wide, high );
 			bit_blit(W(border),x,y,wide,high,BIT_SRC,W(save),x,y);
-			MOUSE_ON(screen,mousex,mousey);
 			}
 		}
 	}
@@ -207,15 +202,6 @@ static rectangle *got_int(rectangle *r1, /* rect 1 */
 	else
 		return((rectangle *) 0);
 	}
-/*}}}  */
-/*{{{  in_mouseoff -- see if mouse in rectangle, if so turn the mouse off*/
-static void in_mouseoff(x0,y0,wide,high)
-register int x0,y0,wide,high;
-   {
-   if( !( x0 > mousex+16 || y0 > mousey+16 ||
-        x0+wide < mousex || y0+high < mousey))
-	MOUSE_OFF(screen,mousex,mousey);
-   }
 /*}}}  */
 /*{{{  in_win -- see if rectangle in window*/
 static int

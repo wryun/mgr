@@ -119,7 +119,6 @@ int destroy(win) register WINDOW *win;
    if (win == (WINDOW *) 0)
       return(-1);
 
-   MOUSE_OFF(screen,mousex,mousey);
    cursor_off();
 
    if (win != active) {
@@ -219,7 +218,6 @@ int destroy(win) register WINDOW *win;
    dbgprintf('d',(stderr,"Active: %s-%d\r\n",
 	     active?ACTIVE(tty):"NONE", active?ACTIVE(num):0));
 
-   MOUSE_ON(screen,mousex,mousey);
 
    return(0);
    }

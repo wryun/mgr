@@ -20,8 +20,8 @@
 static SDL_PixelFormatEnum static_bitmap_pixel_format = SDL_PIXELFORMAT_INDEX1MSB;
 static SDL_PixelFormatEnum preferred_pixel_format = SDL_PIXELFORMAT_ABGR8888;
 static const SDL_Color bitmap_palette_colors[] = {
-  {0x00, 0x00, 0x00, 0x00},
-  {0xFF, 0xFF, 0xFF, 0xFF},
+  {0xFF, 0xFF, 0xFF, SDL_ALPHA_TRANSPARENT},
+  {0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE},
 };
 
 static void (APIENTRY *glLogicOp_f)(int);
@@ -31,8 +31,6 @@ static void (APIENTRY *glEnable_f)(int);
 int sdl_helper_setup(SDL_Renderer *renderer) {
   glLogicOp_f = SDL_GL_GetProcAddress("glLogicOp");
   glEnable_f = SDL_GL_GetProcAddress("glEnable");
-
-  glEnable_f(GL_COLOR_LOGIC_OP);
 
   SDL_RendererInfo rendererInfo;
   // Below code fails anyway.
@@ -67,10 +65,10 @@ SDL_Texture *sdl_create_texture_target(SDL_Renderer *renderer, int x, int y) {
 }
 
 
-SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void *pixels, int wide, int high, int depth) {
+SDL_Surface *sdl_create_surface_from_static_bitmap(void *pixels, int wide, int high, int depth) {
   assert(depth == SDL_BITSPERPIXEL(static_bitmap_pixel_format));
 
-  SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, wide * depth / 8, static_bitmap_pixel_format);
+  SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, ((wide + 1) * depth - 1) / 8, static_bitmap_pixel_format);
   if (surface == NULL) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface for static texture: %s", SDL_GetError());
     return NULL;
@@ -81,14 +79,57 @@ SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void 
     return NULL;
   }
 
-  glLogicOp_f(GL_COPY);
-  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-  if (texture == NULL) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create static texture %d: %s", renderer, SDL_GetError());
+  return surface;
+}
+
+
+SDL_Cursor *sdl_create_cursor_from_static_bitmap(void *pixels, int wide, int high, int depth) {
+  const size_t sdl_cursor_height = (high < 16) ? high : 16;
+  const size_t sdl_cursor_size = sdl_cursor_height * 16 / 8;
+  int row_byte_width = wide * depth / 8;
+  int cursor_row_byte_width = 16 * depth / 8;
+  Uint8 data[sdl_cursor_size];
+  Uint8 mask[sdl_cursor_size];
+  Uint8 *source_white = (Uint8 *)pixels;
+  Uint8 *source_black = source_white;
+  
+  if (high >= 32) {
+    source_black = &(((Uint8 *)pixels)[16 * row_byte_width]);
+  }
+
+  for (size_t i = 0, x = 0, y = 0; i < sdl_cursor_size; ++i, ++x) {
+    if (x >= cursor_row_byte_width) {
+      x = 0;
+      y += row_byte_width;
+    }
+    data[i] = source_white[y + x];
+    mask[i] = source_white[y + x] | source_black[y + x];
+  }
+  SDL_Cursor *cursor = SDL_CreateCursor(data, mask, 16, sdl_cursor_height, 0, 0);
+
+  if (cursor == NULL) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create cursor: %s", SDL_GetError());
     return NULL;
   }
 
+  return cursor;
+}
+
+
+SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void *pixels, int wide, int high, int depth) {
+  SDL_Surface *surface = sdl_create_surface_from_static_bitmap(pixels, wide, high, depth);
+  if (surface == NULL) {
+    return NULL;
+  }
+
+  glLogicOp_f(GL_COPY);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
   SDL_FreeSurface(surface);
+
+  if (texture == NULL) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create static texture: %s", SDL_GetError());
+    return NULL;
+  }
 
   return texture;
 }
@@ -138,7 +179,7 @@ static inline int mgr_to_gl_opcode(int op) {
 
 
 void sdl_use_func(int func) {
-  glLogicOp_f(mgr_to_gl_opcode(OPCODE(func)));
+  //glLogicOp_f(mgr_to_gl_opcode(OPCODE(func)));
 
   /* TODO handle fg/bg colour... but can't do it with shader because GL 1.1 for logic op? Bah.
    * I guess we could set the _foreground_ colour with glColor4f, at least?

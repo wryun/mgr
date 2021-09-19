@@ -235,7 +235,7 @@ char *start;
 
    set_covered(win);
    border(win,BORDER_THIN);
-   CLEAR(W(window),PUTOP(BIT_CLR,W(style)));
+   CLEAR(W(window),C_WHITE);
 
    SETMOUSEICON( DEFAULT_MOUSE_CURSOR);	/* because active win chg */
 

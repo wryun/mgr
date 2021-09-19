@@ -30,14 +30,14 @@ int start,end,delta,op;	/* starting line, ending line, # of lines */
    if (delta > 0) {
       if (end-start > delta)
             bit_blit(map,0,start,BIT_WIDE(map),ems-delta,BIT_SRC,map,0,start+delta);
-      bit_blit(map,0,end-delta,BIT_WIDE(map),delta,op,0,0,0);
+      bit_blit_color(map,0,end-delta,BIT_WIDE(map),delta,C_WHITE,0,0,0);
       }
 
    else if (delta < 0) {
       if (ems + delta > 0)
          bit_blit(map,0,start-delta,BIT_WIDE(map),ems+delta,
              BIT_SRC,map,0,start);
-      bit_blit(map,0,start,BIT_WIDE(map),-delta,op,NULL_DATA,0,0);
+      bit_blit_color(map,0,start,BIT_WIDE(map),-delta,C_WHITE,NULL_DATA,0,0);
       }
 
 

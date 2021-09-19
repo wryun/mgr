@@ -98,7 +98,7 @@ int shape(int x, int y, int dx, int dy)
     save_win(win);
   }
 
-  CLEAR(ACTIVE(window),PUTOP(BIT_CLR,ACTIVE(style)));
+  CLEAR(ACTIVE(window),C_WHITE);
 
   border(active,BORDER_THIN);
   bit_blit(ACTIVE(border),0,0,

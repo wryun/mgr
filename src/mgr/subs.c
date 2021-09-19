@@ -147,11 +147,8 @@ register WINDOW *win;			/* window to expose */
 		    ACTIVE(tty),(unsigned)ACTIVE(flags)));
       }
    {
-      int mouse_was_on = mouse_on;
       /* I think the mouse is always off here, but I cannot prove it. vpb */
-      MOUSE_OFF(screen,mousex,mousey);
       SETMOUSEICON( DEFAULT_MOUSE_CURSOR);	/* because active win chg */
-      if( mouse_was_on)  MOUSE_ON(screen,mousex,mousey);
    }
    }
 /*}}}  */
@@ -290,24 +287,20 @@ int how;
    register int mx = *x, my = *y;
    register int button = 0;
    int dx,dy;
-   MOUSE_ON(screen,mx,my);
    do {
       button=mouse_get_poll(&dx,&dy);
       if (button == -1) {
          bit_present(screen);
          button=mouse_get_wait(&dx,&dy);
       }
-      MOUSE_OFF(screen,mx,my);
       mx += dx;
       my -= dy;
       mx = BETWEEN(0,mx,BIT_WIDE(screen)); 
       my = BETWEEN(0,my,BIT_HIGH(screen)); 
-      MOUSE_ON(screen,mx,my);
       }
    while (how ? button!= 0 : button==0);
    if( how )
 	do_button( 0 );
-   MOUSE_OFF(screen,mx,my);
    *x = mx;
    *y = my;
    return(button);
@@ -427,7 +420,6 @@ void suspend(void)
 #ifdef SIGSTOP
    register WINDOW *win;
 
-   MOUSE_OFF(screen,mousex,mousey);
 
    for(win=active;win!=(WINDOW *) 0;win=win->next) {
       killpg(W(pid),SIGSTOP);
@@ -455,7 +447,6 @@ void suspend(void)
       killpg(ACTIVE(pid),SIGCONT);
       }
 #endif
-   MOUSE_ON(screen,mousex,mousey);
    }
 /*}}}  */
 #ifdef MGR_ALIGN

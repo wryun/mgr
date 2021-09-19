@@ -48,7 +48,6 @@ void _quit(void)
       abort();
       }
 
-   MOUSE_OFF(screen,mousex,mousey);
 
 #ifdef MOVIE
    log_end(); 		/* turn off logging */
@@ -72,7 +71,6 @@ void _quit(void)
           rm_utmp(W(tty));
 #endif
 
-   CLEAR(screen,BIT_CLR);
    do_cmd( 'q' );	/* do the quiting command */
 	{ bit_destroy(screen); bit_destroy(prime); }
    }

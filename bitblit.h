@@ -66,6 +66,14 @@ typedef struct bitmap
   void *deviceinfo;	   /* dev-dep stuff needed by screen driver, if any */
 } BITMAP;
 
+typedef struct color
+{
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
+  unsigned char a;
+} COLOR;
+
 /* Macro to declare a 1 bit per pixel static bitmap */
 #define bit_static(name,wide,high,data,depth,id) \
 BITMAP name = { (DATA *)data, &(name), 0, 0, wide, high, depth, _STATIC, id, \
@@ -118,8 +126,11 @@ extern void *bit_save( BITMAP *bp);
 extern BITMAP *bit_alloc( int wide, int high, DATA *data, unsigned char depth);
 extern void bit_blit( BITMAP *dst, int dx, int dy, int width, int height,
 		      int func, BITMAP *src, int sx, int sy);
+extern void bit_blit_color( BITMAP *dst, int dx, int dy, int width, int height,
+		            COLOR color, BITMAP *src, int sx, int sy);
 extern BITMAP *bit_create( BITMAP *map, int x, int y, int wide, int high);
 extern void bit_destroy( BITMAP *map);
+extern void bit_cursor( BITMAP *map);
 extern void bit_line( BITMAP *dst, int x0, int y0, int x1, int y1, int func);
 extern int bit_on( BITMAP *bp, int x, int y);
 extern BITMAP *bit_open( char *name);

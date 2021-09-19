@@ -90,7 +90,7 @@ int	flags;
 unsigned char *init, *start;
 {
     struct font *fp = Get_font( font );
-    int i, mouse_was_on;
+    int i;
 
     dbgprintf('S',(stderr,"starting shell %s\r\n",shell? *shell: "???"));
     if( dx <= 0 )
@@ -116,10 +116,7 @@ unsigned char *init, *start;
        if( y < 0 )
           y = 16 * tile_pos + next_windowset_id();
     }
-    mouse_was_on = mouse_on;
-    MOUSE_OFF(screen,mousex,mousey);
     create_window(x, y, dx, dy, font, *shell?shell:0);
-    if( mouse_was_on)  MOUSE_ON(screen,mousex,mousey);
 
     if (flags)
        ACTIVE(flags) |= flags;
@@ -208,9 +205,7 @@ void startup(name) char *name;
                }
 
 	    if( !active ) {
-	       MOUSE_OFF(screen,mousex,mousey);
                erase_win(screen);
-	       MOUSE_ON(screen,mousex,mousey);
 	    }
 #ifdef MOVIE
 		 log_time();

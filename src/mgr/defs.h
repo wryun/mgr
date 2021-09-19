@@ -86,18 +86,7 @@ char *strchr();
 
 /* macros -- for speed */
 
-#ifdef FASTMOUSE
-#define MoUSE(m,a,b)     0
-#define MOUSE_ON(m,a,b)	0
-#define MOUSE_OFF(m,a,b) 0
-#else
-/* turn on the mouse only if it is off */
-#define MOUSE_ON(m,a,b) 0
-/* turn off the mouse only if it is on */
-#define MOUSE_OFF(m,a,b) 0
-#endif
-
-#define CLEAR(s,op)	bit_blit((s),0,0,BIT_WIDE(s),BIT_HIGH(s),op,0,0,0);
+#define CLEAR(s,color)	bit_blit_color((s),0,0,BIT_WIDE(s),BIT_HIGH(s),color,0,0,0);
 
 #define BORDER_FAT 1
 #define BORDER_THIN 0
@@ -114,7 +103,7 @@ char *strchr();
  			  	
 #define ACTIVE_OFF() border(active,BORDER_THIN)
 
-#define SETMOUSEICON(x)	(m_rop = x)
+#define SETMOUSEICON(x)	(bit_cursor(x))
 #define DEFAULT_MOUSE_CURSOR ((active&&active->cursor)? active->cursor: &mouse_arrow)
 
 /* short hand */
@@ -262,6 +251,9 @@ void new_window(), move_window();
 #include <sys/types.h>
 #include <sys/time.h>
 
+extern COLOR C_WHITE;
+extern COLOR C_BLACK;
+
 extern char *full_menu[];
 extern char *main_menu[];
 extern char *active_menu[];
@@ -271,9 +263,7 @@ extern function full_functions[];
 extern function main_functions[];
 extern function active_functions[];
 
-extern BITMAP *m_rop;
 extern int next_window;
-extern BITMAP *mouse_save;
 extern struct font *font;
 extern BITMAP *screen,*prime;
 extern fd_set mask;
@@ -281,7 +271,7 @@ extern fd_set to_poll;
 extern WINDOW *active;
 extern WINDOW *last_active;
 extern int button_state;
-extern int mouse, mousex, mousey, mouse_on;
+extern int mouse, mousex, mousey;
 extern int debug;
 extern char *fontlist[], *font_dir;
 extern char *icon_dir;

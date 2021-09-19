@@ -193,7 +193,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
   if (text==(BITMAP*)0) text=window;
 
   if (W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)) {
-     MOUSE_OFF(screen,mousex,mousey);
   }
 
   if (win==active) cursor_off();
@@ -525,8 +524,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*{{{  E_MOUSE      -- move the mouse or change cursor shape */
         case E_MOUSE:
 	      if (cnt == 0 || (cnt == 1 && win == active)) {
-		 int mouse_was_on = mouse_on;
-		 MOUSE_OFF(screen,mousex,mousey);
 
 		 if (cnt == 0) {
 		    /* change mouse cursor shape */
@@ -549,9 +546,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 		    mousex = BETWEEN(0,mousex,BIT_WIDE(screen)-1);
 		    mousey = BETWEEN(0,mousey,BIT_HIGH(screen)-1);
 		 }
-		 if (mouse_was_on)
-		    MOUSE_ON(screen,mousex,mousey);
-	      }
+         }
               break;
         /*}}}  */
         /*{{{  E_SIZE       -- reshape window: cols, rows*/
@@ -562,7 +557,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                  int lines = W(esc)[cnt];
                  int x = W(x0), y = W(y0);
 
-                 MOUSE_OFF(screen,mousex,mousey);
 
                  if (cnt>=3) {
                     x = W(esc)[0];
@@ -580,7 +574,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                             2*W(borderwid) + HIGH);
                  ACTIVE_ON();
                  if (!(W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)))
-                    MOUSE_ON(screen,mousex,mousey);
                  done++;
                  }
               break;
@@ -920,7 +913,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*{{{  E_SHAPE      -- reshape window, make it active*/
         case E_SHAPE:
 
-              MOUSE_OFF(screen,mousex,mousey);
 
               ACTIVE_OFF();
               if (win!=active) {
@@ -938,7 +930,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
               ACTIVE_ON();
               if (!(W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)))
-                 MOUSE_ON(screen,mousex,mousey);
 
               done++;
               break;
@@ -1019,10 +1010,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  E_POP        -- pop old environment*/
         case E_POP:                    /* pop old environment */
-             MOUSE_OFF(screen,mousex,mousey);
              win_pop(win);
              if (!(W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)))
-                MOUSE_ON(screen,mousex,mousey);
              done++;
              break;
         /*}}}  */
@@ -1106,7 +1095,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         break;
                      W(flags) |= W_REVERSE;
                      W(style) = SWAPCOLOR(W(style));
-                     CLEAR(window,BG_OP);
+                     CLEAR(window,C_WHITE);
                      BORDER(win);
                      if (Do_clip())
                         Set_all();
@@ -1155,7 +1144,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      if (win == active)
                          break;
 
-                     MOUSE_OFF(screen,mousex,mousey);
 
                      cursor_off();
                      ACTIVE_OFF();
@@ -1165,7 +1153,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      done++;
 
                      if (!(W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)))
-                        MOUSE_ON(screen,mousex,mousey);
                      break;
                      }
              break;
@@ -1190,7 +1177,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         break;
                      W(flags) &= ~W_REVERSE;
                      W(style) = SWAPCOLOR(W(style));
-                     CLEAR(window,BG_OP);
+                     CLEAR(window,C_WHITE);
                      BORDER(win);
                      if (Do_clip())
                         Set_all();
@@ -1237,7 +1224,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 case M_ACTIVATE:       /* hide the window */
                      if (!(W(flags)&W_ACTIVE) || next_window==1)
                          break;
-                     MOUSE_OFF(screen,mousex,mousey);
                      if (win!=active)
                         cursor_off();
                      ACTIVE_OFF();
@@ -1246,7 +1232,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      if (win!=active)
                         cursor_on();
                      if (!(W(flags)&W_ACTIVE && mousein(mousex,mousey,win,0)))
-                        MOUSE_ON(screen,mousex,mousey);
 
                      done++;
                      break;
@@ -1260,7 +1245,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  E_MAKEWIN    -- make or goto a new window*/
         case E_MAKEWIN:                /* make or goto a new window */
-             MOUSE_OFF(screen,mousex,mousey);
              win_make(win,indx);
              done++;
              break;
@@ -1273,7 +1257,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
              if (cnt < 3 ||  cnt > 4)
                 break;
-             MOUSE_OFF(screen,mousex,mousey);
              if (win!=active)
                 cursor_off();
              ACTIVE_OFF();
@@ -1340,7 +1323,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  C_FF -- form feed*/
         case C_FF:
-                   CLEAR(text,BG_OP);
+                   CLEAR(text,C_WHITE);
                    W(x)=0;
                    W(y)=fsizehigh;
                    W(flags) |= W_SNARFABLE;
@@ -1353,8 +1336,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         case C_BELL:
                    /* TODO */
                    if (!bell++) {
-                      CLEAR(W(window),BIT_NOT(BIT_DST));
-                      CLEAR(W(window),BIT_NOT(BIT_DST));
+                      //CLEAR(W(window),BIT_NOT(BIT_DST));
+                      //CLEAR(W(window),BIT_NOT(BIT_DST));
                       }
                    break;
         /*}}}  */
@@ -1424,7 +1407,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
   cursor_on();
 
-  MOUSE_ON(screen,mousex,mousey);
 
   /* this is probably wrong */
   if (text != window) bit_destroy(text);

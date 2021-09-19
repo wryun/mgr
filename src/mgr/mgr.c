@@ -211,13 +211,11 @@ int update_windows() {
       if (W(from_fd) && FD_ISSET( W(from_fd), &to_poll)
           && W(flags)&W_EXPOSE && !(W(flags)&W_ACTIVE)) {
          dbgprintf('o',(stderr,"%s: activating self\r\n",W(tty)));
-         MOUSE_OFF(screen,mousex,mousey);
          cursor_off();
          ACTIVE_OFF();
          expose(win);
          ACTIVE_ON();
          cursor_on();
-         MOUSE_ON(screen,mousex,mousey);
 
          dirty = 1;
       }
@@ -406,7 +404,6 @@ int main(int argc, char **argv) {
    int touch_colormap = 1;
 
    timestamp();                                 /* initialize the timestamp */
-   SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
 
    sprintf(start_file,"%s/%s",getenv("HOME"),STARTFILE);
    /*{{{  parse arguments*/
@@ -583,7 +580,6 @@ int main(int argc, char **argv) {
    if (!(SDL_GetModState() & KMOD_CTRL)) {
       SDL_StartTextInput();
    }
-   SDL_SetCursor(SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW));
    SDL_ShowCursor(SDL_ENABLE);
 
    /*{{{  get the default font file*/
@@ -618,7 +614,6 @@ int main(int argc, char **argv) {
       }
    /*}}}  */
    copyright(screen, "");
-   mouse_save=bit_alloc(16,32,0,BIT_DEPTH(screen));
    SETMOUSEICON(&mouse_cup);
    /*{{{  always look for keyboard and mouse input*/
    FD_ZERO( &mask);
@@ -645,13 +640,10 @@ int main(int argc, char **argv) {
    if (active != (WINDOW *) 0)
       ACTIVE_ON();
    else {
-      MOUSE_OFF(screen,mousex,mousey);
       erase_win(screen);
-      MOUSE_ON(screen,mousex,mousey);
    }
    /*}}}  */
    /*{{{  turn on mouse cursor*/
-   MOUSE_OFF(screen,mousex,mousey);
    SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
    /*}}}  */
    /* main polling loop */
@@ -673,9 +665,8 @@ int main(int argc, char **argv) {
       int time_since_render_ms = ticks - last_render_ticks;
 
       if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
-         MOUSE_ON(screen,mousex,mousey);
          bit_present(screen);
-         MOUSE_OFF(screen,mousex,mousey);
+         dbgprintf('w', (stderr, "------ render\r\n"));
 
          last_render_ticks = ticks;
          dirty = 0;
@@ -695,7 +686,7 @@ int main(int argc, char **argv) {
 
       int dx, dy;
 
-      do switch (event.type) {
+      switch (event.type) {
       case SDL_USEREVENT:
          handle_select_event(&event);
          break;
@@ -770,20 +761,10 @@ int main(int argc, char **argv) {
       case SDL_MOUSEMOTION:
          mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen)-1);
          mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen)-1);
-         dirty = 1;
-         /* Mouse is turned back on below, in case we have more motion events */
          break;
       default:
          break;
-      } while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_USEREVENT - 1));
-      /* ^ process real SDL events ASAP if they're sitting at the front of the queue.
-       * Note that only two things here can cause screen changes that require rerender:
-       *  - mouse movement - and we need to process these immediately so we get
-       *    the user to the correct location
-       *  - select (i.e. user event)
-       * If we don't do this, there's the possibility that on a slow computer the
-       * &to_poll rendering will cause laggy mouse motion as it will interrupt each event.
-       */
+      }
    }
 }
 /*}}}  */

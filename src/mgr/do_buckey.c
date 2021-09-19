@@ -38,14 +38,12 @@
 /*{{{  do_it -- Given a WINDOW pointer, move that window to top.*/
 static void do_it(win) register WINDOW *win;
 {
-	MOUSE_OFF(screen,mousex,mousey);
 	cursor_off();
 	ACTIVE_OFF();
 	expose(win);
 	ACTIVE(flags) &= ~W_NOINPUT;
 	ACTIVE_ON();
 	cursor_on();
-	MOUSE_ON(screen,mousex,mousey);
 }
 /*}}}  */
 
@@ -180,13 +178,11 @@ int do_buckey(c) register unsigned char	c;
 		break;
 	case 'h':	/* hide top window on bottom */
 		if (active && ACTIVE(next)) {
-			MOUSE_OFF(screen,mousex,mousey);
 			cursor_off();
 			ACTIVE_OFF();
 			hide_win();
 			ACTIVE_ON();
 			cursor_on();
-			MOUSE_ON(screen,mousex,mousey);
 		}
 		break;
 	case ' ':				/* go to next window */
@@ -230,17 +226,15 @@ int do_buckey(c) register unsigned char	c;
 #endif	/* debug */
 #endif	/* movie */
 	case 'l':				/* clear the window */
-		MOUSE_OFF(screen,mousex,mousey);
 		cursor_off();
 		ACTIVE_OFF();
-		CLEAR(ACTIVE(window),PUTOP(BIT_CLR,ACTIVE(style)));
+      COLOR color = {0xFF, 0xFF, 0xFF, 0};
+		CLEAR(ACTIVE(window), color);
 		ACTIVE_ON();
 		cursor_on();
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'R':	/* redraw the screen */
 	case 'r':
-		MOUSE_OFF(screen,mousex,mousey);
 		if( active ) {
 			cursor_off();
 			ACTIVE_OFF();
@@ -250,11 +244,9 @@ int do_buckey(c) register unsigned char	c;
 			ACTIVE_ON();
 			cursor_on();
 		}
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'n':	/* make a new window 80x24 characters */
 	case 'N':	/* make a new window, sweept out by the mouse */
-		MOUSE_OFF(screen,mousex,mousey);
 		if( active ) {
 			cursor_off();
 			ACTIVE_OFF();
@@ -267,7 +259,6 @@ int do_buckey(c) register unsigned char	c;
 			ACTIVE_ON();
 			cursor_on();
 		}
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'z':	/* stop process */
 		suspend();
@@ -275,30 +266,24 @@ int do_buckey(c) register unsigned char	c;
 	case 'm':	/* move text (cut and paste) */
 		if( !active )
 			break;
-		MOUSE_OFF(screen,mousex,mousey);
 		cursor_off();
 		if (cut(0) > 0)
 			paste();
 		cursor_on();
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'x':	/* move words (cut and paste) */
 		if( !active )
 			break;
-		MOUSE_OFF(screen,mousex,mousey);
 		cursor_off();
 		cut(2);
 		cursor_on();
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'c':	/* start a cut of text */
 		if( !active )
 			break;
-		MOUSE_OFF(screen,mousex,mousey);
 		cursor_off();
 		cut(0);
 		cursor_on();
-		MOUSE_ON(screen,mousex,mousey);
 		break;
 	case 'p':	/* paste text at current cursor */
 		if( !active )

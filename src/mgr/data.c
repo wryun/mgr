@@ -113,8 +113,9 @@ unsigned char color_map[COLORMAP_SIZE] = {
 	0		/* root pattern bg */
 	};
 
-BITMAP *m_rop;				/* current mouse bit map */
-BITMAP *mouse_save;			/* where to keep what cursor's on */
+COLOR C_WHITE = {0xFF, 0xFF, 0xFF, 0xFF};
+COLOR C_BLACK = {0x00, 0x00, 0x00, 0xFF};
+
 int next_window=0;			/* next available window count */
 struct font *font;			/* default font */
 BITMAP *screen,*prime;			/* default screen */
@@ -123,7 +124,6 @@ WINDOW *last_active = (WINDOW *) 0;	/* previous window connected to keyboard */
 int button_state = 0;			/* state of the mouse buttons */
 int mouse, mousex, mousey;		/* mouse fd, x-coord, y-coord */
 int debug = 0;				/* ==1 for debug prints */
-int mouse_on = 0;			/* 1 iff mouse track is on */
 char *snarf = (char *) 0;		/* place to keep snarfed text */
 char *message = (char *) 0;		/* place to keep message */
 int id_message = 0;			/* id of message sender */
