@@ -15,7 +15,6 @@
 #include <mgr/font.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 
@@ -30,14 +29,12 @@
 #include "put_window.h"
 #include "scroll.h"
 #include "subs.h"
-#include "update.h"
 /*}}}  */
 
 /*{{{  shape -- reshape a window to specified dimentions*/
 int shape(int x, int y, int dx, int dy)
 {
   int sx,sy,w,h;
-  register WINDOW *win;
 
   if (dx>0)
   {
@@ -72,39 +69,24 @@ int shape(int x, int y, int dx, int dy)
   alignwin(screen,&sx,&w,ACTIVE(borderwid));
 #endif
 
-  /* remove current window position */
-  save_win(active);
-  erase_win(ACTIVE(border));
-  clip_bad(active);	/* invalidate clip lists */
-
-  /* redraw remaining windows */
-  repair(active);
-
   /* adjust window state */
   ACTIVE(x0) = sx;
   ACTIVE(y0) = sy;
-  bit_destroy(ACTIVE(window));
-  bit_destroy(ACTIVE(border));
-  ACTIVE(border) = bit_create(screen,sx,sy,w,h);
+  BITMAP *old_border = ACTIVE(border);
+  ACTIVE(border) = bit_alloc(w,h,NULL,1);
   ACTIVE(window) = bit_create(ACTIVE(border),
 			      ACTIVE(borderwid),
 			      ACTIVE(borderwid),
 			      w-ACTIVE(borderwid)*2,
 			      h-ACTIVE(borderwid)*2);
 
-  for(win=ACTIVE(next);win != (WINDOW *) 0;win=W(next)) 
-  {
-    if (W(flags)&W_ACTIVE && intersect(active,win))
-    save_win(win);
-  }
-
   CLEAR(ACTIVE(window),C_WHITE);
 
   border(active,BORDER_THIN);
   bit_blit(ACTIVE(border),0,0,
-	   BIT_WIDE(ACTIVE(save))-ACTIVE(borderwid),
-	   BIT_HIGH(ACTIVE(save))-ACTIVE(borderwid),
-	   BIT_SRC,ACTIVE(save),0,0);
+	   BIT_WIDE(old_border)-ACTIVE(borderwid),
+	   BIT_HIGH(old_border)-ACTIVE(borderwid),
+	   BIT_SRC,old_border,0,0);
 
   /* make sure character cursor is in a good spot */
   if (ACTIVE(x) > BIT_WIDE(ACTIVE(window))) 
@@ -114,24 +96,11 @@ int shape(int x, int y, int dx, int dy)
   }
   if (ACTIVE(y) > BIT_HIGH(ACTIVE(window))) 
   {
-#ifdef WIERD
-    ACTIVE(y) = BIT_HIGH(ACTIVE(window));
-    scroll(ACTIVE(window),0,BIT_HIGH(ACTIVE(window)),
-    ((int)(ACTIVE(font)->head.high)),SWAPCOLOR(ACTIVE(style)));
-    bit_blit(ACTIVE(window),0,BIT_HIGH(ACTIVE(window))-((int)(ACTIVE(font)->head.high)),
-	     BIT_WIDE(ACTIVE(save)),((int)(ACTIVE(font)->head.high)),
-	     BIT_SRC,ACTIVE(save),
-	     ACTIVE(borderwid),BIT_HIGH(ACTIVE(save))-((int)(ACTIVE(font)->head.high))-ACTIVE(borderwid));
-#else
     ACTIVE(y) = BIT_HIGH(ACTIVE(window))-((int)(ACTIVE(font)->head.high));
-#endif
   }
 
-  bit_destroy(ACTIVE(save));
-  ACTIVE(save)=(BITMAP *)0;
+  bit_destroy(old_border);
 
-  /* invalidate clip lists */
-  clip_bad(active);
   un_covered();
   set_size(active);
   return(0);

@@ -28,7 +28,6 @@
 #include <sundev/kbio.h>
 #endif
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 
@@ -46,7 +45,6 @@
 #include "set_mode.h"
 #include "sigdata.h"
 #include "startup.h"
-#include "update.h"
 /*}}}  */
 
 /*{{{  set_covered -- deactivate all windows covered by win*/
@@ -57,7 +55,6 @@ register WINDOW *check;			/* window to check covering against */
 
    for(win=active;win != (WINDOW *) 0;win=win->next)
        if (win!=check && intersect(win,check) && W(flags)&W_ACTIVE) {
-          save_win(win);
           do_event(EVENT_COVERED,win,E_MAIN);
           W(flags) &= ~W_ACTIVE;
           if (!(W(flags)&W_LOOK)) {
@@ -74,7 +71,6 @@ void un_covered()
    register int cover;
 
    for(win=active;win != (WINDOW *) 0;win=W(next)) {
-      dbgprintf('U',(stderr,"	invalidate cliplist: %s)\r\n",W(tty)));
       dbgprintf('o',(stderr,"	un_cover: %s)\n",W(tty)));
       for(cover=0,check=active;check!=win && cover==0;check=check->next)
          if (intersect(win,check)) cover=1;
@@ -133,13 +129,6 @@ register WINDOW *win;			/* window to expose */
    active = win;
 
    if (!(W(flags)&W_ACTIVE)) {
-      for(win=active->next;win!=(WINDOW *) 0;win=W(next))
-         if (W(flags)&W_ACTIVE && intersect(active,win))
-            save_win(win);
-   
-      restore_win(active);
-   
-      clip_bad(active);	/* invalidate clip lists */
       un_covered();
       }
    else {
@@ -181,91 +170,7 @@ register WINDOW *win;			/* window to hide */
    {
    dbgprintf('o',(stderr,"hiding %s\r\n",W(tty)));
    if (bury(win)==0) return;
-   save_win(win);
-   repair(win);
-   clip_bad(active);	/* invalidate clip lists */
    SETMOUSEICON( DEFAULT_MOUSE_CURSOR);	/* because active win chg */
-   }
-/*}}}  */
-/*{{{  repair -- repair effects of buried window*/
-void repair(WINDOW *clip)
-   {
-   register WINDOW *win;
-#ifdef NOCLIP
-   for(win=ACTIVE(prev)->prev;win!=active;win=W(prev))
-      if (!alone(win)) restore_win(win);
-   restore_win(win);
-#else
-   for(win=clip->prev;win!=active;win=W(prev))
-       if (intersect(clip,win))
-          clip_win(win,clip);
-    if (clip!= active && intersect(clip,active))
-       clip_win(active,clip);
-#endif
-   un_covered();
-   }
-/*}}}  */
-/*{{{  save_win -- save a pixel image of the window*/
-void save_win(WINDOW *win)
-   {
-   dbgprintf('o',(stderr,"\t\t  saving %s\r\n",W(tty)));
-   if (W(save) == (BITMAP *) 0) {
-      W(save) = bit_alloc(BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-                          (DATA*)0,BIT_DEPTH(W(window)));
-      }
-   else if (BIT_WIDE(W(save)) != BIT_WIDE(W(border))  ||
-            BIT_HIGH(W(save)) != BIT_HIGH(W(border))) {
-      dbgprintf('o',(stderr,"Saved window %s mismatch\r\n",W(tty)));
-      bit_destroy(W(save));
-      W(save) = bit_alloc(BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-                          (DATA*)0,BIT_DEPTH(W(window)));
-      }
-
-   bit_blit(W(save),0,0,BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-          BIT_SRC,W(border),0,0);
-   }
-/*}}}  */
-/*{{{  clip_win -- partially restore a previously saved pixel image of the window*/
-#define C(x)	(clip->x)
-
-void
-clip_win(win,clip)
-register WINDOW *win;			/* window to restore to screen */
-register WINDOW *clip;			/* clip window */
-   {
-   int x0 = Max(W(x0),C(x0)) - W(x0);
-   int y0 = Max(W(y0),C(y0)) - W(y0);
-   int x1 = Min(W(x0)+BIT_WIDE(W(border)),C(x0)+BIT_WIDE(C(border))) - W(x0);
-   int y1 = Min(W(y0)+BIT_HIGH(W(border)),C(y0)+BIT_HIGH(C(border))) - W(y0);
-
-   if (W(save) != (BITMAP *) 0) {
-
-/*	******* look at clipping region **********
-      bit_blit(W(border),x0,y0,x1-x0,y1-y0 ,
-               BIT_NOT(BIT_DST),W(save),x0,y0);
-      getchar();
-end of debug */
-
-      bit_blit(W(border),x0,y0,x1-x0,y1-y0,
-               BIT_SRC,W(save),x0,y0);
-      }
-#ifdef DEBUG
-   else
-      if( debug )
-	 fprintf(stderr,"clip: can't restore %s\r\n",W(tty));
-   dbgprintf('o',(stderr,"\t\t  restore %s (clip to %s)\r\n",W(tty),C(tty)));
-#endif
-   }
-/*}}}  */
-/*{{{  restore_win -- restore a previously saved pixel image of the window*/
-void
-restore_win(win)
-register WINDOW *win;			/* window to restore to screen */
-   {
-   if (W(save) != (BITMAP *) 0)
-   bit_blit(W(border),0,0,BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-          BIT_SRC,W(save),0,0);
-   dbgprintf('o',(stderr,"\t\t  restoring %s\r\n",W(tty)));
    }
 /*}}}  */
 /*{{{  move_mouse*/
@@ -423,8 +328,6 @@ void suspend(void)
 
    for(win=active;win!=(WINDOW *) 0;win=win->next) {
       killpg(W(pid),SIGSTOP);
-      if (W(flags)&W_ACTIVE)
-         save_win(win);
       }
 
    do_cmd( 's' );	/* do the suspention command */
@@ -440,10 +343,8 @@ void suspend(void)
    erase_win(screen);
    if (active) {
       for(win=ACTIVE(prev);win!=active;win=W(prev)) {
-         restore_win(win);
          killpg(W(pid),SIGCONT);
          }
-      restore_win(active);
       killpg(ACTIVE(pid),SIGCONT);
       }
 #endif

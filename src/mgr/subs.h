@@ -3,10 +3,6 @@ void           un_covered     (void);
 void           expose         (WINDOW *win);
 int            bury           (WINDOW *win);
 void           hide           (WINDOW *win);
-void           repair         (WINDOW *clip);
-void           save_win       (WINDOW *win);
-void           clip_win       (WINDOW *win, WINDOW *clip);
-void           restore_win    (WINDOW *win);
 int            move_mouse     (BITMAP *screen, int mouse, int *x, int *y,
                                int how);
 int            parse          (char *line, char **fields);

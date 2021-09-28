@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 
@@ -38,7 +37,6 @@
 #include "icon_server.h"
 #include "put_window.h"
 #include "subs.h"
-#include "update.h"
 #include "utmp.h"
 /*}}}  */
 /*{{{  #defines*/
@@ -91,13 +89,10 @@ int how;			/* if how, unlink window stack as well */
    bit_destroy(W(cursor));	/* usually noop because static */
    if (W(border))
        bit_destroy(W(border));
-   if (W(save))
-       bit_destroy(W(save));
    if (W(snarf))
       free(W(snarf));
    if (W(bitmap))
       free(W(bitmap));
-   zap_cliplist(win);
 
    for(i=0; i< MAXEVENTS;i++)
        if (W(events)[i])
@@ -204,9 +199,7 @@ int destroy(win) register WINDOW *win;
    SETMOUSEICON( DEFAULT_MOUSE_CURSOR);	/* because active win chg */
 
    if (active) {
-      repair(win);
       un_covered();
-      clip_bad(win);	/* invalidate clip lists */
       ACTIVE_ON();
       cursor_on();
       }

@@ -22,7 +22,7 @@ void border( WINDOW *win, int be_fat)
 
     int clr = PUTOP(BIT_CLR,W(style));
     int set = PUTOP(BIT_SET,W(style));
-    BITMAP *bdr = (W(flags)&W_ACTIVE)? W(border): W(save);
+    BITMAP *bdr = W(border);
     int w = BIT_WIDE(bdr);
     int h = BIT_HIGH(bdr);
 

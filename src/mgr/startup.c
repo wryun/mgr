@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 
 #include "proto.h"

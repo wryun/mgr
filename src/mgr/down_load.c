@@ -45,8 +45,7 @@ int sub;			/* window number of this window */
   if (W(pid)==id && W(num)==sub)
   {
     map=bit_alloc(BIT_WIDE(W(window)),BIT_HIGH(W(window)),(DATA*)0,BIT_DEPTH(W(window)));
-    if (map && W(flags)&W_ACTIVE) bit_blit(map,0,0,BIT_WIDE(map),BIT_HIGH(map),BIT_SRC,W(window),0,0);
-    else if (map) bit_blit(map,0,0,BIT_WIDE(map),BIT_HIGH(map),BIT_SRC,W(save),W(borderwid),W(borderwid));
+    if (map) bit_blit(map,0,0,BIT_WIDE(map),BIT_HIGH(map),BIT_SRC,W(window),0,0);
     return(map);
   }
   return((BITMAP*)0);

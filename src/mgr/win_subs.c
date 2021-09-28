@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "graph_subs.h"
 #include "win_subs.h"
@@ -49,7 +48,6 @@ void win_rop(WINDOW *win, BITMAP *window)
     /*{{{  3 -- ras_write*/
     case 3:
     bit_blit(window,Scalex(p[0]),Scaley(p[1]),Scalex(p[2]),Scaley(p[3]),op,(DATA*)0,0,0);
-    if (Do_clip()) Set_clip(Scalex(p[0]),Scaley(p[1]),Scalex(p[0])+Scalex(p[2]),Scaley(p[1])+Scaley(p[3]))
     break;
     /*}}}  */
     /*{{{  4 -- ras_write  specify dest*/
@@ -68,12 +66,6 @@ void win_rop(WINDOW *win, BITMAP *window)
       Scalex(p[2]),Scaley(p[3]),
       op,0,0,0
     );
-    if (Do_clip() && p[4]==0) Set_clip
-    (
-      Scalex(p[0]),Scaley(p[1]),
-      Scalex(p[0])+Scalex(p[2]),
-      Scaley(p[1])+Scaley(p[3])
-    );
     break;
     /*}}}  */
     /*{{{  5 -- ras_copy*/
@@ -85,12 +77,6 @@ void win_rop(WINDOW *win, BITMAP *window)
       Scalex(p[2]),Scaley(p[3]),
       op,window,
       Scalex(p[4]),Scaley(p[5])
-    );
-    if (Do_clip()) Set_clip
-    (
-      Scalex(p[0]),Scaley(p[1]),
-      Scalex(p[0])+Scalex(p[2]),
-      Scaley(p[1])+Scaley(p[3])
     );
     break;
     /*}}}  */
@@ -125,12 +111,6 @@ void win_rop(WINDOW *win, BITMAP *window)
       p[7]?W(bitmaps)[p[7]-1]:window,
       Scalex(p[4]),Scaley(p[5])
     );
-    if (Do_clip() && p[6]==0) Set_clip
-    (
-      Scalex(p[0]),Scaley(p[1]),
-      Scalex(p[0])+Scalex(p[2]),
-      Scaley(p[1])+Scaley(p[3])
-    );
     /*}}}  */
   }
 }
@@ -161,10 +141,6 @@ void win_map(WINDOW *win, BITMAP *window)
     /*{{{  2 -- bitmap to graphics point*/
     case 2:
     bit_blit(window,Scalex(W(gx)),Scaley(W(gy)),p[0],p[1],op,W(bitmap),0,0);
-    if (Do_clip())
-    {
-      Set_clip(Scalex(W(gx)),Scaley(W(gy)),Scalex(W(gx))+p[0],Scaley(W(gy))+p[1]);
-    }
     break;
     /*}}}  */
     /*{{{  3 -- bitmap to graphics point specify dest*/
@@ -181,10 +157,6 @@ void win_map(WINDOW *win, BITMAP *window)
     /*{{{  4 -- bitmap to specified point*/
     case 4:
     bit_blit(window,p[2],p[3],p[0],p[1],op,W(bitmap),0,0);
-    if (Do_clip()) 
-    {
-      Set_clip(p[2],p[3],p[2]+p[0],p[3]+p[1]);
-    }
     break;
     /*}}}  */
     /*{{{  5 -- bitmap to specified point specify dest*/
@@ -245,11 +217,6 @@ void win_plot(WINDOW *win, BITMAP *window)
 void Bit_line(WINDOW *win, BITMAP *dst,int x1,int y1,int x2,int y2,int op)
 {
   bit_line(dst,x1,y1,x2,y2,op);
-  if (Do_clip()) 
-  {
-    Set_clip(x1,y1,x2+1,y2+1);
-    Set_clip(x2,y2,x1+1,y1+1);
-  }
 }
 /*}}}  */
 /*{{{  grunch -- experimantal graphics crunch mode*/
@@ -354,8 +321,6 @@ void circle_plot(WINDOW *win,BITMAP *window)
     break;
     /*}}}  */
   }
-  if (Do_clip())
-  Set_all();
 }
 /*}}}  */
 /*{{{  win_go -- move the graphics pointer*/

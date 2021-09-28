@@ -83,16 +83,8 @@ void redraw(void)
    dbgprintf('b',(stderr,"\r\n\tREDRAW\r\n"));
    for(win=active;win != (WINDOW *) 0;win=W(next)) {
       if (W(flags)&W_ACTIVE) {
-         save_win(win);
          do_event(EVENT_REDRAW,win,E_MAIN);
          }
-      }
-
-   erase_win(screen);
-   if (active) {
-      for(win=ACTIVE(prev);win != active;win=W(prev))
-         restore_win(win);
-      restore_win(active);
       }
    }
 /*}}}  */
@@ -103,18 +95,9 @@ static void lock_screen(void) {
     /* Mouse is off from mgr:main */
     /* cursor and active border off because of button handling */
 
-    for( win = active; win != 0; win = W(next))
-	if( W(flags)&W_ACTIVE)
-	    save_win( win);
-
     copyright( screen, pwd? pwd->pw_passwd: "");
 
     erase_win( screen);
-    if( active) {
-	for( win = ACTIVE(prev); win != active; win = W(prev))
-	    restore_win( win);
-	restore_win( active);
-    }
 
     /* flush and ignore intervening mouse events */
     int x, y;

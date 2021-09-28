@@ -16,7 +16,6 @@
 #include <mgr/bitblit.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 /*}}}  */
 
@@ -41,11 +40,5 @@ int start,end,delta,op;	/* starting line, ending line, # of lines */
       }
 
 
-   if (Do_clip()) 
-      Set_clip(W(text).x,
-               W(text).y + start,
-               W(text).x + BIT_WIDE(map),
-               W(text).y + BIT_HIGH(map)
-              );
    }
 /*}}}  */

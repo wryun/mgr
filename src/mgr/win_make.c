@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 
@@ -29,7 +28,6 @@
 #include "new_window.h"
 #include "put_window.h"
 #include "subs.h"
-#include "update.h"
 /*}}}  */
 
 /*{{{  win_make -- manipulte an alternate (client) window - called by put_window()*/
@@ -136,7 +134,6 @@ void win_make(WINDOW *win, int indx)
          else
             sprintf(buff,"%d\n",ACTIVE(num));
          write(ACTIVE(to_fd),buff,strlen(buff));
-         clip_bad(active);	/* invalidate clip lists */
          break;
       case 5:		/* nothing */
          break;

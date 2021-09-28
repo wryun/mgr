@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <sys/ioctl.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 #include "menu.h"
@@ -43,7 +42,6 @@
 #include "scroll.h"
 #include "shape.h"
 #include "subs.h"
-#include "update.h"
 #include "win_make.h"
 #include "win_stack.h"
 #include "win_subs.h"
@@ -76,10 +74,6 @@
    }
 
 #define B_SIZE8(w,h,d)	((h)*((((w*d)+7L)&~7L)>>3))
-/*}}}  */
-
-/*{{{  variables*/
-rect clip;                              /* clipping rectangle */
 /*}}}  */
 
 /*{{{  set_winsize*/
@@ -145,33 +139,18 @@ void set_size(WINDOW *win)
 int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 {
   /*{{{  variables*/
-  register BITMAP *window;                     /* bitmap to update */
+  register BITMAP *window = W(window);         /* bitmap to update */
   register BITMAP *text=(BITMAP*)0;            /* current text region */
   register int indx;                           /* index into buff */
   register int cnt;                            /* # of esc. numbers */
   register unsigned char c;                    /* current char */
   register int done=0;                         /* set to 1 to exit */
   int bell=0;                                  /* 1 if screen flashed once */
-  int sub_window = 0;                          /* sub window created */
   int fsizehigh, fsizewide;                    /* variables to save deref. */
   int offset = 0;                              /* font glyph offset */
   char tbuff[40];                              /* tmp space for replies */
   /*}}}  */
 
-  /*{{{  set up environment*/
-  if (W(flags)&W_ACTIVE) window=W(window);
-  else
-  {
-     window=bit_create(W(save),W(borderwid),W(borderwid),BIT_WIDE(W(window)),BIT_HIGH(W(window)));
-     sub_window++;
-  }
-
-  if (window==(BITMAP*)0)
-  {
-     perror("Bit_create failed for window");
-     return(0);
-  }
-  /*}}}  */
   /*{{{  avoid repeated dereferencing of pointers*/
 
   fsizehigh = FSIZE(high);
@@ -181,12 +160,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
   {
        if (W(flags)&W_UNDER) offset = MAXGLYPHS;
        if (W(flags)&W_BOLD) offset += 2*MAXGLYPHS;
-  }
-
-  if (Do_clip())
-  {
-     Set_clipall();
-     Set_cliplow(W(x)+W(text).x,W(y)+W(text).y-fsizehigh);
   }
 
   if (W(text.wide)) text=bit_create(window,W(text.x),W(text.y),W(text.wide),W(text.high));
@@ -333,15 +306,10 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                  int n = W(esc)[0] * fsizehigh / div;
                  if (W(y)>n) {
                     W(y) -= n;
-                    if (Do_clip())
-                       Set_cliplow(10000,W(y)+W(text).y-fsizehigh);
-                    }
                  break;
                  }
 #endif
               if (W(y)>fsizehigh) W(y) -= fsizehigh;
-              if (Do_clip())
-                 Set_cliplow(10000,W(y)+W(text).y-fsizehigh);
               break;
         /*}}}  */
         /*{{{  E_RIGHT      -- right 1 line*/
@@ -371,8 +339,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 		    done++;
 		 } else {
 		    W(y) += n;
-		    if (Do_clip())
-			    Set_cliphigh(0,W(y)+W(text).y);
 		 }
                  break;
               }
@@ -383,8 +349,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                  }
               else {
                  W(y) += fsizehigh;
-                 if (Do_clip())
-                    Set_cliphigh(0,W(y)+W(text).y);
                  }
               break;
         /*}}}  */
@@ -459,16 +423,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*{{{  E_CLEAREOL   -- clear to end of line*/
         case E_CLEAREOL:               /* clear to end of line */
               bit_blit(text,W(x),W(y)-fsizehigh,T_WIDE-W(x),fsizehigh,BG_OP,0,0,0);
-              if (Do_clip())
-                 Set_cliphigh(BIT_WIDE(W(window)),0);
               break;
         /*}}}  */
         /*{{{  E_CLEAREOS   -- clear to end of window*/
         case E_CLEAREOS:               /* clear to end of window */
               bit_blit(text,W(x),W(y)-fsizehigh,T_WIDE-W(x),fsizehigh,BG_OP,0,0,0);
               bit_blit(text,0,W(y),T_WIDE,T_HIGH-W(y),BG_OP,0,0,0);
-              if (Do_clip())
-                 Set_cliphigh(BIT_WIDE(W(window)),BIT_HIGH(window));
               break;
         /*}}}  */
         /*{{{  E_SETCURSOR  -- set the character cursor*/
@@ -958,8 +918,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*{{{  E_MOVE       -- move to x,y pixels*/
         case E_MOVE:                   /* move to x,y pixels */
                  W(flags) &= ~W_SNARFABLE;
-                 if (Do_clip())
-                    Set_cliphigh(W(x)+W(text).x+fsizewide,W(y)+W(text).y);
                  if (cnt>0) {
                     W(x) = Scalex(*W(esc));
                     W(y) = Scaley(W(esc)[1]);
@@ -971,8 +929,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      W(x) = WIDE-fsizewide;
                   if (W(y) > HIGH)
                      W(y) = HIGH - fsizehigh;
-                  if (Do_clip())
-                     Set_cliplow(W(x)+W(text).x,W(y)+W(text).y-fsizehigh);
               break;
         /*}}}  */
         /*{{{  E_CUP        -- move to col,row (zero based)*/
@@ -983,12 +939,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                  register int y = W(esc)[cnt] * fsizehigh;
                  if (x == BETWEEN(-1,x,T_WIDE-fsizewide) &&
                      y == BETWEEN(-1,y,T_HIGH)) {
-                     if (Do_clip())
-                       Set_cliphigh(W(x)+W(text).x+fsizewide,W(y)+W(text).y);
                      W(y) = y+fsizehigh;
                      W(x) = x;
-                     if (Do_clip())
-                        Set_cliplow(W(x)+W(text).x,W(y)+W(text).y-fsizehigh);
                      }
                  }
               break;
@@ -1097,8 +1049,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      W(style) = SWAPCOLOR(W(style));
                      CLEAR(window,C_WHITE);
                      BORDER(win);
-                     if (Do_clip())
-                        Set_all();
                      break;
                 case M_NOWRAP:         /* turn on no-wrap */
                      W(flags) |= W_NOWRAP;
@@ -1179,8 +1129,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                      W(style) = SWAPCOLOR(W(style));
                      CLEAR(window,C_WHITE);
                      BORDER(win);
-                     if (Do_clip())
-                        Set_all();
                      break;
                 case M_NOWRAP:         /* turn off no-wrap */
                      W(flags) &= ~W_NOWRAP;
@@ -1310,15 +1258,9 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  C_BS -- back space*/
         case C_BS:
-                   if (Do_clip()) {
-                      Set_cliphigh(W(x)+W(text).x + fsizewide,0);
-                      }
                    W(x) -= fsizewide;
                    if (W(x) < 0)
                       W(x) = 0;
-                   if (Do_clip()) {
-                      Set_cliplow(W(x)+W(text).x,10000);
-                      }
                    break;
         /*}}}  */
         /*{{{  C_FF -- form feed*/
@@ -1327,8 +1269,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                    W(x)=0;
                    W(y)=fsizehigh;
                    W(flags) |= W_SNARFABLE;
-                   if (Do_clip())
-                      Set_all();
                    done++;
                    break;
         /*}}}  */
@@ -1357,10 +1297,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         /*}}}  */
         /*{{{  C_RETURN -- return*/
         case C_RETURN:
-                   if (Do_clip()) {
-                      Set_cliphigh(W(x)+W(text).x + fsizewide,0);
-                      Set_cliplow(W(text).x,10000);
-                      }
                    W(x)=0;
                    break;
         /*}}}  */
@@ -1382,10 +1318,6 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                    W(x) += fsizewide;
                    if (W(x)+fsizewide > T_WIDE && !(W(flags)&W_NOWRAP)) {
-                      if (Do_clip()) {
-                         Set_cliphigh(W(x)+W(text).x + fsizewide,0);
-                         Set_cliplow(W(text).x,10000);
-                         }
                       W(x)=0;
                       W(y) += fsizehigh;
                       if (W(y) > T_HIGH) {
@@ -1403,16 +1335,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
   }
   /*}}}  */
 
-  if (Do_clip()) { Set_cliphigh(W(x)+W(text).x+fsizewide,W(y)+W(text).y); }
-
   cursor_on();
 
 
   /* this is probably wrong */
   if (text != window) bit_destroy(text);
-  if (sub_window) bit_destroy(window);
 
-  if (W(flags)&W_BACKGROUND && !(W(flags)&W_ACTIVE)) update(win, &clip);
   return(indx);
 }
 /*}}}  */

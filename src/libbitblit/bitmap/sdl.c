@@ -55,6 +55,11 @@ SDL_Texture *sdl_create_texture_target(SDL_Renderer *renderer, int x, int y) {
     return NULL;
   }
 
+  if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND)) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode on texture: %s", SDL_GetError());
+    return NULL;
+  }
+
   return texture;
 }
 
@@ -128,7 +133,6 @@ SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void 
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode on texture: %s", SDL_GetError());
     return NULL;
   }
-
 
   return texture;
 }

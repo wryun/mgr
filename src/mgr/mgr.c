@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "event.h"
 #include "menu.h"
@@ -255,6 +254,38 @@ int update_windows() {
 #endif
 
    return dirty;
+}
+
+
+void display_windows() {
+   register WINDOW *win;                /* current window to update */
+
+   /*if (active != NULL) {
+      bit_blit_color(screen, ACTIVE(x0), ACTIVE(y0), ACTIVE(border)->wide, ACTIVE(border)->high, &C_WHITE, NULL, ACTIVE(border), 0, 0);
+      bit_present(screen);
+   }
+   */
+
+   if (active == NULL) {
+      bit_present(screen);
+      return;
+   }
+
+   win = active->prev;
+   do {
+      bit_blit_color(screen, W(x0), W(y0), W(border)->wide, W(border)->high, &C_WHITE, NULL, W(border), 0, 0);
+   } while ((win = W(prev)) != active->prev);
+
+   /*
+   for (int i = 0; i < 5; ++i) {
+      if (win == W(prev)) {
+         break;
+      }
+      win = W(prev);
+   }
+   */
+
+   bit_present(screen);
 }
 
 
@@ -665,7 +696,7 @@ int main(int argc, char **argv) {
       int time_since_render_ms = ticks - last_render_ticks;
 
       if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
-         bit_present(screen);
+         display_windows();
          dbgprintf('w', (stderr, "------ render\r\n"));
 
          last_render_ticks = ticks;

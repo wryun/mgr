@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "clip.h"
 #include "defs.h"
 #include "menu.h"
 
@@ -34,7 +33,6 @@
 #include "mgr.h"
 #include "put_window.h"
 #include "subs.h"
-#include "update.h"
 /*}}}  */
 
 /*{{{  insert_win -- insert a new window into the window list*/
@@ -139,7 +137,7 @@ struct font *curr_font;
    W(curs_type) = CS_BLOCK;
    W(x0) = x;
    W(y0) = y;
-   W(border) = bit_create(screen,x,y,dx,dy);
+   W(border) = bit_alloc(dx,dy,NULL,1);
    W(window) = bit_create(W(border),SUM_BDR,SUM_BDR,dx-SUM_BDR*2,dy-SUM_BDR*2);
 
    W(borderwid) = SUM_BDR;
@@ -155,13 +153,11 @@ struct font *curr_font;
       W(bitmaps)[i] = (BITMAP *) 0;
 
    W(cursor) = &mouse_arrow;
-   W(save) = (BITMAP *) 0;
    W(stack) = (WINDOW *) 0;
    W(main) = win;
    W(alt) = (WINDOW *) 0;
    W(esc_cnt) = 0;
    W(esc[0])=0;
-   W(clip_list) = (char *) 0;
 
    for(i=0;i<MAXMENU;i++)
       W(menus[i]) = (struct menu_state *) 0;
@@ -180,7 +176,6 @@ struct font *curr_font;
    W(current) = 0;
    strcpy(W(tty), last_tty());
    W(num) = 0;
-   clip_bad(win);	/* invalidate clip lists */
    return(W(border) && W(window));
    }
 /*}}}  */

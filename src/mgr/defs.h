@@ -196,12 +196,10 @@ typedef struct window {		/* primary window structure */
   struct window *alt;	/* alternate window ( 0 if none) */
   BITMAP *border;	/* window + border */
   BITMAP *window;	/* This is the window */
-  BITMAP *save;		/* pointer to window bit-image if inactive */
   BITMAP *bitmap;	/* for use when downloading bitmaps */
   BITMAP *bitmaps[MAXBITMAPS];	/* scratchpad space */
   BITMAP *cursor;	/* bitmap of cursor */
   struct font *font;	/* this is the font */
-  char *clip_list;	/* pointer to clip list for BG updates */
 
   rectangle text;	/* location of text region within window */
   int x0,y0;		/* origin of window on screen */

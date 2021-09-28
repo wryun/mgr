@@ -63,8 +63,7 @@ int level;			/* what things to push */
       S(events)[j] = (char *) 0;
    for(j=0;j<MAXBITMAPS;j++)
       S(bitmaps)[j] = (BITMAP *) 0;
-   S(save) = (BITMAP *) 0;
-   S(clip_list) = (char *) 0;
+   S(border) = (BITMAP *) 0;
 
    /* setup each pushed item */
 
@@ -131,14 +130,10 @@ int level;			/* what things to push */
               break;
          case P_WINDOW:		/* save the bit image */
               dbgprintf('P',(stderr,"  window\n"));
-              S(save) = bit_alloc(BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-                                  NULL_DATA,BIT_DEPTH(W(window)));
-              if (W(save) && !(W(flags)&W_ACTIVE))
-                 bit_blit(S(save),0,0,BIT_WIDE(W(save)),BIT_HIGH(W(save)),
-                          BIT_SRC,W(save),0,0);
-              else
-                 bit_blit(S(save),0,0,BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-                          BIT_SRC,W(border),0,0);
+              S(border) = bit_alloc(BIT_WIDE(W(border)),BIT_HIGH(W(border)),
+                                    NULL_DATA,BIT_DEPTH(W(window)));
+              bit_blit(S(border),0,0,BIT_WIDE(W(border)),BIT_HIGH(W(border)),
+                       BIT_SRC,W(border),0,0);
               break;
          case P_POSITION:	/* save the window position */
               dbgprintf('P',(stderr,"  position\n"));
@@ -291,12 +286,8 @@ WINDOW *win;				/* window to pop to */
               dbgprintf('P',(stderr,"  position\n"));
               break;
          case P_WINDOW:		/* restore the window contents */
-              if (W(save))
-                 bit_destroy(W(save));
-              W(save) = bit_alloc(BIT_WIDE(W(border)),BIT_HIGH(W(border)),
-                                  NULL_DATA,BIT_DEPTH(W(window)));
-              bit_blit(W(border),0,0,BIT_WIDE(S(save)),BIT_HIGH(S(save)),
-                       BIT_SRC,S(save),0,0);
+              bit_blit(W(border),0,0,BIT_WIDE(S(border)),BIT_HIGH(S(border)),
+                       BIT_SRC,S(border),0,0);
               dbgprintf('P',(stderr,"  window\n"));
               break;
          case P_FLAGS:		/* restore the window flags */
