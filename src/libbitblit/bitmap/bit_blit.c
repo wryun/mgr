@@ -113,8 +113,8 @@ void bit_blit_color(
     SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
     if (src_texture == dst_texture) {
       new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
-      SDL_SetTextureAlphaMod(src_texture, 0);
-      SDL_SetTextureColorMod(src_texture, 0, 0, 0);
+      SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
+      SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
       SDL_SetRenderTarget(sdl_renderer, new_src_texture);
       SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = wide, .h = high};
       SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &new_src_rect);

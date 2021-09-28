@@ -19,8 +19,6 @@ void bit_present(BITMAP *dest)
     return;
   }
 
-  sdl_use_func(SRC);
-
   SDL_SetRenderTarget(sdl_renderer, NULL);
   SDL_RenderCopy(sdl_renderer, (SDL_Texture *)dest->data, NULL, NULL);
   SDL_RenderPresent(sdl_renderer);

@@ -20,18 +20,12 @@
 static SDL_PixelFormatEnum static_bitmap_pixel_format = SDL_PIXELFORMAT_INDEX1MSB;
 static SDL_PixelFormatEnum preferred_pixel_format = SDL_PIXELFORMAT_ABGR8888;
 static const SDL_Color bitmap_palette_colors[] = {
-  {0xFF, 0xFF, 0xFF, SDL_ALPHA_TRANSPARENT},
-  {0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE},
+  {0x00, 0x00, 0x00, SDL_ALPHA_TRANSPARENT},
+  {0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE},
 };
-
-static void (APIENTRY *glLogicOp_f)(int);
-static void (APIENTRY *glEnable_f)(int);
 
 
 int sdl_helper_setup(SDL_Renderer *renderer) {
-  glLogicOp_f = SDL_GL_GetProcAddress("glLogicOp");
-  glEnable_f = SDL_GL_GetProcAddress("glEnable");
-
   SDL_RendererInfo rendererInfo;
   // Below code fails anyway.
   return 1;
@@ -68,7 +62,7 @@ SDL_Texture *sdl_create_texture_target(SDL_Renderer *renderer, int x, int y) {
 SDL_Surface *sdl_create_surface_from_static_bitmap(void *pixels, int wide, int high, int depth) {
   assert(depth == SDL_BITSPERPIXEL(static_bitmap_pixel_format));
 
-  SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, ((wide + 1) * depth - 1) / 8, static_bitmap_pixel_format);
+  SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, ((wide + 8) * depth - 1) / 8, static_bitmap_pixel_format);
   if (surface == NULL) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface for static texture: %s", SDL_GetError());
     return NULL;
@@ -122,7 +116,6 @@ SDL_Texture *sdl_create_texture_from_static_bitmap(SDL_Renderer *renderer, void 
     return NULL;
   }
 
-  glLogicOp_f(GL_COPY);
   SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
   SDL_FreeSurface(surface);
 
@@ -175,19 +168,4 @@ static inline int mgr_to_gl_opcode(int op) {
     assert(0);
     return GL_COPY;
   }
-}
-
-
-void sdl_use_func(int func) {
-  //glLogicOp_f(mgr_to_gl_opcode(OPCODE(func)));
-
-  /* TODO handle fg/bg colour... but can't do it with shader because GL 1.1 for logic op? Bah.
-   * I guess we could set the _foreground_ colour with glColor4f, at least?
-   * Black and white here we come, for now...
-   * Probably should just dump the raster ops and use textures for everything, once I've
-   * got something minimally working.
-   *
-   * This all seems really broken. If I enable logic ops, I get reversed colors?
-   * and fonts are ... not there.
-   */
 }

@@ -259,9 +259,9 @@ void copyright(BITMAP *where, char *password)
     clip1.x2 = clip1.x1 + SSIZE + BIT_WIDE(notice);
     clip1.y2 = clip1.y1 + SSIZE + BIT_HIGH(notice);
 
-    bit_blit(where,clip1.x1+SSIZE,clip1.y1+SSIZE,
+    bit_blit_color(where,clip1.x1+SSIZE,clip1.y1+SSIZE,
 	     BIT_WIDE(notice),BIT_HIGH(notice),
-	     BUILDOP(BIT_SRC,color_map[CR_COLOR],color_map[LOGO_COLOR_BG]),
+	     C_WHITE,
 	     notice,0,0);
 
     /* get the globe hole */
@@ -296,6 +296,8 @@ void copyright(BITMAP *where, char *password)
   /* keep drawing stars until enough read from kb to stop */
   for(;;)
   {
+    int old_ticks = SDL_GetTicks();
+    int new_ticks = old_ticks;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       switch (event.type) {
@@ -338,12 +340,15 @@ void copyright(BITMAP *where, char *password)
       }
     }
 
+    new_ticks = SDL_GetTicks();
+    SDL_Delay(50 - (new_ticks - old_ticks));
+    old_ticks = new_ticks;
     dofly(where);
-    if( at_startup)
+    if( at_startup )
       bit_blit(where,clip2.x1+SSIZE,clip2.y1+SSIZE,
 	       BIT_WIDE(logo[0]),BIT_HIGH(logo[0]),
 	       BUILDOP(BIT_SRC,color_map[LOGO_COLOR],color_map[LOGO_COLOR_BG]),
-	       logo[i++%8],0,0);
+	       logo[(i++/2)%8],0,0);
 
     bit_present(where);
   }
