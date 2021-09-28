@@ -71,6 +71,8 @@ void bit_blit(
     SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
     if (src_texture == dst_texture) {
       SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
+      SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
+      SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
       SDL_SetRenderTarget(sdl_renderer, new_src_texture);
       SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = wide, .h = high};
       SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &new_src_rect);
@@ -78,10 +80,14 @@ void bit_blit(
       src_rect = new_src_rect;
       src_texture = new_src_texture;
 
+      SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
+      SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
       SDL_SetRenderTarget(sdl_renderer, dst_texture);
       SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
       SDL_DestroyTexture(new_src_texture);
     } else {
+      SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
+      SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
       SDL_SetRenderTarget(sdl_renderer, dst_texture);
       SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
     }
@@ -95,7 +101,8 @@ void bit_blit_color(
     BITMAP *dst_map,      /* destination bitmap */
     int x_dst, int y_dst, /* destination coords */
     int wide, int high,   /* bitmap size */
-    COLOR color,      
+    COLOR *color,      
+    COLOR *bg_color,      
     BITMAP *src_map,      /* source bitmap */
     int x_src, int y_src  /* source coords */
     )
@@ -105,7 +112,7 @@ void bit_blit_color(
 
   if (src_map == NULL) {
     SDL_SetRenderTarget(sdl_renderer, dst_texture);
-    SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
+    SDL_SetRenderDrawColor(sdl_renderer, color->r, color->g, color->b, color->a);
     SDL_RenderFillRect(sdl_renderer, &dst_rect);
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
@@ -123,8 +130,15 @@ void bit_blit_color(
       src_texture = new_src_texture;
     }
 
-    SDL_SetTextureColorMod(src_texture, color.r, color.g, color.b);
-    SDL_SetTextureAlphaMod(src_texture, color.a);
+    SDL_SetRenderTarget(sdl_renderer, dst_texture);
+
+    if (bg_color != NULL) {
+      SDL_SetRenderDrawColor(sdl_renderer, bg_color->r, bg_color->g, bg_color->b, bg_color->a);
+      SDL_RenderFillRect(sdl_renderer, &dst_rect);
+    }
+
+    SDL_SetTextureColorMod(src_texture, color->r, color->g, color->b);
+    SDL_SetTextureAlphaMod(src_texture, color->a);
     SDL_SetRenderTarget(sdl_renderer, dst_texture);
     SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
 

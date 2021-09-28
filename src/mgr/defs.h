@@ -86,7 +86,7 @@ char *strchr();
 
 /* macros -- for speed */
 
-#define CLEAR(s,color)	bit_blit_color((s),0,0,BIT_WIDE(s),BIT_HIGH(s),color,0,0,0);
+#define CLEAR(s,color)	bit_blit_color((s),0,0,BIT_WIDE(s),BIT_HIGH(s),&color,NULL,0,0,0);
 
 #define BORDER_FAT 1
 #define BORDER_THIN 0

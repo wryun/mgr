@@ -127,7 +127,7 @@ extern BITMAP *bit_alloc( int wide, int high, DATA *data, unsigned char depth);
 extern void bit_blit( BITMAP *dst, int dx, int dy, int width, int height,
 		      int func, BITMAP *src, int sx, int sy);
 extern void bit_blit_color( BITMAP *dst, int dx, int dy, int width, int height,
-		            COLOR color, BITMAP *src, int sx, int sy);
+		            COLOR *color, COLOR *bg_color, BITMAP *src, int sx, int sy);
 extern BITMAP *bit_create( BITMAP *map, int x, int y, int wide, int high);
 extern void bit_destroy( BITMAP *map);
 extern void bit_cursor( BITMAP *map);

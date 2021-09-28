@@ -55,8 +55,8 @@
         ((font)->glyph[c])
 
 #define PUT_CHAR(dest,x,y,font,op,c)    \
-        bit_blit(dest,x,y-fsizehigh,fsizewide,fsizehigh, \
-        op, DO_CHAR(font,c),0,0)
+        bit_blit_color(dest,x,y-fsizehigh,fsizewide,fsizehigh, \
+        &C_BLACK, &C_WHITE, DO_CHAR(font,c),0,0)
 
 /* fix the border color */
 

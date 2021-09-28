@@ -141,7 +141,7 @@ int state;
   if (!(x < clip2.x1 || x >= clip2.x2 || y < clip2.y1 || y >= clip2.y2 )) return(0);
   if (!(x < clip3.x1 || x >= clip3.x2 || y < clip3.y1 || y >= clip3.y2 )) return(0);
 
-  bit_blit_color(where,x,y,SSIZE,SSIZE,state ? C_WHITE : C_BLACK,(BITMAP*)0,0,0);
+  bit_blit_color(where,x,y,SSIZE,SSIZE,state ? &C_WHITE : &C_BLACK, NULL, (BITMAP*)0,0,0);
   return(0);
 }
 /*}}}  */
@@ -261,7 +261,7 @@ void copyright(BITMAP *where, char *password)
 
     bit_blit_color(where,clip1.x1+SSIZE,clip1.y1+SSIZE,
 	     BIT_WIDE(notice),BIT_HIGH(notice),
-	     C_WHITE,
+	     &C_WHITE, NULL,
 	     notice,0,0);
 
     /* get the globe hole */
@@ -344,11 +344,11 @@ void copyright(BITMAP *where, char *password)
     SDL_Delay(50 - (new_ticks - old_ticks));
     old_ticks = new_ticks;
     dofly(where);
-    if( at_startup )
-      bit_blit(where,clip2.x1+SSIZE,clip2.y1+SSIZE,
+    if( at_startup && (++i % 2) )
+      bit_blit_color(where,clip2.x1+SSIZE,clip2.y1+SSIZE,
 	       BIT_WIDE(logo[0]),BIT_HIGH(logo[0]),
-	       BUILDOP(BIT_SRC,color_map[LOGO_COLOR],color_map[LOGO_COLOR_BG]),
-	       logo[(i++/2)%8],0,0);
+          &C_WHITE, &C_BLACK,
+	       logo[(i/2)%8],0,0);
 
     bit_present(where);
   }
