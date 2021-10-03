@@ -27,24 +27,18 @@ register int *x,*y;		/* starting position */
 register int dx,dy;             /* box size */
 int how;					/* termination condition */
 {
-  int x_mouse, y_mouse;
   register int button;
 
   for (;;) {
     box(screen,*x,*y,dx,dy);
     bit_present(screen);
-    button = mouse_get_wait(&x_mouse, &y_mouse);
+    button = mouse_get_wait(x, y);
     box(screen,*x,*y,dx,dy);
     do {
-      *x += x_mouse;
-      *y -= y_mouse;
-      *x = BETWEEN(0,*x,BIT_WIDE(screen)-dx);
-      *y = BETWEEN(0,*y,BIT_HIGH(screen)-dy);
-
       if (how ? button == 0 : button != 0) {
         return;
       }
-    } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
+    } while ((button = mouse_get_poll(x, y)) != -1);
   }
 
 }

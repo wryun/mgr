@@ -132,6 +132,7 @@ extern BITMAP *bit_create( BITMAP *map, int x, int y, int wide, int high);
 extern void bit_destroy( BITMAP *map);
 extern void bit_cursor( BITMAP *map);
 extern void bit_line( BITMAP *dst, int x0, int y0, int x1, int y1, int func);
+extern void bit_rect( BITMAP *dst, int x, int y, int wide, int high, COLOR *color);
 extern int bit_on( BITMAP *bp, int x, int y);
 extern BITMAP *bit_open( char *name);
 extern int bit_point( BITMAP *map, int dx, int dy, int func);

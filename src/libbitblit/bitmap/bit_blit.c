@@ -69,7 +69,7 @@ void bit_blit(
   } else {
     SDL_Texture *src_texture = get_texture(src_map);
     SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
-    if (src_texture == dst_texture) {
+    if (src_texture == dst_texture && dst_rect.y > src_rect.y) {
       SDL_Texture *new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
       SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
       SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
@@ -118,7 +118,7 @@ void bit_blit_color(
     SDL_Texture *src_texture = get_texture(src_map);
     SDL_Texture *new_src_texture = NULL;
     SDL_Rect src_rect = {.x = src_map->x0 + x_src, .y = src_map->y0 + y_src, .w = wide, .h = high};
-    if (src_texture == dst_texture) {
+    if (src_texture == dst_texture && dst_rect.y > src_rect.y) {
       new_src_texture = sdl_create_texture_target(sdl_renderer, wide, high);
       SDL_SetTextureAlphaMod(src_texture, SDL_ALPHA_OPAQUE);
       SDL_SetTextureColorMod(src_texture, 0xFF, 0xFF, 0xFF);
@@ -148,6 +148,7 @@ void bit_blit_color(
   }
 }
 /*}}}  */
+
 BITMAP *bit_expand(
     BITMAP *map,   /* bitmap to expand */
     int fg, int bg /* foreground and background colors */

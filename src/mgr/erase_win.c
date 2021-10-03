@@ -52,16 +52,24 @@ int func;
    }
 /*}}}  */
 
+BITMAP *bg = NULL;
+
 /*{{{  erase_win*/
 void erase_win(BITMAP *map)
 {
-  Bit_pattern
-  (
-    map,
-    0,0,
-    BIT_WIDE(map),BIT_HIGH(map),
-    BUILDOP(BIT_SRC,color_map[ROOT_COLOR_FG],color_map[ROOT_COLOR_BG]),
-    pattern
-  );
+  // TODO this is obviously wrong if map is not the entire screen. Testing perf.
+  if (!bg) {
+    bg = bit_alloc(BIT_WIDE(map), BIT_HIGH(map), NULL_DATA, BIT_DEPTH(map));
+    Bit_pattern
+    (
+      bg,
+      0,0,
+      BIT_WIDE(map),BIT_HIGH(map),
+      BUILDOP(BIT_SRC,color_map[ROOT_COLOR_FG],color_map[ROOT_COLOR_BG]),
+      pattern
+    );
+  }
+
+  bit_blit_color(map, 0, 0, BIT_WIDE(map), BIT_HIGH(map), &C_WHITE, &C_BLACK, bg, 0, 0);
 }
 /*}}}  */

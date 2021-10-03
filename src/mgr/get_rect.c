@@ -52,25 +52,16 @@ int x,y;			/* starting position */
 register int *dx,*dy;		/* box width,height */
 int type;			/* rectangle or line */
    {
-   int x_mouse, y_mouse;
+   int x_mouse=x, y_mouse=y;
    register int button;
-   register int newx;
-   register int newy;
-
-   newx = *dx;
-   newy = *dy;
 
    for (;;) {
+      *dx = x_mouse - x;
+      *dy = y_mouse - y;
       Box(screen,x,y,*dx,*dy);
       bit_present(screen);
       button = mouse_get_wait(&x_mouse, &y_mouse);
-      Box(screen,x,y,*dx,*dy);
       do {
-         newx += x_mouse<<1;
-         newy -= y_mouse<<1;
-         *dx = BETWEEN(-x,newx,(int) BIT_WIDE(screen)-x);
-         *dy = BETWEEN(-y,newy,(int) BIT_HIGH(screen)-y);
-
          if (button == 0) {
             return;
          }

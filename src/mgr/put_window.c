@@ -611,6 +611,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                  case 0:                       /* remove menu from display */
                     if (p[0]>=0 && p[0]<MAXMENU && (menu=W(menus[p[0]])))
                        menu_remove(menu);
+                    break;
                  case 1:                       /* select active item */
                     if (p[0]>=0 && p[0]<MAXMENU && (menu=W(menus[p[0]])))
                        menu->current = p[1];

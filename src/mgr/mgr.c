@@ -170,7 +170,6 @@ void read_fds_into_windows() {
                           W(max),W(max),W(buff)));
          } else {
             FD_CLR( W(from_fd), &to_poll);
-            redo_select();
 #ifdef KILL
             if (W(flags)&W_NOKILL) W(flags) |= W_DIED;
 #endif
@@ -204,6 +203,7 @@ int update_windows() {
       else
          win = W(next);
 
+   int should_redo_select = 0;
    for (win=active;win != (WINDOW *) 0;win=W(next)) {
       /* check for window to auto-expose */
 
@@ -244,9 +244,13 @@ int update_windows() {
          W(current) += i;
          if (W(current) >= W(max)) {
             FD_CLR( W(from_fd), &to_poll);
-            redo_select();
+            should_redo_select = 1;
          }
       }
+   }
+
+   if (should_redo_select) {
+      redo_select();
    }
 
 #ifdef MOVIE
@@ -696,6 +700,7 @@ int main(int argc, char **argv) {
       int time_since_render_ms = ticks - last_render_ticks;
 
       if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
+         erase_win(screen);
          display_windows();
          dbgprintf('w', (stderr, "------ render\r\n"));
 
@@ -754,22 +759,32 @@ int main(int argc, char **argv) {
          case SDLK_TAB:
          case SDLK_RETURN:
          case SDLK_ESCAPE:
-            write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+            if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+               write(ACTIVE(to_fd), &event.key.keysym.sym, 1);
+            }
             break;
          case SDLK_UP:
-            write(ACTIVE(to_fd), &"\033[A", 3);
+            if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+               write(ACTIVE(to_fd), &"\033[A", 3);
+            }
             break;
          case SDLK_DOWN:
-            write(ACTIVE(to_fd), &"\033[B", 3);
+            if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+               write(ACTIVE(to_fd), &"\033[B", 3);
+            }
             break;
          case SDLK_RIGHT:
-            write(ACTIVE(to_fd), &"\033[C", 3);
+            if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+               write(ACTIVE(to_fd), &"\033[C", 3);
+            }
             break;
          case SDLK_LEFT:
-            write(ACTIVE(to_fd), &"\033[D", 3);
+            if (active && !(ACTIVE(flags)&W_NOINPUT)) {
+               write(ACTIVE(to_fd), &"\033[D", 3);
+            }
             break;
          default:
-            if (ctrl_enabled) {
+            if (active && ctrl_enabled && !(ACTIVE(flags)&W_NOINPUT)) {
                c = event.key.keysym.sym - 'a' + 1;
                if (iscntrl(c)) {
                   write(ACTIVE(to_fd), &c, 1);

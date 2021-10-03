@@ -47,7 +47,7 @@ BITMAP *bit_open(char *name)
     return NULL;
   }
 
-  sdl_helper_setup(sdl_renderer);
+  sdl_helper_setup(sdl_renderer, sdl_window);
 
   result->wide = WIDTH;
   result->high = HEIGHT;

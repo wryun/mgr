@@ -29,6 +29,15 @@ int bit_point(BITMAP *dest, int x, int y, int func)
   return 0;
 }
 
+void bit_rect(BITMAP *dest, int x, int y, int wide, int high, COLOR *color) {
+  SDL_Rect dst_rect = {.x = dest->x0 + x, .y = dest->y0 + y, .w = wide, .h = high};
+  SDL_Texture *dst_texture = (SDL_Texture *)dest->data;
+
+  SDL_SetRenderTarget(sdl_renderer, dst_texture);
+  SDL_SetRenderDrawColor(sdl_renderer, color->r, color->g, color->b, color->a);
+  SDL_RenderFillRect(sdl_renderer, &dst_rect);
+}
+
 int bit_on(BITMAP *bp, int x, int y) {
   /* RenderReadPixels - probably a bad idea - slow/might not work with textures */
   return 0;

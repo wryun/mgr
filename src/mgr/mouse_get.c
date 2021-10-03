@@ -30,7 +30,7 @@ static int button_map[8] = {0,1,2,3,4,5,6,7};
 /*{{{  mouse_get*/
 /* primary mouse interface
 */
-int mouse_get_wait(int *x_delta, int *y_delta) {
+int mouse_get_wait(int *x, int *y) {
    SDL_Event event;
 
    while (SDL_WaitEvent(&event)) {
@@ -40,7 +40,7 @@ int mouse_get_wait(int *x_delta, int *y_delta) {
 #ifdef MOVIE
          log_time();
 #endif
-         return mouse_get_sdl(&event, x_delta, y_delta);
+         return mouse_get_sdl(&event, x, y);
       default: /* TODO - losing events (see comment above) */
          break;
       }
@@ -50,7 +50,7 @@ int mouse_get_wait(int *x_delta, int *y_delta) {
 }
 /*}}}  */
 
-int mouse_get_poll(int *x_delta, int *y_delta)
+int mouse_get_poll(int *x, int *y)
 {
    SDL_Event event;
 
@@ -61,7 +61,7 @@ int mouse_get_poll(int *x_delta, int *y_delta)
 #ifdef MOVIE
          log_time();
 #endif
-         return mouse_get_sdl(&event, x_delta, y_delta);
+         return mouse_get_sdl(&event, x, y);
       default: /* TODO - losing events (see comment above) */
          break;
       }
@@ -70,18 +70,15 @@ int mouse_get_poll(int *x_delta, int *y_delta)
    return -1; /* -1 means there was nothing there. */
 }
 
-int mouse_get_sdl(SDL_Event *event, int *x_delta, int *y_delta) {
-   int x, y;
+int mouse_get_sdl(SDL_Event *event, int *x, int *y) {
    switch (event->type) {
    case SDL_MOUSEMOTION:
-      *x_delta = event->motion.xrel;
-      *y_delta = -event->motion.yrel;
+      *x = event->motion.x;
+      *y = event->motion.y;
       return button_map[event->motion.state];
    case SDL_MOUSEBUTTONDOWN:
    case SDL_MOUSEBUTTONUP:
-      *x_delta = 0;
-      *y_delta = 0;
-      return button_map[SDL_GetMouseState(&x, &y)];
+      return button_map[SDL_GetMouseState(x, y)];
    default:
       fprintf(stderr, "invalid request of mouse_get_sdl");
       exit(1);

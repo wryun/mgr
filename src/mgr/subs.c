@@ -189,25 +189,17 @@ BITMAP *screen;
 int mouse, *x, *y;
 int how;
    {
-   register int mx = *x, my = *y;
    register int button = 0;
-   int dx,dy;
    do {
-      button=mouse_get_poll(&dx,&dy);
+      button=mouse_get_poll(x,y);
       if (button == -1) {
          bit_present(screen);
-         button=mouse_get_wait(&dx,&dy);
+         button=mouse_get_wait(x,y);
       }
-      mx += dx;
-      my -= dy;
-      mx = BETWEEN(0,mx,BIT_WIDE(screen)); 
-      my = BETWEEN(0,my,BIT_HIGH(screen)); 
       }
    while (how ? button!= 0 : button==0);
    if( how )
 	do_button( 0 );
-   *x = mx;
-   *y = my;
    return(button);
    }
 /*}}}  */

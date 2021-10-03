@@ -25,24 +25,15 @@ static const SDL_Color bitmap_palette_colors[] = {
 };
 
 
-int sdl_helper_setup(SDL_Renderer *renderer) {
-  SDL_RendererInfo rendererInfo;
-  // Below code fails anyway.
-  return 1;
+int sdl_helper_setup(SDL_Renderer *renderer, SDL_Window *window) {
+  SDL_PixelFormatEnum pf = SDL_GetWindowPixelFormat(window);
 
-  int err;
-  if (!(err = SDL_GetRendererInfo(renderer, &rendererInfo))) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't interrogate renderer: %s", SDL_GetError());
-    return 1;
-  }
-  if (rendererInfo.num_texture_formats > 0) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Renderer had no texture pixel formats? (what?)");
+  if (pf == SDL_PIXELFORMAT_UNKNOWN) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't find window pixel format: %s", SDL_GetError());
     return 1;
   }
 
-  // Let's just grab the first one for now...
-  preferred_pixel_format = rendererInfo.texture_formats[0];
-  SDL_Log("Chosen texture format: %s", SDL_GetPixelFormatName(preferred_pixel_format));
+  preferred_pixel_format = pf;
 
   return 0;
 }

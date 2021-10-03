@@ -58,13 +58,12 @@ struct menu_result {
 
 struct menu_state {
    BITMAP *menu;	/* where the menu image goes */
+   BITMAP *inverse_inside;	/* where the inverse of the menu goes (for 'BAR' selection) */
    BITMAP *screen;	/* pointer to the display */
-   BITMAP *save;	/* stuff covered by menu */
    short menu_startx, 	/* menu starting coords on screen */
          menu_starty;
    short bar_sizex, 	/* size of one menu item */
-         bar_sizey,
-         x_pos;		/* x position relative to inside */
+         bar_sizey;
    struct menu_action *action;	/* value associated with each item */
    short current;			/* currently selected bar */
    short exit;			/* mouse position in menu */

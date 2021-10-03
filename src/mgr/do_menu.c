@@ -209,7 +209,7 @@ int exit_code;			/* valid exit codes */
         case EXIT_RIGHT:	/* slid off top the right */
              if ((next = menu_next(state)) >=0 &&	/* link exists */
                      menu_list[next] &&			/* menu exists */
-                     menu_list[next]->save == (BITMAP *) 0 &&	/* not used */
+                     // TODO - ??? - menu_list[next]->save == (BITMAP *) 0 &&	/* not used */
                      (result=do_menus(screen,mouse,		/* choice */
                                       x+x_slide,y-y_slide,font,menu_list,
                                       next,exit_code|EXIT_LEFT))) {
@@ -218,7 +218,7 @@ int exit_code;			/* valid exit codes */
              break;
         case EXIT_BOTTOM:
              if ((next = menu_next(state)) >=0 &&	/* menu exists */
-                 menu_list[next]->save == (BITMAP *) 0 &&	/* not used */
+                 // TODO - ??? - menu_list[next]->save == (BITMAP *) 0 &&	/* not used */
                      (result=do_menus(screen,mouse,		/* choice */
                                       x+x_page,y+y_page,font,menu_list,
                                       next,exit_code|EXIT_TOP))) {
