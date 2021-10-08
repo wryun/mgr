@@ -63,10 +63,12 @@ void menu_render(struct menu_state *state) {
    bit_blit_color(screen,state->menu_startx,state->menu_starty,BIT_WIDE(state->menu),BIT_HIGH(state->menu),
  			&C_WHITE, NULL, state->menu,0,0);
 
-   int y_bar_start = state->current*state->bar_sizey;
-   bit_blit_color(screen, state->menu_startx + MENU_BORDER, state->menu_starty + MENU_BORDER + y_bar_start,
-                  state->bar_sizex, state->bar_sizey,
-                  &C_WHITE, NULL, state->inverse_inside, 0, y_bar_start);
+   if (state->current >= 0) {
+      int y_bar_start = state->current*state->bar_sizey;
+      bit_blit_color(screen, state->menu_startx + MENU_BORDER, state->menu_starty + MENU_BORDER + y_bar_start,
+                     state->bar_sizex, state->bar_sizey,
+                     &C_WHITE, NULL, state->inverse_inside, 0, y_bar_start);
+   }
 
    bit_present(screen);
 }
@@ -199,34 +201,24 @@ int button;			/* button termination condition (not yet)*/
 int exit;			/* off-menu exit codes */
    {
    register BITMAP *inside;	/* the menu */
+   int x_mouse, y_mouse;
    int push;
-   int x_mouse, y_mouse;	/* mouse delta's */
-   int new_current;			/* selected item */
-   int count;			/* number of items */
 
    if (state == (struct menu_state *) 0)
        return(-1);
 
 	SETMOUSEICON(&mouse_bull);
 
-   new_current = state -> current;
-   count = state -> count;
-   state->exit=0;
+   state->exit = 0;
+   state->current = -1;
 
    /* set up text region */
 
    inside = bit_create(state->screen,state->menu_startx+MENU_BORDER,
-                    state->menu_starty+MENU_BORDER - state->bar_sizey,
-                    state->bar_sizex,state->bar_sizey*(count+2));
-
-   /* make sure we aren't already exited */
-
-   if (exit&EXIT_BOTTOM && new_current >= count) {
-      new_current = count-1;
-      }
+                       state->menu_starty+MENU_BORDER - state->bar_sizey,
+                       state->bar_sizex,state->bar_sizey*(state->count+2));
 
    /* track the mouse */
-   menu_render(state);
    do {
       push = mouse_get_poll(&x_mouse,&y_mouse);
       if (push == -1) {
@@ -239,30 +231,33 @@ int exit;			/* off-menu exit codes */
             state->exit = EXIT_LEFT;
             break;
          }
+         state->current = -1;
          continue;
       } else if (x_mouse + HOT >= state->menu_startx + BIT_WIDE(state->menu)) {
          if (exit&EXIT_RIGHT) {
             state->exit = EXIT_RIGHT;
             break;
          }
+         state->current = -1;
          continue;
       } else if (y_mouse + HOT <= state->menu_starty) {
          if (exit&EXIT_TOP) {
             state->exit = EXIT_TOP;
             break;
          }
+         state->current = -1;
          continue;
       } else if (y_mouse + HOT >= state->menu_starty + BIT_HIGH(state->menu)) {
          if (exit&EXIT_BOTTOM) {
             state->exit = EXIT_BOTTOM;
             break;
          }
+         state->current = -1;
          continue;
       }
 
-      state->current = BETWEEN(0, state->count, (count + 2) * (y_mouse + HOT - state->menu_starty - MENU_BORDER) / BIT_HIGH(inside));
-   }
-   while (push != button);
+      state->current = BETWEEN(0, state->count - 1, (state->count + 2) * (y_mouse + HOT - state->menu_starty - MENU_BORDER) / BIT_HIGH(inside));
+   } while (push != button);
 
    bit_destroy(inside);
    SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
