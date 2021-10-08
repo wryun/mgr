@@ -138,6 +138,7 @@ extern BITMAP *bit_open( char *name);
 extern int bit_point( BITMAP *map, int dx, int dy, int func);
 extern int bit_size( int wide, int high, unsigned char depth);
 extern void bit_present(BITMAP *map);
+extern void bit_flush();
 extern void bit_warpmouse(int x, int y);
 extern DATA *bit_initscreen( char *name,
 			     int *width, int *height, unsigned char *depth,

@@ -12,6 +12,11 @@
 
 #include "sdl.h"
 
+void bit_flush()
+{
+  SDL_RenderFlush(sdl_renderer);
+}
+
 void bit_present(BITMAP *dest)
 {
   if (!IS_SCREEN(dest)) {

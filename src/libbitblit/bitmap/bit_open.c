@@ -17,8 +17,8 @@
 /*}}}  */
 
 
-#define WIDTH 1366
-#define HEIGHT 768
+#define WIDTH 500
+#define HEIGHT 600
 #define DEPTH 1  /* TODO ... colours. */
 
 
@@ -42,7 +42,7 @@ BITMAP *bit_open(char *name)
     return NULL;
   }
 
-  if (SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, SDL_WINDOW_FULLSCREEN_DESKTOP, &sdl_window, &sdl_renderer)) {
+  if (SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, SDL_WINDOW_OPENGL, &sdl_window, &sdl_renderer)) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
     return NULL;
   }
