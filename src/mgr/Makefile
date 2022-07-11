@@ -13,7 +13,7 @@ OBJS=		Write.o border.o colormap.o copyright.o cut.o \
 		get_menus.o get_rect.o get_text.o getshell.o graph_subs.o \
 		icon_server.o intersect.o mgr.o mouse_get.o move.o \
                 move_box.o new_window.o print.o put_window.o scroll.o \
-                set_mode.o shape.o sigdata.o startup.o subs.o update.o utmp.o \
+                set_mode.o shape.o sigdata.o startup.o subs.o utmp.o \
                 win_make.o win_stack.o win_subs.o write_ok.o popen.o
 
 all:		mgr mgrlogin

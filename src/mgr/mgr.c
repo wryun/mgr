@@ -559,7 +559,9 @@ int main(int argc, char **argv) {
      /*{{{  default -- invalid flag*/
      default:
      fprintf(stderr,"Usage: mgr ");
+#ifdef DEBUG
      fprintf(stderr,"[-d <level>]");
+#endif
      fprintf(stderr,"[-vx][-m <mouse>][-s <.rc file>][-F <default font>]\n");
      fprintf(stderr,"           [-P <polling timeout>][-b <shell buffer>][-B <window buffer>]\n");
      fprintf(stderr,"           [-f <font directory>][-i <icon directory>][-S <frame buffer>]\n");
@@ -691,8 +693,10 @@ int main(int argc, char **argv) {
    /* We use the SDL event loop, so we move the traditional
     * 'select' handling to a thread (and have it push a userevent).
     */
+   dbgprintf('m', (stderr, "------ setup select\r\n"));
    setup_select();
 
+   dbgprintf('m', (stderr, "------ start update\r\n"));
    while (1) {
       dirty |= update_windows();
 

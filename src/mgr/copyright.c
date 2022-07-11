@@ -341,7 +341,9 @@ void copyright(BITMAP *where, char *password)
     }
 
     new_ticks = SDL_GetTicks();
-    SDL_Delay(50 - (new_ticks - old_ticks));
+    if ((new_ticks - old_ticks) < 50) {
+      SDL_Delay(50 - (new_ticks - old_ticks));
+    }
     old_ticks = new_ticks;
     dofly(where);
     if( at_startup && (++i % 2) )
