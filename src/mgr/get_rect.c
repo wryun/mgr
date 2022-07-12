@@ -8,64 +8,68 @@
 
 /* sweep out a rectangle */
 
-/*{{{}}}*/
-/*{{{  #includes*/
+/* }}} */
+/* #includes */
 #include <mgr/bitblit.h>
 
 #include "defs.h"
 
 #include "mouse_get.h"
-/*}}}  */
 
-/*{{{  #defines*/
-#define Box(screen,x,y,dx,dy) \
-	type ? \
-           bit_line(screen,x,y,x+dx,y+dy,BIT_NOT(BIT_DST)) : \
-           box(screen,x,y,dx,dy) 
-/*}}}  */
+/* #defines */
+#define Box(screen, x, y, dx, dy) \
+    type ? \
+    bit_line(screen, x, y, x + dx, y + dy, BIT_NOT(BIT_DST)) : \
+    box(screen, x, y, dx, dy)
 
-/*{{{  box -- draw a box*/
-void box(screen,x1,y1,dx,dy)
+/* box -- draw a box */
+void box(screen, x1, y1, dx, dy)
 BITMAP *screen;
-int x1,y1,dx,dy;
-   {
-   if (dx<0)
-      x1 += dx,dx = -dx;
-   if (dy<0)
-      y1 += dy,dy = -dy;
-   if (dx<3)
-      dx=3;
-   if (dy<3)
-      dy=3;
+int x1, y1, dx, dy;
+{
+    if (dx < 0) {
+        x1 += dx, dx = -dx;
+    }
 
-   bit_blit(screen,x1+1,y1,dx-1,1 ,BIT_NOT(BIT_DST),NULL_DATA,0,0);
-   bit_blit(screen,x1+1,y1+dy,dx-1,1 ,BIT_NOT(BIT_DST),NULL_DATA,0,0);
-   bit_blit(screen,x1,y1,1, dy,BIT_NOT(BIT_DST),NULL_DATA,0,0);
-   bit_blit(screen,x1+dx,y1,1, dy,BIT_NOT(BIT_DST),NULL_DATA,0,0);
-   }
-/*}}}  */
-/*{{{  get_rect*/
-void get_rect(screen,mouse,x,y,dx,dy,type)
-BITMAP *screen;		/* where to sweep out the box */
-int mouse;			/* file to get mouse coords from */
-int x,y;			/* starting position */
-register int *dx,*dy;		/* box width,height */
-int type;			/* rectangle or line */
-   {
-   int x_mouse=x, y_mouse=y;
-   register int button;
+    if (dy < 0) {
+        y1 += dy, dy = -dy;
+    }
 
-   for (;;) {
-      *dx = x_mouse - x;
-      *dy = y_mouse - y;
-      Box(screen,x,y,*dx,*dy);
-      bit_present(screen);
-      button = mouse_get_wait(&x_mouse, &y_mouse);
-      do {
-         if (button == 0) {
-            return;
-         }
-      } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
-   }
-   }
-/*}}}  */
+    if (dx < 3) {
+        dx = 3;
+    }
+
+    if (dy < 3) {
+        dy = 3;
+    }
+
+    bit_blit(screen, x1 + 1, y1, dx - 1, 1, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
+    bit_blit(screen, x1 + 1, y1 + dy, dx - 1, 1, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
+    bit_blit(screen, x1, y1, 1, dy, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
+    bit_blit(screen, x1 + dx, y1, 1, dy, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
+}
+/* get_rect */
+void get_rect(screen, mouse, x, y, dx, dy, type)
+BITMAP *screen;         /* where to sweep out the box */
+int mouse;                      /* file to get mouse coords from */
+int x, y;                        /* starting position */
+register int *dx, *dy;           /* box width,height */
+int type;                       /* rectangle or line */
+{
+    int x_mouse = x, y_mouse = y;
+    register int button;
+
+    for (;;) {
+        *dx = x_mouse - x;
+        *dy = y_mouse - y;
+        Box(screen, x, y, *dx, *dy);
+        bit_present(screen);
+        button = mouse_get_wait(&x_mouse, &y_mouse);
+
+        do {
+            if (button == 0) {
+                return;
+            }
+        } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
+    }
+}

@@ -1,5 +1,5 @@
-/*{{{}}}*/
-/*{{{  Notes*/
+/* }}} */
+/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -9,8 +9,7 @@
  */
 
 /* move a window */
-/*}}}  */
-/*{{{  #includes*/
+/* #includes */
 #include <mgr/bitblit.h>
 #include <stdio.h>
 
@@ -22,38 +21,37 @@
 #include "mouse_get.h"
 #include "move_box.h"
 #include "shape.h"
-/*}}}  */
 
-/*{{{  move_window*/
+/* move_window */
 void move_window()
-   {
-   int button;
-   int dx = BIT_WIDE(ACTIVE(border));
-   int dy = BIT_HIGH(ACTIVE(border));
-   int sx = ACTIVE(x0);
-   int sy = ACTIVE(y0);
+{
+    int button;
+    int dx = BIT_WIDE(ACTIVE(border));
+    int dy = BIT_HIGH(ACTIVE(border));
+    int sx = ACTIVE(x0);
+    int sy = ACTIVE(y0);
 
-   move_box(screen,mouse,&sx,&sy,dx,dy,0);
+    move_box(screen, mouse, &sx, &sy, dx, dy, 0);
 
-   /* adjust window state */
+    /* adjust window state */
 
-   mousex += sx-ACTIVE(x0);
-   mousey += sy-ACTIVE(y0);
+    mousex += sx - ACTIVE(x0);
+    mousey += sy - ACTIVE(y0);
 
-   shape(sx,sy,dx,dy);
-   bit_present(screen);
+    shape(sx, sy, dx, dy);
+    bit_present(screen);
 #ifdef MGR_ALIGN
-   if (dx != BIT_WIDE(ACTIVE(border)) || dy != BIT_HIGH(ACTIVE(border)))
-      do_event(EVENT_SHAPE,active,E_MAIN);
-   else
+
+    if (dx != BIT_WIDE(ACTIVE(border)) || dy != BIT_HIGH(ACTIVE(border))) {
+        do_event(EVENT_SHAPE, active, E_MAIN);
+    } else
 #endif
-      do_event(EVENT_MOVE,active,E_MAIN);
+    do_event(EVENT_MOVE, active, E_MAIN);
 
+    /* wait till button is released */
+    do {
+        button = mouse_get_wait(&sx, &sy);
+    }
 
-   /* wait till button is released */
-   do {
-      button=mouse_get_wait(&sx,&sy);
-      }
-   while (button!=0);
-   }
-/*}}}  */
+    while (button != 0);
+}
