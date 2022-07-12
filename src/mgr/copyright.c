@@ -35,7 +35,6 @@ without paying fees.
 #include "defs.h"
 
 #include "proto.h"
-#include "colormap.h"
 #include "font_subs.h"
 #include "icon_server.h"
 extern BITMAP default_font;
@@ -76,7 +75,6 @@ static int clockwise = 0;
 static struct st 
 {
   short x, y, z;
-  short color;
 } stars[NSTARS]; /* our galaxy */
 /*}}}  */
 
@@ -129,10 +127,9 @@ register short scale, count;
 }
 /*}}}  */
 /*{{{  xplot*/
-static int xplot(where,x, y, col, state)
+static int xplot(where,x, y, state)
 register BITMAP *where;
 register int x, y;
-register int col;
 int state;
 {
   /* are we on the screen? If not, let the caller know*/
@@ -146,10 +143,9 @@ int state;
 }
 /*}}}  */
 /*{{{  project*/
-static int project(where,x, y, z, col, state)
+static int project(where,x, y, z, state)
 register BITMAP *where;
 register short x, y, z;
-register int col;
 register short state;
 {
         
@@ -159,7 +155,7 @@ register short state;
   */
   x = (x/z) + hmaxh;
   y = (y/z) + hmaxv;
-  return(xplot(where,x, y, col, state));
+  return(xplot(where,x, y, state));
 
 }
 /*}}}  */
@@ -178,8 +174,7 @@ static void fly (where) BITMAP *where;
       stp->x = Random();
       stp->y = Random();
       stp->z = (Random() % MAXZ) + 1;
-      stp->color = Random() & ((1 << BIT_DEPTH(where))-1);
-    } while(project(where,stp->x, stp->y, stp->z, stp->color, ON)); /* on screen? */
+    } while(project(where,stp->x, stp->y, stp->z, ON)); /* on screen? */
   }
 }
 /*}}}  */
@@ -193,7 +188,7 @@ static void dofly (where) BITMAP *where;
   stp = stars;
   do 
   {
-    project(where,stp->x, stp->y, stp->z, stp->color, OFF); /* turn star off*/
+    project(where,stp->x, stp->y, stp->z, OFF); /* turn star off*/
     if ((stp->z -= SPEED) <= 0) { /* star went past us */
       stp->x = Random();
       stp->y = Random();
@@ -202,7 +197,7 @@ static void dofly (where) BITMAP *where;
     else {		/* rotate universe */
       cordic(&stp->x,&stp->y,SCALE,COUNT);
     }
-    if (project(where,stp->x, stp->y, stp->z, stp->color, ON)) 
+    if (project(where,stp->x, stp->y, stp->z, ON)) 
     {
       /* if projection is off screen, get a new position */
       stp->x = Random();
@@ -221,34 +216,12 @@ void copyright(BITMAP *where, char *password)
   int i = 0;
   char rbuf[64], *readp = rbuf;
   char *crypt();
-  unsigned int ind, r, g, b, maxi;
   int at_startup = (*password == 0);
-
-  /* find w/o claiming the colors we want on the startup screen */
-  r = 255; g = 180; b = 60; maxi = 255; /* sun yellow */
-  findcolor( screen, &ind, &r, &g, &b, &maxi);
-  color_map[LOGO_COLOR] = ind;
-
-  if( at_startup) {
-    r = 0; g = 16; b = 64; maxi = 255; /* deep blue */
-  } else {
-    r = 0; g =  0; b =  0; maxi = 255; /* black for screen saving */
-  }
-  findcolor( screen, &ind, &r, &g, &b, &maxi);
-  color_map[LOGO_COLOR_BG] = ind;
-
-  r = 255; g = 108; b = 0; maxi = 255; /* orange */
-  findcolor( screen, &ind, &r, &g, &b, &maxi);
-  color_map[CR_COLOR] = ind;
-
-  r = 0; g = 255; b = 0; maxi = 255;  /* unused green? */
-  findcolor( screen, &ind, &r, &g, &b, &maxi);
-  color_map[CR_COLOR_BG] = ind;
 
   /* clear display */
         
-  bit_blit(where,0,0,BIT_WIDE(where),BIT_HIGH(where),
-	   BUILDOP(BIT_CLR,color_map[LOGO_COLOR],color_map[LOGO_COLOR_BG]),
+  bit_blit_color(where,0,0,BIT_WIDE(where),BIT_HIGH(where),
+	   &C_BLACK, NULL,
 	   (BITMAP*)0,0,0);
 
   if( at_startup) {

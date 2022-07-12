@@ -29,7 +29,6 @@
 
 #include "proto.h"
 #include "border.h"
-#include "colormap.h"
 #include "do_event.h"
 #include "erase_win.h"
 #include "font_subs.h"
@@ -147,7 +146,6 @@ int destroy(win) register WINDOW *win;
 #ifdef WHO
       rm_utmp(W(tty));
 #endif
-      free_colors( win, 0, 255); /* release claims on the colormap */
 
       /* tell alternate windows main died */
 

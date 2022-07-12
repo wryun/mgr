@@ -38,7 +38,6 @@
 
 #include "proto.h"
 #include "border.h"
-#include "colormap.h"
 #include "copyright.h"
 #include "destroy.h"
 #include "do_buckey.h"
@@ -264,12 +263,6 @@ int update_windows() {
 void display_windows() {
    register WINDOW *win;                /* current window to update */
 
-   /*if (active != NULL) {
-      bit_blit_color(screen, ACTIVE(x0), ACTIVE(y0), ACTIVE(border)->wide, ACTIVE(border)->high, &C_WHITE, NULL, ACTIVE(border), 0, 0);
-      bit_present(screen);
-   }
-   */
-
    if (active == NULL) {
       bit_present(screen);
       return;
@@ -279,15 +272,6 @@ void display_windows() {
    do {
       bit_blit_color(screen, W(x0), W(y0), W(border)->wide, W(border)->high, &C_WHITE, NULL, W(border), 0, 0);
    } while ((win = W(prev)) != active->prev);
-
-   /*
-   for (int i = 0; i < 5; ++i) {
-      if (win == W(prev)) {
-         break;
-      }
-      win = W(prev);
-   }
-   */
 
    bit_present(screen);
 }
@@ -436,13 +420,12 @@ int main(int argc, char **argv) {
    char start_file[MAX_PATH];           /* name of startup file */
    char *screen_dev = SCREEN_DEV;       /* name of frame buffer */
    char *default_font = (char * )0;     /* default font */
-   int touch_colormap = 1;
 
    timestamp();                                 /* initialize the timestamp */
 
    sprintf(start_file,"%s/%s",getenv("HOME"),STARTFILE);
    /*{{{  parse arguments*/
-   while ((flag=getopt(argc,argv,"d:p:cvxm:s:F:M:P:b:B:f:i:S:z:Z:"))!=EOF)
+   while ((flag=getopt(argc,argv,"d:p:vxm:s:F:M:P:b:B:f:i:S:z:Z:"))!=EOF)
    switch(flag)
    {
      /*{{{  d*/
@@ -479,11 +462,6 @@ int main(int argc, char **argv) {
      case 'v':
                fputs(version,stdout);
                exit(1);
-     /*}}}  */
-     /*{{{  c -- dont touch the colormap on startup, wait for orders */
-     case 'c':
-               touch_colormap = 0;
-               break;
      /*}}}  */
      /*{{{  x -- use /dev/null as startfile*/
      case 'x': strcpy(start_file,"/dev/null");
@@ -608,9 +586,6 @@ int main(int argc, char **argv) {
         screen = bit_create(prime,x,y,w,h);
    }
    else prime=(BITMAP*)0;
-   init_colors( screen);
-   if( touch_colormap)
-      fill_colormap( screen);
    /*}}}  */
 
    /* SDL init */

@@ -28,7 +28,6 @@
 #include "proto.h"
 #include "Write.h"
 #include "border.h"
-#include "colormap.h"
 #include "do_event.h"
 #include "do_menu.h"
 #include "down_load.h"
@@ -368,7 +367,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
               BORDER(win);
               break;
         /*}}}  */
-        /*{{{  E_BCOLOR     -- set background color*/
+        /*{{{  E_BCOLOR     -- set background golor*/
         case E_BCOLOR:
 	      W(style) = W(flags)&W_REVERSE ?
 			   PUTFCOLOR(W(style),*W(esc)):
@@ -748,7 +747,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 		     getpalette( screen, (unsigned int)i, &r, &g, &b, &maxi);
 		     sprintf(tbuff, "COLOR %d %u %u %u %u\n", i, r, g, b, maxi);
 		 } else {
-		     i = allocate_color( win);
+		     /* TODO i = allocate_color( win); */
+                     i = 0;  /* TODO */
 		     if (i >= 0)
 			 sprintf(tbuff, "YOURCOLOR %d\n", i);
 		     else
@@ -756,13 +756,14 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 		 }
 		 write(W(to_fd), tbuff, strlen(tbuff));
 	     } else if (cnt == 1) { /* free some colors */
-		     free_colors( win, (unsigned int)i, (unsigned int)W(esc)[1]);
+		     /* TODO */
+		     /* free_colors( win, (unsigned int)i, (unsigned int)W(esc)[1]); */
 	     } else if (cnt == 3) { /* find a color */
 		     r = (unsigned int)i;
 		     g = W(esc)[1];
 		     b = W(esc)[2];
 		     maxi = W(esc)[3];
-		     findcolor( screen, &ind, &r, &g, &b, &maxi);
+		     /* TODO findcolor( screen, &ind, &r, &g, &b, &maxi); */
 		     sprintf(tbuff, "COLOR %u %u %u %u %u\n", ind, r, g, b, maxi);
 		     write(W(to_fd), tbuff, strlen(tbuff));
 	     } else if (cnt == 4) {	/* set palette entry */

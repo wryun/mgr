@@ -6,7 +6,7 @@ _CPPFLAGS=	$(CPPFLAGS) $(MGRFLAGS) \
 
 CFLAGS=		$(CCFLAGS) $(_CPPFLAGS)
 
-OBJS=		Write.o border.o colormap.o copyright.o cut.o \
+OBJS=		Write.o border.o copyright.o cut.o \
 		data.o debug_flags.o \
 		destroy.o do_buckey.o do_button.o do_event.o do_menu.o \
                 down_load.o erase_win.o font_subs.o get_font.o get_info.o \
