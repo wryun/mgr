@@ -199,6 +199,7 @@ typedef struct window {         /* primary window structure */
     BITMAP *bitmap;     /* for use when downloading bitmaps */
     BITMAP *bitmaps[MAXBITMAPS]; /* scratchpad space */
     BITMAP *cursor;     /* bitmap of cursor */
+    BITMAP *char_cursor_backup;     /* TODO - temp hack so we don't lose cursor data */
     struct font *font;  /* this is the font */
 
     rectangle text;     /* location of text region within window */

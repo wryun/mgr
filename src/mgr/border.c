@@ -6,12 +6,12 @@
 #include "defs.h"
 
 
-#define ONE_BOX( bm, x, y, w, h, b, op)                                   \
+#define ONE_BOX( bm, x, y, w, h, b, col)                                   \
 /* top, right, bottom, left */                                            \
-    bit_blit( bm, (x), (y), (w), (b), (op), 0, 0, 0); \
-    bit_blit( bm, (x) + (w) - (b), (y) + (b), (b), (h) - (b) - (b), (op), 0, 0, 0); \
-    bit_blit( bm, (x), (y) + (h) - (b), (w), (b), (op), 0, 0, 0); \
-    bit_blit( bm, (x), (y) + (b), (b), (h) - (b) - (b), (op), 0, 0, 0);
+    bit_blit_color( bm, (x), (y), (w), (b), (col), NULL, 0, 0, 0); \
+    bit_blit_color( bm, (x) + (w) - (b), (y) + (b), (b), (h) - (b) - (b), (col), NULL, 0, 0, 0); \
+    bit_blit_color( bm, (x), (y) + (h) - (b), (w), (b), (col), NULL, 0, 0, 0); \
+    bit_blit_color( bm, (x), (y) + (b), (b), (h) - (b) - (b), (col), NULL, 0, 0, 0);
 
 
 void border( WINDOW *win, int be_fat)
@@ -20,8 +20,6 @@ void border( WINDOW *win, int be_fat)
     int out = (be_fat == BORDER_FAT)? both - 1: win->outborderwid;
     int inr = both - out;
 
-    int clr = PUTOP(BIT_CLR, W(style));
-    int set = PUTOP(BIT_SET, W(style));
     BITMAP *bdr = W(border);
     int w = BIT_WIDE(bdr);
     int h = BIT_HIGH(bdr);
@@ -30,6 +28,6 @@ void border( WINDOW *win, int be_fat)
         return;
     }
 
-    ONE_BOX( bdr, 0, 0, w, h, out, set);
-    ONE_BOX( bdr, out, out, w - out - out, h - out - out, inr, clr);
+    ONE_BOX( bdr, 0, 0, w, h, out, &C_BLACK);
+    ONE_BOX( bdr, out, out, w - out - out, h - out - out, inr, &C_WHITE);
 }

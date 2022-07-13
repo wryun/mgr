@@ -45,6 +45,7 @@
 #include "sigdata.h"
 #include "startup.h"
 
+
 /* set_covered -- deactivate all windows covered by win */
 void set_covered(check)
 register WINDOW *check;                 /* window to check covering against */
@@ -64,6 +65,7 @@ register WINDOW *check;                 /* window to check covering against */
         }
     }
 }
+
 /* un_covered -- find and activate all windows previously covered by win */
 void un_covered()
 {
@@ -109,6 +111,7 @@ void un_covered()
         }
     }
 }
+
 /* expose -- bring a window to the top */
 void expose(win)
 register WINDOW *win;                   /* window to expose */
@@ -147,6 +150,7 @@ register WINDOW *win;                   /* window to expose */
         SETMOUSEICON( DEFAULT_MOUSE_CURSOR);    /* because active win chg */
     }
 }
+
 /* bury -- move a window at the bottom of window list */
 int bury(win)
 register WINDOW *win;                   /* window to bury */
@@ -172,6 +176,7 @@ register WINDOW *win;                   /* window to bury */
 
     return(1);
 }
+
 /* hide -- bury a window at the bottom of the screen */
 void hide(win)
 register WINDOW *win;                   /* window to hide */
@@ -184,7 +189,7 @@ register WINDOW *win;                   /* window to hide */
 
     SETMOUSEICON( DEFAULT_MOUSE_CURSOR); /* because active win chg */
 }
-/* move_mouse */
+
 /*****************************************************************************
  *	move the mouse, keep exclusive control
  *	"how" specifies how we recognize completion:
@@ -193,7 +198,6 @@ register WINDOW *win;                   /* window to hide */
  *		how != 0:	some button was down at start of action,
  *				all buttons released completes the action.
  */
-
 int move_mouse(screen, mouse, x, y, how)
 BITMAP *screen;
 int mouse, *x, *y;
@@ -216,6 +220,7 @@ int how;
 
     return(button);
 }
+
 /* parse -- parse a line into fields */
 #define iswhite(x)      (strchr(" \t", x))
 
@@ -395,47 +400,7 @@ BITMAP *map;                    /* cursor icon */
     return(map != NULL && BIT_WIDE(map) >= 16 && BIT_HIGH(map) >= 32);
     /* might like to check contents of bitmap to be reasonable */
 }
-/* do_cursor */
-static void do_cursor(win)
-WINDOW *win;
-{
-    switch (W(curs_type)) {
-    case CS_BLOCK:
-        bit_blit(W(window), W(x) + W(text.x),
-                 W(y) + W(text.y) - W(font->head.high),
-                 W(font->head.wide), W(font->head.high),
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        break;
-    case CS_BOX:
-        bit_blit(W(window), W(x) + W(text.x),
-                 W(y) + W(text.y) - W(font->head.high) + 1,
-                 W(font->head.wide), W(font->head.high) - 2,
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        bit_blit(W(window), W(x) + W(text.x) - 2,
-                 W(y) + W(text.y) - W(font->head.high) - 1,
-                 W(font->head.wide) + 4, W(font->head.high) + 2,
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        break;
-    case CS_LEFT:
-        bit_blit(W(window), W(x) + W(text.x) - 1,
-                 W(y) + W(text.y) - W(font->head.high),
-                 2, W(font->head.high),
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        break;
-    case CS_RIGHT:
-        bit_blit(W(window), W(x) + W(text.x) + W(font->head.wide) - 1,
-                 W(y) + W(text.y) - W(font->head.high),
-                 2, W(font->head.high),
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        break;
-    case CS_UNDER:
-        bit_blit(W(window), W(x) + W(text.x),
-                 W(y) + W(text.y) - 1,
-                 W(font->head.wide), 2,
-                 PUTOP(BIT_NOT(BIT_DST), W(style)), 0, 0, 0);
-        break;
-    }
-}
+
 /* cursor_on, cursor_off */
 static int cursoron = 0;
 
@@ -451,8 +416,51 @@ void cursor_on()
         return;
     }
 
-    do_cursor(active);
     cursoron = 1;
+    WINDOW *win = active;
+
+    bit_blit_color(W(char_cursor_backup), 0, 0,
+                   W(font->head.wide) + 2, W(font->head.high) + 2,
+                   &C_WHITE, NULL,
+                   W(window),
+                   W(x) + W(text.x) - 1, W(y) + W(text.y) - W(font->head.high) - 1);
+
+    switch (W(curs_type)) {
+    case CS_BLOCK:
+        bit_blit_color(W(window), W(x) + W(text.x),
+                 W(y) + W(text.y) - W(font->head.high),
+                 W(font->head.wide), W(font->head.high),
+                 &C_BLACK, NULL, 0, 0, 0);
+        break;
+    case CS_BOX:
+        bit_blit_color(W(window), W(x) + W(text.x),
+                       W(y) + W(text.y) - W(font->head.high) + 1,
+                       W(font->head.wide), W(font->head.high) - 2,
+                       &C_BLACK, NULL, 0, 0, 0);
+        bit_blit_color(W(window), W(x) + W(text.x) - 2,
+                       W(y) + W(text.y) - W(font->head.high) - 1,
+                       W(font->head.wide) + 4, W(font->head.high) + 2,
+                       &C_BLACK, NULL, 0, 0, 0);
+        break;
+    case CS_LEFT:
+        bit_blit_color(W(window), W(x) + W(text.x) - 1,
+                       W(y) + W(text.y) - W(font->head.high),
+                       2, W(font->head.high),
+                       &C_BLACK, NULL, 0, 0, 0);
+        break;
+    case CS_RIGHT:
+        bit_blit_color(W(window), W(x) + W(text.x) + W(font->head.wide) - 1,
+                       W(y) + W(text.y) - W(font->head.high),
+                       2, W(font->head.high),
+                       &C_BLACK, NULL, 0, 0, 0);
+        break;
+    case CS_UNDER:
+        bit_blit_color(W(window), W(x) + W(text.x),
+                       W(y) + W(text.y) - 1,
+                       W(font->head.wide), 2,
+                       &C_BLACK, NULL, 0, 0, 0);
+        break;
+    }
 }
 
 void cursor_off()
@@ -468,11 +476,16 @@ void cursor_off()
     }
 
     cursoron = 0;
-    do_cursor(active);
-}
-/* system command - turn off root privaleges */
-/* system command - turn off root privaleges */
+    WINDOW *win = active;
 
+    bit_blit_color(W(window),
+                   W(x) + W(text.x) - 1, W(y) + W(text.y) - W(font->head.high) - 1,
+                   W(font->head.wide) + 2, W(font->head.high) + 2,
+                   &C_WHITE, NULL,
+                   W(char_cursor_backup), 0, 0);
+}
+
+/* system command - turn off root privileges */
 int systemcmd(command) char *command;
 {
     int status, pid, w;

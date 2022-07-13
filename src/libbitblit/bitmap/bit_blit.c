@@ -61,9 +61,9 @@ void bit_blit(
   if (src_map == NULL) {
     SDL_SetRenderTarget(sdl_renderer, dst_texture);
     if (op | BIT_CLR) {
-      SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
-    } else {
       SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    } else {
+      SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
     }
     SDL_RenderFillRect(sdl_renderer, &dst_rect);
   } else {
