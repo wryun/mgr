@@ -11,6 +11,7 @@
 /* defines for mgr */
 
 #include <string.h>
+#include <SDL.h>
 
 /* potentially changable defines for mgr */
 
@@ -118,9 +119,9 @@ char *strchr();
 
 /* mouse buttons */
 
-#define BUTTON_SYS      4               /* system menu button */
-#define BUTTON_2        2               /* middle button */
-#define BUTTON_1        1               /* right button */
+#define BUTTON_SYS      SDL_BUTTON_LMASK               /* system menu button */
+#define BUTTON_2        SDL_BUTTON_MMASK               /* middle button */
+#define BUTTON_1        SDL_BUTTON_RMASK               /* right button */
 
 /* Window table flags */
 

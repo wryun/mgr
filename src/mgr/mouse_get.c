@@ -20,12 +20,21 @@
 #include <SDL.h>
 
 #include "proto.h"
-#include "mouse.h"
 
 /* variables */
 static int button_map[8] = {
-    0, 1, 2, 3, 4, 5, 6, 7
+    0,
+    SDL_BUTTON_LMASK,
+    SDL_BUTTON_MMASK,
+    SDL_BUTTON_LMASK | SDL_BUTTON_MMASK,
+    SDL_BUTTON_RMASK,
+    SDL_BUTTON_LMASK | SDL_BUTTON_RMASK,
+    SDL_BUTTON_MMASK | SDL_BUTTON_RMASK,
+    SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK,
 };
+
+/* SDL also tracks additional buttons; MGR doesn't expect more than 3. */
+#define ALL_BUTTONS (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK)
 
 /* mouse_get */
 /* primary mouse interface
@@ -79,10 +88,10 @@ int mouse_get_sdl(SDL_Event *event, int *x, int *y)
         *x = event->motion.x;
         *y = event->motion.y;
 
-        return button_map[event->motion.state];
+        return button_map[event->motion.state & ALL_BUTTONS];
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP:
-        return button_map[SDL_GetMouseState(x, y)];
+        return button_map[SDL_GetMouseState(x, y) & ALL_BUTTONS];
     default:
         fprintf(stderr, "invalid request of mouse_get_sdl");
         exit(1);
