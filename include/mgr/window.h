@@ -162,6 +162,13 @@
 
 #define E_XMENU		'X'	/* extended menu ops, mgr needs -DXMENU */
 
+#define E_ANSI		'[' /* ANSI control sequence intro instruction */
+
+/* ANSI codes (limited) */
+
+#define EA_SEP		';'
+
+#define EA_COLOR	'm'	/* ANSI style color instruction */
 
 /* misc */
 

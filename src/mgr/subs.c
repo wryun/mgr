@@ -421,7 +421,7 @@ void cursor_on()
 
     bit_blit_color(W(char_cursor_backup), 0, 0,
                    W(font->head.wide) + 2, W(font->head.high) + 2,
-                   &C_WHITE, NULL,
+                   &W(bg_color), NULL,
                    W(window),
                    W(x) + W(text.x) - 1, W(y) + W(text.y) - W(font->head.high) - 1);
 
@@ -430,35 +430,35 @@ void cursor_on()
         bit_blit_color(W(window), W(x) + W(text.x),
                  W(y) + W(text.y) - W(font->head.high),
                  W(font->head.wide), W(font->head.high),
-                 &C_BLACK, NULL, 0, 0, 0);
+                 &W(fg_color), NULL, 0, 0, 0);
         break;
     case CS_BOX:
         bit_blit_color(W(window), W(x) + W(text.x),
                        W(y) + W(text.y) - W(font->head.high) + 1,
                        W(font->head.wide), W(font->head.high) - 2,
-                       &C_BLACK, NULL, 0, 0, 0);
+                       &W(fg_color), NULL, 0, 0, 0);
         bit_blit_color(W(window), W(x) + W(text.x) - 2,
                        W(y) + W(text.y) - W(font->head.high) - 1,
                        W(font->head.wide) + 4, W(font->head.high) + 2,
-                       &C_BLACK, NULL, 0, 0, 0);
+                       &W(fg_color), NULL, 0, 0, 0);
         break;
     case CS_LEFT:
         bit_blit_color(W(window), W(x) + W(text.x) - 1,
                        W(y) + W(text.y) - W(font->head.high),
                        2, W(font->head.high),
-                       &C_BLACK, NULL, 0, 0, 0);
+                       &W(fg_color), NULL, 0, 0, 0);
         break;
     case CS_RIGHT:
         bit_blit_color(W(window), W(x) + W(text.x) + W(font->head.wide) - 1,
                        W(y) + W(text.y) - W(font->head.high),
                        2, W(font->head.high),
-                       &C_BLACK, NULL, 0, 0, 0);
+                       &W(fg_color), NULL, 0, 0, 0);
         break;
     case CS_UNDER:
         bit_blit_color(W(window), W(x) + W(text.x),
                        W(y) + W(text.y) - 1,
                        W(font->head.wide), 2,
-                       &C_BLACK, NULL, 0, 0, 0);
+                       &W(fg_color), NULL, 0, 0, 0);
         break;
     }
 }
@@ -481,7 +481,7 @@ void cursor_off()
     bit_blit_color(W(window),
                    W(x) + W(text.x) - 1, W(y) + W(text.y) - W(font->head.high) - 1,
                    W(font->head.wide) + 2, W(font->head.high) + 2,
-                   &C_WHITE, NULL,
+                   &W(bg_color), NULL,
                    W(char_cursor_backup), 0, 0);
 }
 

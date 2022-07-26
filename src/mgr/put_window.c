@@ -49,9 +49,9 @@
 #define DO_CHAR(font, c) \
     ((font)->glyph[c])
 
-#define PUT_CHAR(dest, x, y, font, op, c)    \
+#define PUT_CHAR(dest, x, y, font, fg_color, bg_color, c)    \
     bit_blit_color(dest, x, y - fsizehigh, fsizewide, fsizehigh, \
-                   &C_BLACK, &C_WHITE, DO_CHAR(font, c), 0, 0)
+                   &fg_color, &bg_color, DO_CHAR(font, c), 0, 0)
 
 /* fix the border color */
 
@@ -84,7 +84,7 @@ static void set_winsize(fd, rows, cols, ypixel, xpixel) int fd, rows, cols, ypix
     ioctl(fd, TIOCSWINSZ, &size);
     dbgprintf('t', (stderr, "SWINSZ ioctl %dx%d\n", rows, cols));
 }
-/* standout */
+
 static void standout(WINDOW *win)
 {
     if (W(flags) & W_STANDOUT) {
@@ -100,7 +100,7 @@ static void standout(WINDOW *win)
     W(style) = PUTOP(BIT_NOT(W(style)), W(style));
     W(flags) |= W_STANDOUT;
 }
-/* standend */
+
 static void standend(WINDOW *win)
 {
     if (!(W(flags) & W_STANDOUT)) {
@@ -134,6 +134,7 @@ void set_size(WINDOW *win)
         set_winsize(W(to_fd), BIT_HIGH(W(window)) / FSIZE(high), BIT_WIDE(W(window)) / FSIZE(wide));
     }
 }
+
 /* put_window -- send a string to a window, interpret ESCs, return # of processed character */
 int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 {
@@ -149,10 +150,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
     int offset = 0;                            /* font glyph offset */
     char tbuff[40];                            /* tmp space for replies */
 
+
     /* avoid repeated dereferencing of pointers */
 
     fsizehigh = FSIZE(high);
     fsizewide = FSIZE(wide);
+
 
     if (W(flags) & W_SPECIAL) {
         if (W(flags) & W_UNDER) {
@@ -200,6 +203,93 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             }
 
             break;
+        /* W_ANSI -- process an ANSI escape code */
+        case W_ANSI:
+            W(flags) &= ~W_ANSI;
+            cnt = W(esc_cnt);
+
+            switch (c) {
+            /* ESC          -- turn on escape mode */
+            case ESC:
+                W(flags) |= W_ESCAPE;
+                W(esc_cnt) = 0;
+                W(esc[0]) = 0;
+                break;
+            /* 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 */
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+            {
+                int n = W(esc)[W(esc_cnt)];
+
+                if (n >= 0) {
+                    n = n * 10 + (c - '0');
+                } else {
+                    n = n * 10 - (c - '0');
+                }
+
+                W(flags) |= W_ANSI;
+
+                if (W(flags) & W_MINUS && n != 0) {
+                    n = -n;
+                    W(flags) &= ~(W_MINUS);
+                }
+
+                W(esc)[W(esc_cnt)] = n;
+            }
+            break;
+            case EA_SEP:
+                if (W(esc_cnt) + 1 < MAXESC) {
+                    W(esc_cnt)++;
+                }
+
+                W(esc)[W(esc_cnt)] = 0;
+                W(flags) &= ~(W_MINUS);
+                W(flags) |= W_ANSI;
+                break;
+            /* E_MINUS      -- set the MINUS flag */
+            case E_MINUS:
+                W(flags) |= (W_ANSI | W_MINUS);
+                break;
+            /* E_NULL       -- do nothing */
+            case E_NULL:
+                done++;
+                break;
+            case EA_COLOR:
+                for (int i = 0; i <= W(esc_cnt); ++i) {
+                    int code = W(esc)[i];
+
+                    switch (code) {
+                    case 0:
+                        W(fg_color) = C_BLACK;
+                        W(bg_color) = C_WHITE;
+                        break;
+                    // Foreground colour
+                    case 30: case 31: case 32: case 33:
+                    case 34: case 35: case 36: case 37:
+                        W(fg_color) = fg_colors[code - 30];
+                        break;
+                    // Background colour
+                    case 40: case 41: case 42: case 43:
+                    case 44: case 45: case 46: case 47:
+                        W(bg_color) = bg_colors[code - 40];
+                        break;
+                    // Foreground bright colour
+                    case 90: case 91: case 92: case 93:
+                    case 94: case 95: case 96: case 97:
+                        W(fg_color) = fg_bright_colors[code - 90];
+                        break;
+                    // Background bright colour
+                    case 100: case 101: case 102: case 103:
+                    case 104: case 105: case 106: case 107:
+                        W(bg_color) = bg_bright_colors[code - 100];
+                        break;
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+            break;
         /* W_ESCAPE -- process an escape code */
         case W_ESCAPE:
             W(flags) &= ~(W_ESCAPE);
@@ -233,7 +323,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                 W(esc)[W(esc_cnt)] = n;
             }
-            break;
+                break;
             /* E_SEP1, E_SEP2 field seperators */
             case E_SEP1:
             case E_SEP2:
@@ -402,6 +492,14 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                            PUTFCOLOR(W(style), *W(esc)):
                            PUTBCOLOR(W(style), *W(esc));
                 BORDER(win);
+                break;
+            /* E_ANSI  -- accept an ANSI sequence */
+            case E_ANSI:
+                /* This is a hack since most programs these days like
+                 * ANSI color sequences, and it's probably (at a minimum)
+                 * worth swallowing these.
+                 */
+                W(flags) |= W_ANSI;
                 break;
             /* E_STANDOUT   -- inverse video (characters) */
             case E_STANDOUT:
@@ -1165,8 +1263,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     }
 
                     W(flags) |= W_REVERSE;
-                    W(style) = SWAPCOLOR(W(style));
-                    CLEAR(window, C_WHITE);
+                    {
+                        COLOR temp = W(fg_color);
+                        W(fg_color) = W(bg_color);
+                        W(bg_color) = temp;
+                    }
+                    CLEAR(window, W(bg_color));
                     BORDER(win);
                     break;
                 case M_NOWRAP:         /* turn on no-wrap */
@@ -1254,8 +1356,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     }
 
                     W(flags) &= ~W_REVERSE;
-                    W(style) = SWAPCOLOR(W(style));
-                    CLEAR(window, C_WHITE);
+                    {
+                        COLOR temp = W(fg_color);
+                        W(fg_color) = W(bg_color);
+                        W(bg_color) = temp;
+                    }
+                    CLEAR(window, W(bg_color));
                     BORDER(win);
                     break;
                 case M_NOWRAP:         /* turn off no-wrap */
@@ -1414,7 +1520,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 break;
             /* C_FF -- form feed */
             case C_FF:
-                CLEAR(text, C_WHITE);
+                CLEAR(text, W(bg_color));
                 W(x) = 0;
                 W(y) = fsizehigh;
                 W(flags) |= W_SNARFABLE;
@@ -1468,7 +1574,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     W(y) = T_HIGH - fsizehigh;
                 }
 
-                PUT_CHAR(text, W(x), W(y), W(font), W(style), offset + c);
+                /* TODO W(style) implementation... */
+                PUT_CHAR(text, W(x), W(y), W(font), W(fg_color), W(bg_color), offset + c);
 
                 W(x) += fsizewide;
 

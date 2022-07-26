@@ -143,6 +143,9 @@ struct font *curr_font;
     W(window) = bit_create(W(border), SUM_BDR, SUM_BDR, dx - SUM_BDR * 2, dy - SUM_BDR * 2);
     W(char_cursor_backup) = bit_alloc(curr_font->head.wide + 2, curr_font->head.high + 2, NULL, 1);
 
+    W(fg_color) = C_BLACK;
+    W(bg_color) = C_WHITE;
+
     W(borderwid) = SUM_BDR;
     W(outborderwid) = OUT_BDR;
 

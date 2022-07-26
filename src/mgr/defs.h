@@ -150,7 +150,7 @@ char *strchr();
 #define W_DUPKEY        0x100000L       /* duplicate key mode */
 #define W_NOBUCKEY      0x200000L       /* Buckey keys (i.e. "Left-<char>" and
                                            "Right-<char>") have no effect */
-#define W_CLIPDONE      0x400000L       /* clip list for background update valid */
+#define W_ANSI          0x400000L       /* an ANSI escape sequence is in progress */
 
 /* new character attributes */
 
@@ -169,7 +169,7 @@ char *strchr();
     (W_EXPOSE | W_BACKGROUND)           /* Window ready to accept data */
 
 #define W_STATE \
-    (W_ESCAPE | W_TEXT)                 /* terminal emulator states */
+    (W_ESCAPE | W_TEXT | W_ANSI)                 /* terminal emulator states */
 
 #define W_SAVE \
     (W_REVERSE | W_STANDOUT | W_EXPOSE | W_BACKGROUND | \
@@ -207,8 +207,10 @@ typedef struct window {         /* primary window structure */
     int x0, y0;         /* origin of window on screen */
     int x, y;           /* cursor character position */
     int gx, gy;         /* graphics cursor */
-    int op;             /* raster op function (see bitmap.h)  */
-    int style;          /* character style normal/inverse video */
+    int op;             /* raster op function (see bitmap.h)  TODO - remove */
+    COLOR fg_color;
+    COLOR bg_color;
+    int style;          /* character style normal/inverse video  TODO - ? how is this different from W_REVERSE anyway? */
     /* int background;	Unused: background color WOB or BOW */
     int curs_type;      /* cursor type */
 
@@ -250,6 +252,11 @@ void new_window(), move_window();
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+extern COLOR fg_colors[];
+extern COLOR bg_colors[];
+extern COLOR fg_bright_colors[];
+extern COLOR bg_bright_colors[];
 
 extern COLOR C_WHITE;
 extern COLOR C_BLACK;

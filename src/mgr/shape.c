@@ -78,7 +78,7 @@ int shape(int x, int y, int dx, int dy)
                                 w - ACTIVE(borderwid) * 2,
                                 h - ACTIVE(borderwid) * 2);
 
-    CLEAR(ACTIVE(window), C_WHITE);
+    CLEAR(ACTIVE(window), ACTIVE(bg_color));
 
     border(active, BORDER_THIN);
     bit_blit(ACTIVE(border), 0, 0,
