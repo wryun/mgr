@@ -237,6 +237,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 W(esc)[W(esc_cnt)] = n;
             }
             break;
+            /* private sequence parameter bytes - ignore so we swallow */
+            /* TODO - not properly swallowing, since we don't invalidate
+             * the current command... */
+            case '?': case '>': case '=': case '<':
+                W(flags) |= W_ANSI;
+                break;
             case EA_SEP:
                 if (W(esc_cnt) + 1 < MAXESC) {
                     W(esc_cnt)++;
@@ -282,6 +288,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     case 100: case 101: case 102: case 103:
                     case 104: case 105: case 106: case 107:
                         W(bg_color) = bg_bright_colors[code - 100];
+                        break;
+                    default:
                         break;
                     }
                 }
