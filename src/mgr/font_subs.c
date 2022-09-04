@@ -159,6 +159,11 @@ struct font *open_font(file) char *file;
     size = (font->head.wide * font->head.count + 31) & ~31;
 
     font->data = bit_alloc(size, font->head.high, NULL_DATA, 1);
+    /* TODO - horrific hack to hook into other hack to do with fonts.
+     * Remove once libbitblit is ripped out.
+     */
+    font->data->type = _STATIC;
+    font->data->data = malloc(size * font->head.high / 8);
     font->table = (struct entry **) 0;
 
     /* read in font data */
