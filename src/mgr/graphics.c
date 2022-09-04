@@ -5,6 +5,8 @@
  *   - lets us know the height/width without asking
  *   - allows us to create regions that act as new pseudo-textures
  *     (for the purposes of these functions)
+ *   - makes it easier to deal with the 1-bit bitmaps that mgr
+ *     uses for icons, fonts and cursors
  *
  * Also hides our dodgy globals (sdl_window/sdl_renderer) from the rest of the world.
  *
@@ -13,13 +15,27 @@
  * Since we're so heavily tied to SDL now (cf event loop), I'm ok with this.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
-#include <sdl.h>
+#include "graphics.h"
 
 
 static SDL_PixelFormatEnum static_bitmap_pixel_format = SDL_PIXELFORMAT_INDEX1MSB;
+/* This is what most OpenGL renderers like. I think. We try to fix it up in the init, though,
+ * based on SDL_GetWindowPixelFormat.
+ */
 static SDL_PixelFormatEnum preferred_pixel_format = SDL_PIXELFORMAT_ABGR8888;
+/* bitmap_palette_colors is quite important to how we're handling things.
+ *
+ * For fonts, we find it pretty useful to be able to change the background/foreground
+ * independently, and the easiest way to do that is to make the background transparent.
+ * Then it's possible to just plonk the font on top of a plain rectangle background
+ * (and easily recolour the black foreground by applying a colour transform).
+ *
+ * If we want to support more depths other than 1-bit, this approach will
+ * need to be reconsidered...
+ */
 static const SDL_Color bitmap_palette_colors[] = {
   {0x00, 0x00, 0x00, SDL_ALPHA_TRANSPARENT},
   {0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE},
@@ -51,7 +67,7 @@ TEXTURE *screen_init(int width, int height)
         return NULL;
     }
 
-    SDL_PixelFormatEnum pf = SDL_GetWindowPixelFormat(window);
+    SDL_PixelFormatEnum pf = SDL_GetWindowPixelFormat(sdl_window);
 
     if (pf == SDL_PIXELFORMAT_UNKNOWN) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't find window pixel format: %s", SDL_GetError());
@@ -66,7 +82,7 @@ TEXTURE *screen_init(int width, int height)
 void screen_present()
 {
     SDL_SetRenderTarget(sdl_renderer, NULL);
-    SDL_RenderCopy(sdl_renderer, screen_texture, NULL, NULL);
+    SDL_RenderCopy(sdl_renderer, screen_texture->sdl_texture, NULL, NULL);
     SDL_RenderPresent(sdl_renderer);
 }
 
@@ -80,18 +96,21 @@ void cursor_warp(SDL_Point point)
     SDL_WarpMouseInWindow(sdl_window, point.x, point.y);
 }
 
-SDL_Cursor *cursor_create(void *pixels, int wide, int high, int depth)
+SDL_Cursor *cursor_create(void *pixels, int width, int height, int depth)
 {
-    const size_t sdl_cursor_height = (high < 16) ? high : 16;
+    /* Currently, we only support mono bitmaps */
+    assert(depth == SDL_BITSPERPIXEL(static_bitmap_pixel_format));
+
+    const size_t sdl_cursor_height = (height < 16) ? height : 16;
     const size_t sdl_cursor_size = sdl_cursor_height * 16 / 8;
-    int row_byte_width = wide * depth / 8;
+    int row_byte_width = width * depth / 8;
     int cursor_row_byte_width = 16 * depth / 8;
     Uint8 data[sdl_cursor_size];
     Uint8 mask[sdl_cursor_size];
     Uint8 *source_white = (Uint8 *)pixels;
     Uint8 *source_black = source_white;
   
-    if (high >= 32) {
+    if (height >= 32) {
         source_black = &(((Uint8 *)pixels)[16 * row_byte_width]);
     }
 
@@ -118,8 +137,8 @@ SDL_Cursor *cursor_create(void *pixels, int wide, int high, int depth)
  */
 TEXTURE *texture_create_child(TEXTURE *src_texture, SDL_Rect rect)
 {
-    assert(rect.x + rect.w <= texture.rect.w);
-    assert(rect.y + rect.h <= texture.rect.h);
+    assert(rect.x + rect.w <= src_texture->rect.w);
+    assert(rect.y + rect.h <= src_texture->rect.h);
 
     TEXTURE *new_texture = malloc(sizeof(TEXTURE));
     if (new_texture == NULL) {
@@ -144,10 +163,9 @@ void texture_destroy(TEXTURE *texture)
     free(texture);
 }
 
-TEXTURE *texture_create_empty(width, height)
-{
-    SDL_Texture *sdl_texture = SDL_CreateTexture(renderer, preferred_pixel_format, SDL_TEXTUREACCESS_TARGET, width, height);
-    if (texture == NULL) {
+static SDL_Texture *create_empty_target_texture(int width, int height) {
+    SDL_Texture *sdl_texture = SDL_CreateTexture(sdl_renderer, preferred_pixel_format, SDL_TEXTUREACCESS_TARGET, width, height);
+    if (sdl_texture == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create dynamic texture: %s", SDL_GetError());
         return NULL;
     }
@@ -157,13 +175,23 @@ TEXTURE *texture_create_empty(width, height)
         return NULL;
     }
 
+    return sdl_texture;
+}
+
+TEXTURE *texture_create_empty(int width, int height)
+{
+    SDL_Texture *sdl_texture = create_empty_target_texture(width, height);
+    if (sdl_texture == NULL) {
+        return NULL;
+    }
+
     TEXTURE *new_texture = malloc(sizeof(TEXTURE));
     if (new_texture == NULL) {
         return NULL;
     }
 
     new_texture->sdl_texture = sdl_texture;
-    new_texture->orig = 0;
+    new_texture->orig = 1;
     new_texture->rect.x = 0;
     new_texture->rect.y = 0;
     new_texture->rect.w = width;
@@ -172,12 +200,12 @@ TEXTURE *texture_create_empty(width, height)
     return new_texture;
 }
 
-TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth)
+TEXTURE *texture_create_from_pixels(void *pixels, int width, int height, int depth)
 {
     /* Currently, we only support mono bitmaps */
     assert(depth == SDL_BITSPERPIXEL(static_bitmap_pixel_format));
 
-    SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, wide, high, depth, ((wide + 8) * depth - 1) / 8, static_bitmap_pixel_format);
+    SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom(pixels, width, height, depth, ((width + 8) * depth - 1) / 8, static_bitmap_pixel_format);
     if (surface == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface for static texture: %s", SDL_GetError());
         return NULL;
@@ -188,7 +216,7 @@ TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth)
         return NULL;
     }
 
-    SDL_Texture *sdl_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_Texture *sdl_texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
     SDL_FreeSurface(surface);
 
     if (sdl_texture == NULL) {
@@ -207,7 +235,7 @@ TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth)
     }
 
     new_texture->sdl_texture = sdl_texture;
-    new_texture->orig = 0;
+    new_texture->orig = 1;
     new_texture->rect.x = 0;
     new_texture->rect.y = 0;
     new_texture->rect.w = width;
@@ -217,21 +245,23 @@ TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth)
 void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
 {
     SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
-    SDL_SetRenderDrawColor(sdl_renderer, color->r, color->g, color->b, color->a);
+    SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     rect.x += texture->rect.x;
     rect.y += texture->rect.y;
     SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
-void texture_point(TEXTURE *texture, SDL_Point point, SDL_Color color) {
+void texture_point(TEXTURE *texture, SDL_Point point, SDL_Color color)
+{
     SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
-    SDL_SetRenderDrawColor(sdl_renderer, color->r, color->g, color->b, color->a);
+    SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderDrawPoint(sdl_renderer, texture->rect.x + point.x, texture->rect.y + point.y);
 }
 
-void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_Color color) {
+void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_Color color)
+{
     SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
-    SDL_SetRenderDrawColor(sdl_renderer, color->r, color->g, color->b, color->a);
+    SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderDrawLine(sdl_renderer, texture->rect.x + start.x, texture->rect.y + start.y, texture->rect.x + end.x, texture->rect.y + end.y);
 }
 
@@ -241,7 +271,7 @@ void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, S
         .x = dst_texture->rect.x + point.x, .y = dst_texture->rect.y + point.y,
         .w = src_texture->rect.w, .h = src_texture->rect.h,
     };
-    SDL_Rect src_rect = src_sdl_texture->rect;
+    SDL_Rect src_rect = src_texture->rect;
     SDL_Texture *src_sdl_texture = src_texture->sdl_texture;
     SDL_Texture *new_src_sdl_texture = NULL;
     /* TODO: This nonsense is probably only needed for scrolling, which should be implemented differently
@@ -249,24 +279,24 @@ void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, S
      * Also has dodgy 'works but not in API' check for y coordinate. Replace with an assert?
      */
     if (src_sdl_texture == dst_texture->sdl_texture && dst_rect.y > src_rect.y) {
-      new_src_sdl_texture = sdl_create_texture_target(sdl_renderer, src_rect.w, src_rect.h);
-      SDL_SetTextureAlphaMod(src_sdl_texture, SDL_ALPHA_OPAQUE);
-      SDL_SetTextureColorMod(src_sdl_texture, 0xFF, 0xFF, 0xFF);
-      SDL_SetRenderTarget(sdl_renderer, new_src_sdl_texture);
-      SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = src_rect.w, .h = src_rect.h};
-      SDL_RenderCopy(sdl_renderer, src_sdl_texture, &src_rect, &new_src_rect);
+        new_src_sdl_texture = create_empty_target_texture(src_rect.w, src_rect.h);
+        SDL_SetTextureAlphaMod(src_sdl_texture, SDL_ALPHA_OPAQUE);
+        SDL_SetTextureColorMod(src_sdl_texture, 0xFF, 0xFF, 0xFF);
+        SDL_SetRenderTarget(sdl_renderer, new_src_sdl_texture);
+        SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = src_rect.w, .h = src_rect.h};
+        SDL_RenderCopy(sdl_renderer, src_sdl_texture, &src_rect, &new_src_rect);
 
-      src_sdl_texture = new_src_texture;
-      src_rect = *new_src_rect;
+        src_sdl_texture = new_src_sdl_texture;
+        src_rect = new_src_rect;
     }
 
-    SDL_SetTextureColorMod(src_texture, color->r, color->g, color->b);
-    SDL_SetTextureAlphaMod(src_texture, color->a);
-    SDL_SetRenderTarget(sdl_renderer, dst_texture);
-    SDL_RenderCopy(sdl_renderer, src_texture, &src_rect, &dst_rect);
+    SDL_SetTextureColorMod(src_sdl_texture, fg_color.r, fg_color.g, fg_color.b);
+    SDL_SetTextureAlphaMod(src_sdl_texture, fg_color.a);
+    SDL_SetRenderTarget(sdl_renderer, dst_texture->sdl_texture);
+    SDL_RenderCopy(sdl_renderer, src_sdl_texture, &src_rect, &dst_rect);
 
-    if (new_src_texture != NULL) {
-      SDL_DestroyTexture(new_src_texture);
+    if (new_src_sdl_texture != NULL) {
+        SDL_DestroyTexture(new_src_sdl_texture);
     }
 }
 

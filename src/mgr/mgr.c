@@ -10,7 +10,6 @@
 
 /* main routine for MGR */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <mgr/share.h>
 #include <sys/time.h>
@@ -44,6 +43,7 @@
 #include "do_event.h"
 #include "erase_win.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "icon_server.h"
 #include "mouse_get.h"
 #include "put_window.h"
@@ -58,7 +58,7 @@ static struct timespec set_poll = {
 };
 static char *mouse_dev = MOUSE_DEV;
 static char *mouse_type = NULL;
-BITMAP *pattern = &def_pattern;
+TEXTURE *pattern = &def_pattern;
 #ifdef MOVIE
 char *log_command = NULL;         /* process to pipe logging info to */
 FILE *log_file = NULL;            /* file pointer for logging */
@@ -287,7 +287,7 @@ void display_windows()
     register WINDOW *win;               /* current window to update */
 
     if (active == NULL) {
-        bit_present(screen);
+        screen_present();
 
         return;
     }
@@ -295,10 +295,11 @@ void display_windows()
     win = active->prev;
 
     do {
-        bit_blit_color(screen, W(x0), W(y0), W(border)->wide, W(border)->high, &C_WHITE, NULL, W(border), 0, 0);
+        SDL_Point window_point = {.x = W(x0), .y = W(y0)};
+        texture_copy(screen, window_point, W(border), WHITE);
     } while ((win = W(prev)) != active->prev);
 
-    bit_present(screen);
+    screen_present(screen);
 }
 
 
@@ -594,22 +595,23 @@ int main(int argc, char **argv)
         close(i);
     }
 
-    /* find screen */
-    if ((screen = bit_open(screen_dev)) == (BITMAP *) 0) {
-        perror("mgr: Can't open the screen.");
-        exit(2);
-    }
-
     mousex = mousey = 32;
 
     if (getenv("MGRSIZE")) {
         int x, y, w, h;
 
-        prime = screen;
         sscanf(getenv("MGRSIZE"), "%d %d %d %d", &x, &y, &w, &h);
-        screen = bit_create(prime, x, y, w, h);
-    } else {
-        prime = (BITMAP *)0;
+        /* TODO - remove MGRSIZE references, and replace with 'normal' resolution selector...
+         * e.g. 1920x1080x32 + windowed vs full-screen
+         * Settable by command line.
+         * Default is full screen in 'optimal' res.
+         */
+    }
+
+    /* sdl init */
+    if ((screen = screen_init(800, 600)) == NULL) {
+        perror("mgr: Can't open the screen.");
+        exit(2);
     }
 
     /* SDL init */
@@ -706,7 +708,7 @@ int main(int argc, char **argv)
         int ticks = SDL_GetTicks();
         int time_since_render_ms = ticks - last_render_ticks;
 
-        bit_flush();
+        screen_flush();
 
         if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
             erase_win(screen);
@@ -841,8 +843,8 @@ int main(int argc, char **argv)
             dirty = 1;
             break;
         case SDL_MOUSEMOTION:
-            mousex = BETWEEN(0, event.motion.x, BIT_WIDE(screen) - 1);
-            mousey = BETWEEN(0, event.motion.y, BIT_HIGH(screen) - 1);
+            mousex = BETWEEN(0, event.motion.x, screen->rect.w - 1);
+            mousey = BETWEEN(0, event.motion.y, screen->rect.h - 1);
             break;
         default:
             break;

@@ -11,7 +11,7 @@
 /* defines for mgr */
 
 #include <string.h>
-#include <SDL.h>
+#include <graphics.h>
 
 /* potentially changable defines for mgr */
 
@@ -195,12 +195,12 @@ typedef struct window {         /* primary window structure */
     struct window *stack; /* stack of saved window environments */
     struct window *main; /* main window (or 0 if main window ) */
     struct window *alt; /* alternate window ( 0 if none) */
-    BITMAP *border;     /* window + border */
-    BITMAP *window;     /* This is the window */
-    BITMAP *bitmap;     /* for use when downloading bitmaps */
-    BITMAP *bitmaps[MAXBITMAPS]; /* scratchpad space */
-    BITMAP *cursor;     /* bitmap of cursor */
-    BITMAP *char_cursor_backup;     /* TODO - temp hack so we don't lose cursor data */
+    TEXTURE *border;     /* window + border */
+    TEXTURE *window;     /* This is the window */
+    TEXTURE *bitmap;     /* for use when downloading bitmaps */
+    TEXTURE *bitmaps[MAXBITMAPS]; /* scratchpad space */
+    SDL_Cursor *cursor;
+    TEXTURE *char_cursor_backup;     /* TODO - temp hack so we don't lose cursor data */
     struct font *font;  /* this is the font */
 
     rectangle text;     /* location of text region within window */
@@ -208,8 +208,8 @@ typedef struct window {         /* primary window structure */
     int x, y;           /* cursor character position */
     int gx, gy;         /* graphics cursor */
     int op;             /* raster op function (see bitmap.h)  TODO - remove */
-    COLOR fg_color;
-    COLOR bg_color;
+    SDL_Color fg_color;
+    SDL_Color bg_color;
     int style;          /* character style normal/inverse video  TODO - ? how is this different from W_REVERSE anyway? */
     /* int background;	Unused: background color WOB or BOW */
     int curs_type;      /* cursor type */
@@ -253,13 +253,13 @@ void new_window(), move_window();
 #include <sys/types.h>
 #include <sys/time.h>
 
-extern COLOR fg_colors[];
-extern COLOR bg_colors[];
-extern COLOR fg_bright_colors[];
-extern COLOR bg_bright_colors[];
+extern SDL_Color WHITE;
+extern SDL_Color BLACK;
 
-extern COLOR C_WHITE;
-extern COLOR C_BLACK;
+extern SDL_Color fg_colors[];
+extern SDL_Color bg_colors[];
+extern SDL_Color fg_bright_colors[];
+extern SDL_Color bg_bright_colors[];
 
 extern char *full_menu[];
 extern char *main_menu[];
@@ -272,7 +272,7 @@ extern function active_functions[];
 
 extern int next_window;
 extern struct font *font;
-extern BITMAP *screen, *prime;
+extern TEXTURE *screen, *prime;
 extern fd_set mask;
 extern fd_set to_poll;
 extern WINDOW *active;

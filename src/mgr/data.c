@@ -121,14 +121,14 @@ unsigned char color_map[COLORMAP_SIZE] = {
     0                   /* root pattern bg */
 };
 
-COLOR C_WHITE = {
+SDL_Color WHITE = {
     0xFF, 0xFF, 0xFF, 0xFF
 };
-COLOR C_BLACK = {
+SDL_Color BLACK = {
     0x00, 0x00, 0x00, 0xFF
 };
 
-COLOR fg_colors[8] = {
+SDL_Color fg_colors[8] = {
     {0x00, 0x00, 0x00, 0xFF},
     {0x80, 0x00, 0x00, 0xFF},
     {0x00, 0x80, 0x00, 0xFF},
@@ -139,7 +139,7 @@ COLOR fg_colors[8] = {
     {0xc0, 0xc0, 0xc0, 0xFF},
 };
 
-COLOR bg_colors[8] = {
+SDL_Color bg_colors[8] = {
     {0x00, 0x00, 0x00, 0xFF},
     {0x80, 0x80, 0x80, 0xFF},
     {0xff, 0x00, 0x00, 0xFF},
@@ -150,7 +150,7 @@ COLOR bg_colors[8] = {
     {0xff, 0xff, 0xff, 0xFF},
 };
 
-COLOR fg_bright_colors[8] = {
+SDL_Color fg_bright_colors[8] = {
     {0x00, 0x00, 0x00, 0xFF},
     {0x80, 0x00, 0x00, 0xFF},
     {0x00, 0x80, 0x00, 0xFF},
@@ -161,7 +161,7 @@ COLOR fg_bright_colors[8] = {
     {0xc0, 0xc0, 0xc0, 0xFF},
 };
 
-COLOR bg_bright_colors[8] = {
+SDL_Color bg_bright_colors[8] = {
     {0x00, 0x00, 0x00, 0xFF},
     {0x80, 0x80, 0x80, 0xFF},
     {0xff, 0x00, 0x00, 0xFF},
@@ -174,7 +174,7 @@ COLOR bg_bright_colors[8] = {
 
 int next_window = 0;                      /* next available window count */
 struct font *font;                      /* default font */
-BITMAP *screen, *prime;                  /* default screen */
+TEXTURE *screen, *prime;                  /* default screen */
 WINDOW *active = (WINDOW *) 0;          /* window connected to keyboard */
 WINDOW *last_active = (WINDOW *) 0;     /* previous window connected to keyboard */
 int button_state = 0;                   /* state of the mouse buttons */

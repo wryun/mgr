@@ -23,7 +23,6 @@
  * re-re-re hacked by broman for use as screensaver.
  */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <sys/time.h>
 #include <sys/signal.h>
@@ -35,8 +34,9 @@
 
 #include "proto.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "icon_server.h"
-extern BITMAP default_font;
+extern TEXTURE *default_font;
 #include <SDL.h>
 /* #defines */
 #define SSIZE   3               /* star size */
@@ -60,7 +60,7 @@ typedef struct rect {
 } RECT;
 static RECT clip1, clip2, clip3;        /* holes in the galaxy */
 /* variables */
-static BITMAP *logo[] =
+static TEXTURE *logo[] =
 {
     &ball_1, &ball_2, &ball_3, &ball_4, &ball_5, &ball_6, &ball_7, &ball_8
 };
@@ -75,11 +75,11 @@ static struct st {
 stars[NSTARS];   /* our galaxy */
 
 /* init_all */
-void init_all(where) register BITMAP *where;
+void init_all(where) register TEXTURE *where;
 {
-    maxv = BIT_HIGH(where);
+    maxv = where->rect.h;
     hmaxv = maxv >> 1;
-    maxh = BIT_WIDE(where);
+    maxh = where->rect.y;
     hmaxh = maxh >> 1;
 }
 static void flip(void)
@@ -122,7 +122,7 @@ register short scale, count;
 }
 /* xplot */
 static int xplot(where, x, y, state)
-register BITMAP *where;
+register TEXTURE *where;
 register int x, y;
 int state;
 {
@@ -143,13 +143,14 @@ int state;
         return(0);
     }
 
-    bit_blit_color(where, x, y, SSIZE, SSIZE, state ? &C_WHITE : &C_BLACK, NULL, (BITMAP *)0, 0, 0);
+    SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE);
+    texture_fill_rect(where, rect, WHITE);
 
     return(0);
 }
 /* project */
 static int project(where, x, y, z, state)
-register BITMAP *where;
+register TEXTURE *where;
 register short x, y, z;
 register short state;
 {
@@ -165,7 +166,7 @@ register short state;
 
 }
 /* fly */
-static void fly (where) BITMAP *where;
+static void fly (where) TEXTURE *where;
 {
     register short i;
     register struct st *stp;
@@ -183,7 +184,7 @@ static void fly (where) BITMAP *where;
     }
 }
 /* dofly */
-static void dofly (where) BITMAP *where;
+static void dofly (where) TEXTURE *where;
 {
     register short i;
     register struct st *stp;
@@ -214,9 +215,9 @@ static void dofly (where) BITMAP *where;
 }
 
 /* copyright */
-void copyright(BITMAP *where, char *password)
+void copyright(TEXTURE *where, char *password)
 {
-    BITMAP *notice = &cr;
+    TEXTURE *notice = &cr;
     int i = 0;
     char rbuf[64], *readp = rbuf;
     char *crypt();
@@ -224,37 +225,37 @@ void copyright(BITMAP *where, char *password)
 
     /* clear display */
 
-    bit_blit_color(where, 0, 0, BIT_WIDE(where), BIT_HIGH(where),
-                   &C_BLACK, NULL,
-                   (BITMAP *)0, 0, 0);
+    SDL_Rect rect = {.x = 0, .y = 0, .w = where->rect.w, .h = where->rect.h};
+    texture_fill_rect(where, rect, BLACK);
 
     if (at_startup) {
         /* get the cr notice hole */
 
-        clip1.x1 = (BIT_WIDE(where) - BIT_WIDE(notice)) / 2 - SSIZE;
-        clip1.y1 = (3 * BIT_HIGH(where) - 2 * BIT_HIGH(notice)) / 4 - SSIZE;
-        clip1.x2 = clip1.x1 + SSIZE + BIT_WIDE(notice);
-        clip1.y2 = clip1.y1 + SSIZE + BIT_HIGH(notice);
+        clip1.x1 = (where->rect.w - notice->rect.w) / 2 - SSIZE;
+        clip1.y1 = (3 * where->rect.h - 2 * notice->rect.h) / 4 - SSIZE;
+        clip1.x2 = clip1.x1 + SSIZE + notice->rect.w;
+        clip1.y2 = clip1.y1 + SSIZE + notice->rect.h;
 
-        bit_blit_color(where, clip1.x1 + SSIZE, clip1.y1 + SSIZE,
-                       BIT_WIDE(notice), BIT_HIGH(notice),
-                       &C_WHITE, NULL,
-                       notice, 0, 0);
+        SDL_Rect notice_rect = {
+            .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
+            .w = notice->rect.w, .h = notice->rect.h
+        };
+        texture_fill_rect(where, rect, WHITE);
 
         /* get the globe hole */
 
-        clip2.x1 = (BIT_WIDE(where) - BIT_WIDE(logo[0])) / 2 - SSIZE;
-        clip2.y1 = (BIT_HIGH(where) - 2 * BIT_HIGH(logo[0])) / 4 - SSIZE;
-        clip2.x2 = clip2.x1 + SSIZE + BIT_WIDE(logo[0]);
-        clip2.y2 = clip2.y1 + SSIZE + BIT_HIGH(logo[0]);
+        clip2.x1 = (where->rect.w - logo[0]->rect.w) / 2 - SSIZE;
+        clip2.y1 = (where->rect.h - 2 * logo[0]->rect.h) / 4 - SSIZE;
+        clip2.x2 = clip2.x1 + SSIZE + logo[0]->rect.w;
+        clip2.y2 = clip2.y1 + SSIZE + logo[0]->rect.h;
 
 #ifdef MESSAGE
         /* get the message hole */
 
         clip3.x1 = 10 - SSIZE;
-        clip3.y1 = BIT_HIGH(where) - font->head.high - 10 - SSIZE;
+        clip3.y1 = where->rect.h - font->head.high - 10 - SSIZE;
         clip3.x2 = 10 + 2 * SSIZE + strlen(MESSAGE) * font->head.wide;
-        clip3.y2 = BIT_HIGH(where) - 10 + 2 * SSIZE;
+        clip3.y2 = where->rect.h - 10 + 2 * SSIZE;
         put_str(where, 10, clip3.y2 - SSIZE, font, BIT_SRC, MESSAGE);
 #else
         clip3 = clip2;
@@ -269,7 +270,7 @@ void copyright(BITMAP *where, char *password)
     /* kick off stars */
 
     fly(where);
-    bit_present(where);
+    screen_present(where);
 
     /* keep drawing stars until enough read from kb to stop */
     for (;;) {
@@ -339,12 +340,10 @@ void copyright(BITMAP *where, char *password)
         dofly(where);
 
         if (at_startup && (++i % 2)) {
-            bit_blit_color(where, clip2.x1 + SSIZE, clip2.y1 + SSIZE,
-                           BIT_WIDE(logo[0]), BIT_HIGH(logo[0]),
-                           &C_WHITE, &C_BLACK,
-                           logo[(i / 2) % 8], 0, 0);
+            SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
+            texture_copy_with_bg(where, logo_target, logo[(i / 2) % 8], WHITE, BLACK);
         }
 
-        bit_present(where);
+        screen_present(where);
     }
 }

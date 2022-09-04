@@ -10,7 +10,7 @@ OBJS=		Write.o border.o copyright.o cut.o \
 		data.o debug_flags.o \
 		destroy.o do_buckey.o do_button.o do_event.o do_menu.o \
                 down_load.o erase_win.o font_subs.o get_font.o get_info.o \
-		get_menus.o get_rect.o get_text.o getshell.o graph_subs.o \
+		get_menus.o get_rect.o get_text.o getshell.o graph_subs.o graphics.o \
 		icon_server.o intersect.o mgr.o mouse_get.o move.o \
                 move_box.o new_window.o print.o put_window.o scroll.o \
                 set_mode.o shape.o sigdata.o startup.o subs.o utmp.o \
@@ -19,7 +19,7 @@ OBJS=		Write.o border.o copyright.o cut.o \
 all:		mgr mgrlogin
 
 mgr:		$(OBJS)
-		$(CC) $(LDFLAGS) -o mgr $(OBJS) $(LIBDIR)/libbitblit.a $(EXTRALIBS) $(CRYPTLIB)
+		$(CC) $(LDFLAGS) -o mgr $(OBJS) $(EXTRALIBS) $(CRYPTLIB)
 
 setuid:		mgr
 		chown root mgr
@@ -49,7 +49,7 @@ version.h:
 		echo "char version[]=\"MGR version $(VERSION) compiled by `whoami` at `date`.\\nSystem: `uname -a`\\n\";" >> version.h
 
 mgrlogin:	mgrlogin.o mgrlogin_fnt.o set_mode.o
-		$(CC) $(LDFLAGS) -o $@ mgrlogin.o mgrlogin_fnt.o set_mode.o $(LIBDIR)/libbitblit.a $(EXTRALIBS) $(CRYPTLIB)
+		$(CC) $(LDFLAGS) -o $@ mgrlogin.o mgrlogin_fnt.o set_mode.o $(EXTRALIBS) $(CRYPTLIB)
 
 mgrlogin.o:	mgrlogin.c
 		$(CC) $(CFLAGS) -DMGR_BINARY=\"$(BINDIR)/mgr\" -c mgrlogin.c -o $@
