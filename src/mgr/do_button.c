@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* Figure out what to do with a button push */
 /* #includes */
 #include <mgr/bitblit.h>

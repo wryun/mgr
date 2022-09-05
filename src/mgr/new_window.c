@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -10,7 +8,6 @@
 
 /* Create a new window */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <fcntl.h>
 #include <string.h>
@@ -19,6 +16,7 @@
 
 #include "defs.h"
 #include "menu.h"
+#include "graphics.h"
 
 #include "proto.h"
 #include "Write.h"
@@ -139,9 +137,10 @@ struct font *curr_font;
     W(curs_type) = CS_BLOCK;
     W(x0) = x;
     W(y0) = y;
-    W(border) = bit_alloc(dx, dy, NULL, 1);
-    W(window) = bit_create(W(border), SUM_BDR, SUM_BDR, dx - SUM_BDR * 2, dy - SUM_BDR * 2);
-    W(char_cursor_backup) = bit_alloc(curr_font->head.wide + 2, curr_font->head.high + 2, NULL, 1);
+    W(border) = texture_create_empty(dx, dy);
+    SDL_Rect window_rect = {.x = SUM_BDR, .y = SUM_BDR, .w = dx - SUM_BDR * 2, .h = dy - SUM_BDR * 2};
+    W(window) = texture_create_child(W(border), window_rect);
+    W(char_cursor_backup) = texture_create_empty(curr_font->head.wide + 2, curr_font->head.high + 2);
 
     W(fg_color) = C_BLACK;
     W(bg_color) = C_WHITE;
@@ -154,10 +153,10 @@ struct font *curr_font;
     W(text.wide) = 0;
     W(text.high) = 0;
 
-    W(bitmap) = (BITMAP *) 0;
+    W(bitmap) = (TEXTURE *) 0;
 
     for (i = 0; i < MAXBITMAPS; i++) {
-        W(bitmaps)[i] = (BITMAP *) 0;
+        W(bitmaps)[i] = (TEXTURE *) 0;
     }
 
     W(cursor) = &mouse_arrow;
@@ -191,7 +190,7 @@ struct font *curr_font;
 }
 /* make_window -- draw the window on the screen */
 int make_window(screen, x, y, dx, dy, fnt, start)
-BITMAP *screen;
+TEXTURE *screen;
 int x, y, dx, dy;
 int fnt;
 char *start;
@@ -249,7 +248,7 @@ char *start;
 
     set_covered(win);
     border(win, BORDER_THIN);
-    CLEAR(W(window), C_WHITE);
+    texture_fill_rect(W(window), W(window)->rect, W(bg_color));
 
     SETMOUSEICON( DEFAULT_MOUSE_CURSOR); /* because active win chg */
 

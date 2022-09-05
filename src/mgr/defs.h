@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -11,7 +9,9 @@
 /* defines for mgr */
 
 #include <string.h>
-#include <graphics.h>
+
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_pixels.h>
 
 /* potentially changable defines for mgr */
 
@@ -86,8 +86,6 @@ char *strchr();
 #endif
 
 /* macros -- for speed */
-
-#define CLEAR(s, color)  bit_blit_color((s), 0, 0, BIT_WIDE(s), BIT_HIGH(s), &color, NULL, 0, 0, 0);
 
 #define BORDER_FAT 1
 #define BORDER_THIN 0
@@ -180,6 +178,24 @@ char *strchr();
 #define INIT_FLAGS      W_BACKGROUND    /* default window creation flags */
 
 /* Structure definitions */
+
+struct SDL_Texture;
+typedef struct SDL_Texture SDL_Texture;
+struct SDL_Cursor;
+typedef struct SDL_Cursor SDL_Cursor;
+
+/* Wrapper around an SDL texture that allows us to:
+ *  - have easy access to its dimensions
+ *  - potentially have a 'child' texture (see texture_create_child)
+ *    which points to a sub-rectangle (set orig = 0)
+ *  - note that we assume if you texture_destroy when orig = 1,
+ *    you've cleaned up the children (we don't ref count).
+ */
+typedef struct texture {
+    SDL_Texture *sdl_texture;
+    SDL_Rect rect;
+    int orig;
+} TEXTURE;
 
 typedef struct {        /* used for text regions */
     int x, y, wide, high;

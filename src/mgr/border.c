@@ -2,16 +2,9 @@
  * draw the border around this window.             broman@nosc.mil, 1996/03
  */
 
-#include <mgr/bitblit.h>
 #include "defs.h"
 
-
-#define ONE_BOX( bm, x, y, w, h, b, col)                                   \
-/* top, right, bottom, left */                                            \
-    bit_blit_color( bm, (x), (y), (w), (b), (col), NULL, 0, 0, 0); \
-    bit_blit_color( bm, (x) + (w) - (b), (y) + (b), (b), (h) - (b) - (b), (col), NULL, 0, 0, 0); \
-    bit_blit_color( bm, (x), (y) + (h) - (b), (w), (b), (col), NULL, 0, 0, 0); \
-    bit_blit_color( bm, (x), (y) + (b), (b), (h) - (b) - (b), (col), NULL, 0, 0, 0);
+#include "graphics.h"
 
 
 void border( WINDOW *win, int be_fat)
@@ -20,14 +13,16 @@ void border( WINDOW *win, int be_fat)
     int out = (be_fat == BORDER_FAT)? both - 1: win->outborderwid;
     int inr = both - out;
 
-    BITMAP *bdr = W(border);
-    int w = BIT_WIDE(bdr);
-    int h = BIT_HIGH(bdr);
+    TEXTURE *bdr = W(border);
+    int w = bdr->rect.w;
+    int h = bdr->rect.h;
 
     if (both <= 0) {
         return;
     }
 
-    ONE_BOX( bdr, 0, 0, w, h, out, &C_BLACK);
-    ONE_BOX( bdr, out, out, w - out - out, h - out - out, inr, &C_WHITE);
+    SDL_Rect outer_rect = {.x = 0, .y = 0, .w = w, .h = h};
+    SDL_Rect inner_rect = {.x = out, .y = out, .w = w - out * 2, .h = h - out * 2};
+    texture_rect(bdr, outer_rect, W(fg_color), out);
+    texture_rect(bdr, inner_rect, W(bg_color), inr);
 }

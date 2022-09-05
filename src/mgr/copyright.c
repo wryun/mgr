@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1988 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -22,13 +20,14 @@
  * re-re hacked 6/20/88 for MGR (SAU)
  * re-re-re hacked by broman for use as screensaver.
  */
-/* #includes */
+
 #include <mgr/font.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <SDL2/SDL.h>
 
 #include "defs.h"
 
@@ -36,9 +35,9 @@
 #include "font_subs.h"
 #include "graphics.h"
 #include "icon_server.h"
+
 extern TEXTURE *default_font;
-#include <SDL.h>
-/* #defines */
+
 #define SSIZE   3               /* star size */
 
 #define MAXZ 500 /* maximum z depth */
@@ -143,7 +142,7 @@ int state;
         return(0);
     }
 
-    SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE);
+    SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE};
     texture_fill_rect(where, rect, WHITE);
 
     return(0);
@@ -341,7 +340,7 @@ void copyright(TEXTURE *where, char *password)
 
         if (at_startup && (++i % 2)) {
             SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
-            texture_copy_with_bg(where, logo_target, logo[(i / 2) % 8], WHITE, BLACK);
+            texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], WHITE, BLACK);
         }
 
         screen_present(where);

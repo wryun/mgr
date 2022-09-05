@@ -8,7 +8,6 @@
 
 /* high level menu manipulation routines */
 
-/* }}} */
 /* #includes */
 #include <mgr/bitblit.h>
 #include <mgr/font.h>

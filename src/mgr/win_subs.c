@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* Teminal emulator functions called from put_window() and down_load() */
 /* #includes */
 #include <mgr/bitblit.h>

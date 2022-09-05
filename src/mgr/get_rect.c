@@ -8,7 +8,6 @@
 
 /* sweep out a rectangle */
 
-/* }}} */
 /* #includes */
 #include <mgr/bitblit.h>
 

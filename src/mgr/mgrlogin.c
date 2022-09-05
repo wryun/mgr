@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*
 
    wtmp support and executing getty(8) is still missing, and most probably

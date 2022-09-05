@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -9,7 +7,7 @@
  */
 
 /* main routine for MGR */
-/* #includes */
+
 #include <mgr/font.h>
 #include <mgr/share.h>
 #include <sys/time.h>
@@ -28,6 +26,8 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <SDL2/SDL.h>
 
 #include "defs.h"
 #include "event.h"

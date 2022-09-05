@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -29,7 +27,7 @@
 #include "scroll.h"
 #include "subs.h"
 
-/* shape -- reshape a window to specified dimentions */
+/* shape -- reshape a window to specified dimensions */
 int shape(int x, int y, int dx, int dy)
 {
     int sx, sy, w, h;
@@ -78,7 +76,7 @@ int shape(int x, int y, int dx, int dy)
                                 w - ACTIVE(borderwid) * 2,
                                 h - ACTIVE(borderwid) * 2);
 
-    CLEAR(ACTIVE(window), ACTIVE(bg_color));
+    texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
 
     border(active, BORDER_THIN);
     bit_blit(ACTIVE(border), 0, 0,

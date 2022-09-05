@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* read and process startup file */ /* this needs to be redone */
 /* #includes */
 #include <mgr/bitblit.h>

@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -10,7 +8,6 @@
 
 /* make an alternate window */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -23,6 +20,7 @@
 #include "do_event.h"
 #include "border.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "icon_server.h"
 #include "new_window.h"
 #include "put_window.h"
@@ -118,7 +116,7 @@ void win_make(WINDOW *win, int indx)
 
         set_covered(active);
         border(active, BORDER_THIN);
-        CLEAR(ACTIVE(window), ACTIVE(bg_color));
+        texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
         SETMOUSEICON( DEFAULT_MOUSE_CURSOR);    /* because active win chg */
         ACTIVE_ON();
         cursor_on();

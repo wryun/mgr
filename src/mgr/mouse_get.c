@@ -1,4 +1,3 @@
-/* }}} */
 /* #includes */
 #include <sys/time.h>
 #include <mgr/share.h>
@@ -17,7 +16,7 @@
  * Really, that MGR 'blocks' on mouse events is probably what should be
  * fixed here.
  */
-#include <SDL.h>
+#include <SDL2/SDL_mouse.h>
 
 #include "proto.h"
 

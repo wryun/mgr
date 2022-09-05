@@ -1,5 +1,4 @@
 #ifdef WHO
-/* }}} */
 /* #includes */
 #include <fcntl.h>
 #include <pwd.h>

@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /*                        Copyright (c) 1987 Bellcore
  *                            All Rights Reserved
  *       Permission is granted to copy or use this program, EXCEPT that it
@@ -263,10 +261,7 @@ int do_buckey(c) register unsigned char c;
     case 'l':                                   /* clear the window */
         cursor_off();
         ACTIVE_OFF();
-        COLOR color = {
-            0xFF, 0xFF, 0xFF, 0
-        };
-        CLEAR(ACTIVE(window), color);
+        texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
         ACTIVE_ON();
         cursor_on();
         break;

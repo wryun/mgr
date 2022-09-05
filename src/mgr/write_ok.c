@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* check to make sure it is ok to read/write a file */
 /* #includes */
 #include <sys/types.h>

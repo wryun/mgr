@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* erase a pixrect to background pattern */
 /* #includes */
 #include <mgr/bitblit.h>

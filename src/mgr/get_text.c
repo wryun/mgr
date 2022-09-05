@@ -1,5 +1,3 @@
-/* }}} */
-/* Notes */
 /* sweep out text rectangle */
 /* #includes */
 #include <mgr/bitblit.h>

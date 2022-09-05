@@ -18,6 +18,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <SDL2/SDL.h>
+
+#include "defs.h"
 #include "graphics.h"
 
 
@@ -251,6 +254,25 @@ void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
     SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
+void texture_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color, int line_width)
+{
+    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
+    rect.x += texture->rect.x;
+    rect.y += texture->rect.y;
+    if (line_width == 1) {
+        SDL_RenderDrawRect(sdl_renderer, &rect);
+    } else {
+        SDL_Rect rects[] = {
+            {.x = rect.x, .y = rect.y, .w = rect.w, .h = line_width},
+            {.x = rect.x + rect.w - line_width, .y = rect.y + line_width, .w = line_width, .h = rect.h - 2 * line_width},
+            {.x = rect.x, .y = rect.y + rect.h - line_width, .w = rect.w, .h = line_width},
+            {.x = rect.x, .y = rect.y + line_width, .w = line_width, .h = rect.h - 2 * line_width},
+        };
+        SDL_RenderFillRects(sdl_renderer, rects, 4);
+    }
+}
+
 void texture_point(TEXTURE *texture, SDL_Point point, SDL_Color color)
 {
     SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
@@ -267,43 +289,87 @@ void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_Color co
 
 void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color)
 {
+    assert(src_texture != dst_texture);
+
     SDL_Rect dst_rect = {
         .x = dst_texture->rect.x + point.x, .y = dst_texture->rect.y + point.y,
         .w = src_texture->rect.w, .h = src_texture->rect.h,
     };
-    SDL_Rect src_rect = src_texture->rect;
-    SDL_Texture *src_sdl_texture = src_texture->sdl_texture;
-    SDL_Texture *new_src_sdl_texture = NULL;
-    /* TODO: This nonsense is probably only needed for scrolling, which should be implemented differently
-     * anyway I suspect... (i.e. just create a _new_ texture and replace the existing one).
-     * Also has dodgy 'works but not in API' check for y coordinate. Replace with an assert?
-     */
-    if (src_sdl_texture == dst_texture->sdl_texture && dst_rect.y > src_rect.y) {
-        new_src_sdl_texture = create_empty_target_texture(src_rect.w, src_rect.h);
-        SDL_SetTextureAlphaMod(src_sdl_texture, SDL_ALPHA_OPAQUE);
-        SDL_SetTextureColorMod(src_sdl_texture, 0xFF, 0xFF, 0xFF);
-        SDL_SetRenderTarget(sdl_renderer, new_src_sdl_texture);
-        SDL_Rect new_src_rect = {.x = 0, .y = 0, .w = src_rect.w, .h = src_rect.h};
-        SDL_RenderCopy(sdl_renderer, src_sdl_texture, &src_rect, &new_src_rect);
 
-        src_sdl_texture = new_src_sdl_texture;
-        src_rect = new_src_rect;
-    }
-
-    SDL_SetTextureColorMod(src_sdl_texture, fg_color.r, fg_color.g, fg_color.b);
-    SDL_SetTextureAlphaMod(src_sdl_texture, fg_color.a);
+    SDL_SetTextureColorMod(src_texture->sdl_texture, fg_color.r, fg_color.g, fg_color.b);
+    SDL_SetTextureAlphaMod(src_texture->sdl_texture, fg_color.a);
     SDL_SetRenderTarget(sdl_renderer, dst_texture->sdl_texture);
-    SDL_RenderCopy(sdl_renderer, src_sdl_texture, &src_rect, &dst_rect);
+    SDL_RenderCopy(sdl_renderer, src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
+}
 
-    if (new_src_sdl_texture != NULL) {
-        SDL_DestroyTexture(new_src_sdl_texture);
+void texture_scroll(TEXTURE *texture, SDL_Color bg_color, int start, int delta) {
+    /* Copy textures around for vertical scrolling effects.
+     *
+     * Now we're using textures, really scrolling should be implementing by replacing
+     * the texture rather than doing this dance. However, because our 'interesting'
+     * TEXTURE struct, a single sdl_texture could be referred to multiple times,
+     * and we have no current way of tracking down the other references.
+     *
+     * Note that it appears to work if we copy the source texture _over_
+     * the destination texture as long as dst_rect.y > src_rect.y, but this
+     * optimisation is not endorsed by the documentation, so we abandon
+     * it for now...
+     */
+
+    assert(delta != 0);
+
+    int abs_delta = abs(delta);
+
+    /* src_rect -> temp_rect -> texture_target_rect; bg_color -> fill_rect */
+    SDL_Rect src_rect = texture->rect;        /* Bit of original texture to keep */
+    src_rect.y += start;
+    src_rect.h -= start;
+
+    /* If we're scrolling more than the height, we can just blank it out. */
+    if (abs_delta >= src_rect.h) {
+        texture_fill_rect(texture, src_rect, bg_color);
+        return;
     }
+
+    SDL_Rect texture_target_rect = src_rect;  /* Where to copy new texture */
+    SDL_Rect fill_target_rect = src_rect;     /* Where to blank out scrolled lines */
+
+    src_rect.h -= abs_delta;  /* No point copying the part of original rect lost to scroll */
+    texture_target_rect.h -= abs_delta;  /* Similarly, when we copy it back we don't need this */
+    fill_target_rect.h = abs_delta;  /* Because we _fill_ this height using DrawRect */
+
+    if (delta > 0) { /* If we're scrolling down... */
+        src_rect.y += abs_delta;  /* Need to pull the lines from further down */
+        fill_target_rect.y += src_rect.h;  /* And the background fill is going to be at the end */
+    } else if (delta < 0) {  /* If we're scrolling up... */
+        texture_target_rect.y += src_rect.h;  /* Need to copy the lines further down */
+    }
+
+    /* Copy scrollable region to temporary texture */
+    SDL_Rect temp_rect = {.x = 0, .y = 0, .w = src_rect.w, .h = src_rect.h};
+    SDL_Texture *temp_sdl_texture = create_empty_target_texture(temp_rect.w, temp_rect.h);
+    SDL_SetRenderTarget(sdl_renderer, temp_sdl_texture);
+    SDL_SetTextureAlphaMod(texture->sdl_texture, SDL_ALPHA_OPAQUE);
+    SDL_SetTextureColorMod(texture->sdl_texture, 0xFF, 0xFF, 0xFF);
+    SDL_RenderCopy(sdl_renderer, texture->sdl_texture, &src_rect, &temp_rect);
+
+    /* Copy back onto original texture */
+    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetTextureAlphaMod(temp_sdl_texture, SDL_ALPHA_OPAQUE);
+    SDL_SetTextureColorMod(temp_sdl_texture, 0xFF, 0xFF, 0xFF);
+    SDL_RenderCopy(sdl_renderer, temp_sdl_texture, &temp_rect, &texture_target_rect);
+
+    /* Fill in 'new' area with the background colour */
+    SDL_SetRenderDrawColor(sdl_renderer, bg_color.r, bg_color.g, bg_color.b, bg_color.a);
+    SDL_RenderFillRect(sdl_renderer, &fill_target_rect);
+
+    SDL_DestroyTexture(temp_sdl_texture);
 }
 
 void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color, SDL_Color bg_color)
 {
     SDL_Rect dst_rect = {
-        .x = dst_texture->rect.x + point.x, .y = dst_texture->rect.y + point.y,
+        .x = point.x, .y = point.y,
         .w = src_texture->rect.w, .h = src_texture->rect.h,
     };
     texture_fill_rect(dst_texture, dst_rect, bg_color);
