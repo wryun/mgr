@@ -179,23 +179,10 @@ char *strchr();
 
 /* Structure definitions */
 
-struct SDL_Texture;
-typedef struct SDL_Texture SDL_Texture;
+struct texture;
+typedef struct texture TEXTURE;
 struct SDL_Cursor;
 typedef struct SDL_Cursor SDL_Cursor;
-
-/* Wrapper around an SDL texture that allows us to:
- *  - have easy access to its dimensions
- *  - potentially have a 'child' texture (see texture_create_child)
- *    which points to a sub-rectangle (set orig = 0)
- *  - note that we assume if you texture_destroy when orig = 1,
- *    you've cleaned up the children (we don't ref count).
- */
-typedef struct texture {
-    SDL_Texture *sdl_texture;
-    SDL_Rect rect;
-    int orig;
-} TEXTURE;
 
 typedef struct {        /* used for text regions */
     int x, y, wide, high;

@@ -76,9 +76,10 @@ stars[NSTARS];   /* our galaxy */
 /* init_all */
 void init_all(where) register TEXTURE *where;
 {
-    maxv = where->rect.h;
+    SDL_Rect rect = texture_get_rect(where);
+    maxv = rect.h;
     hmaxv = maxv >> 1;
-    maxh = where->rect.y;
+    maxh = rect.w;
     hmaxh = maxh >> 1;
 }
 static void flip(void)
@@ -221,40 +222,41 @@ void copyright(TEXTURE *where, char *password)
     char rbuf[64], *readp = rbuf;
     char *crypt();
     int at_startup = (*password == 0);
+    SDL_Rect where_rect = texture_get_rect(where);
+    SDL_Rect notice_rect = texture_get_rect(notice);
+    SDL_Rect logo_rect = texture_get_rect(logo[0]);
 
     /* clear display */
 
-    SDL_Rect rect = {.x = 0, .y = 0, .w = where->rect.w, .h = where->rect.h};
-    texture_fill_rect(where, rect, BLACK);
+    texture_clear(where, BLACK);
 
     if (at_startup) {
         /* get the cr notice hole */
 
-        clip1.x1 = (where->rect.w - notice->rect.w) / 2 - SSIZE;
-        clip1.y1 = (3 * where->rect.h - 2 * notice->rect.h) / 4 - SSIZE;
-        clip1.x2 = clip1.x1 + SSIZE + notice->rect.w;
-        clip1.y2 = clip1.y1 + SSIZE + notice->rect.h;
+        clip1.x1 = (where_rect.w - notice_rect.w) / 2 - SSIZE;
+        clip1.y1 = (3 * where_rect.h - 2 * notice_rect.h) / 4 - SSIZE;
+        clip1.x2 = clip1.x1 + SSIZE + notice_rect.w;
+        clip1.y2 = clip1.y1 + SSIZE + notice_rect.h;
 
-        SDL_Rect notice_rect = {
+        SDL_Point notice_point = {
             .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
-            .w = notice->rect.w, .h = notice->rect.h
         };
-        texture_fill_rect(where, rect, WHITE);
+        texture_copy(where, notice_point, notice, WHITE);
 
         /* get the globe hole */
 
-        clip2.x1 = (where->rect.w - logo[0]->rect.w) / 2 - SSIZE;
-        clip2.y1 = (where->rect.h - 2 * logo[0]->rect.h) / 4 - SSIZE;
-        clip2.x2 = clip2.x1 + SSIZE + logo[0]->rect.w;
-        clip2.y2 = clip2.y1 + SSIZE + logo[0]->rect.h;
+        clip2.x1 = (where_rect.w - logo_rect.w) / 2 - SSIZE;
+        clip2.y1 = (where_rect.h - 2 * logo_rect.h) / 4 - SSIZE;
+        clip2.x2 = clip2.x1 + SSIZE + logo_rect.w;
+        clip2.y2 = clip2.y1 + SSIZE + logo_rect.h;
 
 #ifdef MESSAGE
         /* get the message hole */
 
         clip3.x1 = 10 - SSIZE;
-        clip3.y1 = where->rect.h - font->head.high - 10 - SSIZE;
+        clip3.y1 = where_rect.h - font->head.high - 10 - SSIZE;
         clip3.x2 = 10 + 2 * SSIZE + strlen(MESSAGE) * font->head.wide;
-        clip3.y2 = where->rect.h - 10 + 2 * SSIZE;
+        clip3.y2 = where_rect.h - 10 + 2 * SSIZE;
         put_str(where, 10, clip3.y2 - SSIZE, font, BIT_SRC, MESSAGE);
 #else
         clip3 = clip2;

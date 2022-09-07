@@ -24,7 +24,6 @@
 #include "icon_server.h"
 #include "intersect.h"
 #include "put_window.h"
-#include "scroll.h"
 #include "subs.h"
 
 /* shape -- reshape a window to specified dimensions */
@@ -76,7 +75,7 @@ int shape(int x, int y, int dx, int dy)
                                 w - ACTIVE(borderwid) * 2,
                                 h - ACTIVE(borderwid) * 2);
 
-    texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
+    texture_clear(ACTIVE(window), ACTIVE(bg_color));
 
     border(active, BORDER_THIN);
     bit_blit(ACTIVE(border), 0, 0,

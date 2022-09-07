@@ -66,6 +66,9 @@ static int log_now = 0;
 #endif
 void redo_select(void);
 
+#define HEIGHT 600
+#define WIDTH 800
+
 /* sig_child -- catch dead children */
 static void sig_child(sig) int sig;
 {
@@ -609,7 +612,7 @@ int main(int argc, char **argv)
     }
 
     /* sdl init */
-    if ((screen = screen_init(800, 600)) == NULL) {
+    if ((screen = screen_init(WIDTH, HEIGHT)) == NULL) {
         perror("mgr: Can't open the screen.");
         exit(2);
     }
@@ -843,8 +846,8 @@ int main(int argc, char **argv)
             dirty = 1;
             break;
         case SDL_MOUSEMOTION:
-            mousex = BETWEEN(0, event.motion.x, screen->rect.w - 1);
-            mousey = BETWEEN(0, event.motion.y, screen->rect.h - 1);
+            mousex = BETWEEN(0, event.motion.x, WIDTH - 1);
+            mousey = BETWEEN(0, event.motion.y, HEIGHT - 1);
             break;
         default:
             break;

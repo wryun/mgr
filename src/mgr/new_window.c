@@ -248,7 +248,7 @@ char *start;
 
     set_covered(win);
     border(win, BORDER_THIN);
-    texture_fill_rect(W(window), W(window)->rect, W(bg_color));
+    texture_clear(W(window), W(bg_color));
 
     SETMOUSEICON( DEFAULT_MOUSE_CURSOR); /* because active win chg */
 

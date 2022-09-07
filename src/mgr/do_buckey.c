@@ -261,7 +261,7 @@ int do_buckey(c) register unsigned char c;
     case 'l':                                   /* clear the window */
         cursor_off();
         ACTIVE_OFF();
-        texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
+        texture_clear(ACTIVE(window), ACTIVE(bg_color));
         ACTIVE_ON();
         cursor_on();
         break;

@@ -116,7 +116,7 @@ void win_make(WINDOW *win, int indx)
 
         set_covered(active);
         border(active, BORDER_THIN);
-        texture_fill_rect(ACTIVE(window), ACTIVE(window)->rect, ACTIVE(bg_color));
+        texture_clear(ACTIVE(window), ACTIVE(bg_color));
         SETMOUSEICON( DEFAULT_MOUSE_CURSOR);    /* because active win chg */
         ACTIVE_ON();
         cursor_on();

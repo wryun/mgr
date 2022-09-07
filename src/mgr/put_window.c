@@ -45,7 +45,25 @@
 #define BORDER(win) \
     ((win == active) ? border(win, BORDER_FAT) : border(win, BORDER_THIN))
 
-#define BG_OP PUTOP(BIT_CLR, W(style))
+/* Scroll text from current line onwards */
+#define TEXT_SCROLL_Y(delta_y) \
+    { \
+        SDL_Rect region = texture_get_rect(text); \
+        region.y += W(y) - fsizehigh; \
+        region.h -= region.y; \
+        texture_scroll(text, region, 0, (delta_y), W(bg_color)); \
+    }
+
+/* Scroll text within current line */
+#define TEXT_SCROLL_X(delta_x) \
+    { \
+        SDL_Rect region = texture_get_rect(text); \
+        region.x += W(x); \
+        region.w -= region.x; \
+        region.y = W(y) - fsizehigh; \
+        region.h = fsizehigh; \
+        texture_scroll(text, region, (delta_x), 0, W(bg_color)); \
+    }
 
 /* fsleep is experimental */
 
@@ -342,44 +360,34 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 break;
             /* E_ADDLINE    -- add a new line */
             case E_ADDLINE:
-                texture_scroll(text, W(bg_color), W(y) - fsizehigh, -(*W(esc) || 1) * fsizehigh);
+                TEXT_SCROLL(W(y) - fsizehigh, (*W(esc) || 1) * fsizehigh);
                 done++;
                 break;
             /* E_ADDCHAR    -- insert a character */
             case E_ADDCHAR:
             {
-                register int wide = (fsizewide) * (*W(esc) ? *W(esc) : 1);
-
-                if (wide + W(x) > T_WIDE) {
-                    wide = T_WIDE - W(x);
-                }
-
-                bit_blit(text, W(x) + wide, W(y) - fsizehigh,
-                         T_WIDE - W(x) - wide, fsizehigh, BIT_SRC,
-                         text, W(x), W(y) - fsizehigh);
-                bit_blit(text, W(x), W(y) - fsizehigh, wide,
-                         fsizehigh, BG_OP, 0, 0, 0);
+                SDL_Rect region = texture_get_rect(text);
+                region.x += W(x);
+                region.w -= region.x;
+                region.y = W(y) - fsizehigh;
+                region.h = fsizehigh;
+                texture_scroll(text, region, (*W(esc) || 1) * fsizewide, 0, W(bg_color));
             }
             break;
             /* E_DELETELINE -- delete a line */
             case E_DELETELINE:         /* delete a line */
-                texture_scroll(text, W(bg_color), W(y) - fsizehigh, (*W(esc) || 1) * fsizehigh);
+                TEXT_SCROLL(W(y) - fsizehigh, -(*W(esc) || 1) * fsizehigh);
                 done++;
-                break;
+            break;
             /* E_DELETECHAR -- delete a character */
             case E_DELETECHAR:
             {
-                register int wide = (fsizewide) * (*W(esc) ? *W(esc) : 1);
-
-                if (wide + W(x) > T_WIDE) {
-                    wide = T_WIDE - W(x);
-                }
-
-                bit_blit(text, W(x), W(y) - fsizehigh,
-                         T_WIDE - W(x) - wide, fsizehigh, BIT_SRC,
-                         text, W(x) + wide, W(y) - fsizehigh);
-                bit_blit(text, T_WIDE - wide, W(y) - fsizehigh, wide,
-                         fsizehigh, BG_OP, 0, 0, 0);
+                SDL_Rect region = texture_get_rect(text);
+                region.x += W(x);
+                region.w -= region.x;
+                region.y = W(y) - fsizehigh;
+                region.h = fsizehigh;
+                texture_scroll(text, region, -(*W(esc) || 1) * fsizewide, 0, W(bg_color));
             }
             break;
             /* E_UPLINE     -- up 1 line */
@@ -430,7 +438,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     int n = W(esc)[0] * fsizehigh / div;
 
                     if (W(y) + n > T_HIGH) {
-                        texture_scroll(text, W(bg_color), 0, n);
+                        texture_scroll(text, texture_get_rect(text), 0, n, W(bg_color));
                         done++;
                     } else {
                         W(y) += n;
@@ -442,7 +450,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 #endif
 
                 if (W(y) + fsizehigh > T_HIGH) {
-                    texture_scroll(text, W(bg_color), 0, fsizehigh);
+                    texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
                     done++;
                 } else {
                     W(y) += fsizehigh;
@@ -585,8 +593,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     W(y) += FSIZE(baseline) - baseline;
 
                     if (W(y) < fsizehigh) {
-                        scroll(win, text, W(y) - fsizehigh, T_HIGH, W(y) - fsizehigh, BG_OP);
-                        texture_scroll(text, W(bg_color), W(y) - fsizehigh, W(y) - fsizehigh);
+                        TEXT_SCROLL(W(y) - fsizehigh, fsizehigh);
                         W(y) = fsizehigh;
                         done++;
                     }
@@ -1249,7 +1256,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         W(fg_color) = W(bg_color);
                         W(bg_color) = temp;
                     }
-                    texture_fill_rect(window, window->rect, W(bg_color));
+                    texture_clear(window, W(bg_color));
                     BORDER(win);
                     break;
                 case M_NOWRAP:         /* turn on no-wrap */
@@ -1342,7 +1349,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         W(fg_color) = W(bg_color);
                         W(bg_color) = temp;
                     }
-                    texture_fill_rect(window, window->rect, W(bg_color));
+                    texture_clear(window, W(bg_color));
                     BORDER(win);
                     break;
                 case M_NOWRAP:         /* turn off no-wrap */
@@ -1501,7 +1508,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 break;
             /* C_FF -- form feed */
             case C_FF:
-                texture_fill_rect(text, text->rect, W(bg_color));
+                texture_clear(text, W(bg_color));
                 W(x) = 0;
                 W(y) = fsizehigh;
                 W(flags) |= W_SNARFABLE;
@@ -1525,7 +1532,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     W(x) = 0;
 
                     if (W(y) + fsizehigh > T_HIGH) {
-                        texture_scroll(text, W(bg_color), 0, fsizehigh);
+                        texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
                         done++;
                     } else {
                         W(y) += fsizehigh;
@@ -1541,7 +1548,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             case C_NL:                 /* line feed */
 
                 if (W(y) + fsizehigh > T_HIGH) {
-                    texture_scroll(text, W(bg_color), 0, fsizehigh);
+                    texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
                     done++;
                 } else {
                     W(y) += fsizehigh;
@@ -1567,7 +1574,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     if (W(y) > T_HIGH) {
                         W(y) -= fsizehigh;
-                        texture_scroll(text, W(bg_color), 0, fsizehigh);
+                        texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
                         done++;
                     }
                 }
