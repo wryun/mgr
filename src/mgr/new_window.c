@@ -26,7 +26,6 @@
 #include "get_font.h"
 #include "get_rect.h"
 #include "getshell.h"
-#include "icon_server.h"
 #include "mgr.h"
 #include "put_window.h"
 #include "subs.h"

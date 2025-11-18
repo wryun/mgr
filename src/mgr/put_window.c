@@ -31,7 +31,6 @@
 #include "get_info.h"
 #include "get_menus.h"
 #include "graphics.h"
-#include "icon_server.h"
 #include "intersect.h"
 #include "new_window.h"
 #include "shape.h"
@@ -144,8 +143,8 @@ void set_size(WINDOW *win)
 int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 {
     /* variables */
-    register BITMAP *window = W(window);       /* bitmap to update */
-    register BITMAP *text = (BITMAP *)0;       /* current text region */
+    register TEXTURE *window = W(window);      /* bitmap to update */
+    register TEXTURE *text = NULL;             /* current text region */
     register int indx;                         /* index into buff */
     register int cnt;                          /* # of esc. numbers */
     register unsigned char c;                  /* current char */
@@ -177,7 +176,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         text = texture_create_child(window, rect);
     }
 
-    if (text == (BITMAP *)0) {
+    if (text == NULL) {
         text = window;
     }
 
@@ -955,6 +954,9 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* E_BITGET     -- transfer a bitmap from server to client */
             case E_BITGET:
             {
+                fprintf(stderr, "MGR: E_PUSH disabled during libbitblit removal\n");
+
+#if 0
                 int offset = W(esc)[2];
                 int which = *W(esc);
                 int size = W(esc)[1];
@@ -973,12 +975,16 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     free(data);
                     /* write(W(to_fd),BIT_DATA(m)+offset,size); */
                 }
+#endif
 
                 break;
             }
             /* E_BITVALUE   -- set/get pixel value */
             case E_BITVALUE:
             {
+                fprintf(stderr, "MGR: E_BITVALUE disabled during libbitblit removal\n");
+
+#if 0
                 int m = W(esc)[0];
                 int x = W(esc)[1];
                 int y = W(esc)[2];
@@ -998,12 +1004,16 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         }
                     }
                 }
+#endif
 
                 break;
             }
             /* E_BITCRT     -- create/destroy a bitmap */
             case E_BITCRT:             /* create/destroy a bitmap */
             {
+                fprintf(stderr, "MGR: E_BITVALUE disabled during libbitblit removal\n");
+
+#if 0
                 int bmnbr = W(esc)[0];
 
                 switch (cnt) {
@@ -1034,6 +1044,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     break;
                 }
+#endif
             }
             break;
             /* E_BITLOAD    -- transfer a bitmap from client to server */
@@ -1143,11 +1154,17 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 break;
             /* E_PUSH       -- push environment */
             case E_PUSH:               /* push environment */
+                fprintf(stderr, "MGR: E_PUSH disabled during libbitblit removal\n");
+                /*
                 win_push(win, *W(esc));
+                */
                 break;
             /* E_POP        -- pop old environment */
             case E_POP:                /* pop old environment */
+                fprintf(stderr, "MGR: E_POP disabled during libbitblit removal\n");
+                /*
                 win_pop(win);
+                */
 
                 if (!(W(flags) & W_ACTIVE && mousein(mousex, mousey, win, 0))) {
                     done++;

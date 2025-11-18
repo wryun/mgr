@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <SDL2/SDL.h>
 
 #include "defs.h"
 #include "event.h"
@@ -30,7 +31,7 @@
 #include "erase_win.h"
 #include "font_subs.h"
 #include "get_menus.h"
-#include "icon_server.h"
+#include "graphics.h"
 #include "put_window.h"
 #include "subs.h"
 #include "utmp.h"
@@ -80,19 +81,22 @@ int how;                        /* if how, unlink window stack as well */
     }
 
     if (W(window)) {
-        bit_destroy(W(window));
+        texture_destroy(W(window));
     }
 
     for (i = 0; i < MAXBITMAPS; i++) {
         if (W(bitmaps)[i]) {
-            bit_destroy(W(bitmaps)[i]);
+            texture_destroy(W(bitmaps)[i]);
         }
     }
 
+#if 0
+    /* libbitblit refactor */
     bit_destroy(W(cursor));     /* usually noop because static */
+#endif
 
     if (W(border)) {
-        bit_destroy(W(border));
+        texture_destroy(W(border));
     }
 
     if (W(snarf)) {

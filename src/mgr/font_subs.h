@@ -18,8 +18,8 @@ struct entry {
 
 struct font {
     struct font_header head;    /* font header */
-    BITMAP *data;               /* all the glyphs strung together */
-    BITMAP **glyph;             /* pointers to individual glyphs */
+    TEXTURE *data;               /* all the glyphs strung together */
+    TEXTURE **glyph;             /* pointers to individual glyphs */
     short ident;                /* font id */
     struct entry **table;       /* pointer to hash table for cut/paste */
 };

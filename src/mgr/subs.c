@@ -35,7 +35,6 @@
 #include "do_event.h"
 #include "erase_win.h"
 #include "font_subs.h"
-#include "icon_server.h"
 #include "intersect.h"
 #include "mgr.h"
 #include "mouse_get.h"

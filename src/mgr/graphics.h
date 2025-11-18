@@ -6,11 +6,12 @@ extern void screen_present();
 extern void screen_flush();
 
 extern void cursor_warp(SDL_Point point);
-extern SDL_Cursor *cursor_create(void *pixels, int wide, int high, int depth);
+SDL_Cursor *cursor_create_from_icon(char *iconpath);
 
 extern TEXTURE *texture_create_child(TEXTURE *src_texture, SDL_Rect rect);
 extern TEXTURE *texture_create_empty(int width, int height);
 extern TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth);
+extern TEXTURE *texture_create_from_icon(const char *iconpath);
 
 extern void texture_destroy(TEXTURE *texture);
 
@@ -24,3 +25,14 @@ extern void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_C
 extern void texture_scroll(TEXTURE *texture, SDL_Rect region, int delta_x, int delta_y, SDL_Color bg_color);
 extern void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color);
 extern void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color, SDL_Color bg_color);
+
+extern TEXTURE *def_pattern;
+extern SDL_Cursor *mouse_arrow;
+extern SDL_Cursor *mouse_box;
+extern SDL_Cursor *mouse_bull;
+extern SDL_Cursor *mouse_bull2;
+extern SDL_Cursor *mouse_cross;
+extern SDL_Cursor *mouse_cup;
+extern SDL_Cursor *mouse_cut;
+
+extern int load_server_icons();

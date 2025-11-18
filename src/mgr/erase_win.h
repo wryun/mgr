@@ -1,1 +1,1 @@
-void erase_win(BITMAP *map);
+void erase_win(TEXTURE *map);

@@ -16,16 +16,16 @@
 #include <stdio.h>
 
 #include "defs.h"
-#include "default_font.h"
 
 #include "proto.h"
 #include "cut.h"
 #include "font_subs.h"
+#include "graphics.h"
 
 /* glyph_create */
-static void glyph_create(font, glyph, offset) struct font *font; BITMAP **glyph; int offset;
+static void glyph_create(font, glyph, offset) struct font *font; TEXTURE **glyph; int offset;
 {
-    register int i, x;
+    register int i;
     int first = font->head.start;
     int last = first + font->head.count;
     int wide = font->head.wide;
@@ -50,41 +50,18 @@ static void glyph_create(font, glyph, offset) struct font *font; BITMAP **glyph;
         nochar = 0;
     }
 
-    nochar = nochar * wide + offset;
-
-    x = offset;
+    SDL_Rect nochar_rect = {.x = nochar * wide + offset, .y = 0, .w = wide, .h = high};
+    SDL_Rect char_rect = {.x = offset, .y = 0, .w = wide, .h = high};
 
     for (i = 0; i < MAXGLYPHS; i++) {
         if (i < first || i >= last) {
-            glyph[i] = bit_create(font->data, nochar, 0, wide, high);
+            glyph[i] = texture_create_child(font->data, nochar_rect);
         } else {
-            glyph[i] = bit_create(font->data, x, 0, wide, high);
-            x += wide;
+            glyph[i] = texture_create_child(font->data, char_rect);
+            char_rect.x += wide;
             dbgprintf('f', (stderr, "Creating glyph for %c\n", i));
         }
     }
-}
-/* open_sfont -- set up a static font file */
-static struct font *open_sfont(head, data) struct font_header head; BITMAP *data;
-{
-    struct font *font;
-
-    if ((font = malloc(sizeof(struct font))) == (struct font *)0) {
-        return((struct font *)0);
-    }
-
-    font->head = head;
-    font->data = data;
-    /* hack! */
-    font->head.type = FONT_S;
-    font->table = (struct entry **) 0;
-
-    /* create individual characters */
-
-    font->glyph = (BITMAP **) malloc(sizeof(BITMAP *) * MAXGLYPHS);
-    glyph_create(font, font->glyph, 0);
-
-    return(font);
 }
 #ifndef MGRLOGIN
 /* font_purge -- look for and remove all references to a particular font */
@@ -119,11 +96,12 @@ static int font_purge(gone) register struct font *gone; /* invalid font pointer 
 struct font *open_font(file) char *file;
 {
     FILE *fp;
-    int size;
+    int size, width, height;
     struct font *font;
+    char *pixels;
 
     if (file == (char *) 0 || *file == '\0') {
-        return(open_sfont(default_font_head, &default_font));
+        file = DEFAULT_FONT;
     }
 
     dbgprintf('f', (stderr, "Opening font file [%s]\n", file));
@@ -154,29 +132,31 @@ struct font *open_font(file) char *file;
 
     /* fonts are always 32 bit aligned */
 
-    size = (font->head.wide * font->head.count + 31) & ~31;
+    font->table = NULL;
+    width = (font->head.wide * font->head.count + 31) & ~31;
+    height = font->head.high;
+    size = width * height / 8;
+    pixels = malloc(size);
+    if (!pixels) {
+        return NULL;
+    }
 
-    font->data = bit_alloc(size, font->head.high, NULL_DATA, 1);
-    /* TODO - horrific hack to hook into other hack to do with fonts.
-     * Remove once libbitblit is ripped out.
-     */
-    font->data->type = _STATIC;
-    font->data->data = malloc(size * font->head.high / 8);
-    font->table = (struct entry **) 0;
+    if (!fread(pixels, size, 1, fp)) {
+        free((char *) font);
+        fclose(fp);
+        free(pixels);
+        return NULL;
+    }
 
-    /* read in font data */
-
-    size = bit_size(BIT_WIDE(font->data), BIT_HIGH(font->data), BIT_DEPTH(font->data));
-    fread(BIT_DATA(font->data), size, 1, fp);
-    SET_DIRTY(font->data);
-    /* create individual characters */
-
-    font->glyph = malloc(sizeof(BITMAP *) * MAXGLYPHS);
-    glyph_create(font, font->glyph, 0);
-
+    font->data = texture_create_from_pixels(pixels, width, height, 1);
+    free(pixels);
     fclose(fp);
 
-    return(font);
+    /* create individual characters */
+    font->glyph = malloc(sizeof(TEXTURE *) * MAXGLYPHS);
+    glyph_create(font, font->glyph, 0);
+
+    return font;
 }
 #ifndef MGRLOGIN
 /* free_font -- deallocate a font */
@@ -194,12 +174,12 @@ void free_font(dead_font) struct font *dead_font;
 
     for (i = 0; i < count; i++) {
         if (dead_font->glyph[i]) {
-            bit_destroy(dead_font->glyph[i]);
+            texture_destroy(dead_font->glyph[i]);
         }
     }
 
     if (dead_font->head.type != FONT_S) {
-        bit_destroy(dead_font->data);
+        texture_destroy(dead_font->data);
     }
 
     free(dead_font->glyph);
@@ -213,8 +193,8 @@ void free_font(dead_font) struct font *dead_font;
 /* enhance_font -- add bold face and underlining to a font */
 int enhance_font(font) struct font *font;                    /* font to be enhanced */
 {
-    BITMAP *data;                         /* new bitmap data */
-    BITMAP **glyph;               /* new font glyphs */
+    TEXTURE *data;                         /* new bitmap data */
+    TEXTURE **glyph;               /* new font glyphs */
     int size;                                     /* current font size */
     register int i;
 
@@ -222,15 +202,20 @@ int enhance_font(font) struct font *font;                    /* font to be enhan
         return(0);
     }
 
+    return 0;
+
+    /* TODO - need ReadRenderPixels */
+
+#if 0
     /* make data structures larger, copy existing data */
 
-    glyph = (BITMAP **) malloc(sizeof(BITMAP *) * MAXGLYPHS * 4);
+    glyph = (TEXTURE **) malloc(sizeof(TEXTURE *) * MAXGLYPHS * 4);
 
     for (i = 0; i < MAXGLYPHS; i++) {
-        bit_destroy(font->glyph[i]);
+        texture_destroy(font->glyph[i]);
     }
 
-    free(font->glyph);
+    texture_destroy(font->glyph);
     font->glyph = glyph;
 
     size = BIT_WIDE(font->data);
@@ -276,5 +261,6 @@ int enhance_font(font) struct font *font;                    /* font to be enhan
     font->head.type |= 0x80;
 
     return(1);
+#endif
 }
 #endif

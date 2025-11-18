@@ -23,6 +23,7 @@
 #include "do_button.h"
 #include "do_event.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "mgr.h"
 #ifdef DEBUG
 #include "print.h"
@@ -395,9 +396,10 @@ int do_buckey(c) register unsigned char c;
         }
 
         for (win = active; win != (WINDOW *) 0; win = win->next) {
+            SDL_Rect window_rect = texture_get_rect(W(window));
             fprintf(stderr, "%s: %d,%d  %d,%d num(%d) {%s}\r\n",
                     W(tty), W(x0), W(y0),
-                    BIT_WIDE(W(window)), BIT_HIGH(W(window)), W(num),
+                    window_rect.w, window_rect.h, W(num),
                     c == 'I' ? print_ps(W(tty)):"");
             fprintf(stderr, "  flags: %s\n", print_flags(W(flags)));
             fprintf(stderr, "  events: %s\n", print_events(W(event_mask)));

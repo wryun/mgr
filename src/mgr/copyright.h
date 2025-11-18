@@ -1,1 +1,1 @@
-void copyright(BITMAP *where, char *password);
+void copyright(TEXTURE *where, char *password);

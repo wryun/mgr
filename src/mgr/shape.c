@@ -21,7 +21,7 @@
 #include "erase_win.h"
 #include "font_subs.h"
 #include "get_rect.h"
-#include "icon_server.h"
+#include "graphics.h"
 #include "intersect.h"
 #include "put_window.h"
 #include "subs.h"
@@ -105,7 +105,7 @@ void shape_window(void)
 {
     int dx = 16, dy = 16;
 
-    SETMOUSEICON(&mouse_box);
+    SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
     SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
     get_rect(screen, mouse, mousex, mousey, &dx, &dy, 0);
@@ -123,7 +123,7 @@ void stretch_window(void)
     int dx, dy;
     int x0, x1, y0, y1;
 
-    SETMOUSEICON(&mouse_box);
+    SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
     SETMOUSEICON( DEFAULT_MOUSE_CURSOR);
 

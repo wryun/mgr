@@ -18,10 +18,13 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <SDL2/SDL.h>
 
 #include "graphics.h"
+#include "bitmap.h"
+#include "defs.h"
 
 
 /* Wrapper around an SDL texture that allows us to:
@@ -112,27 +115,49 @@ void screen_flush()
     SDL_RenderFlush(sdl_renderer);
 }
 
+static SDL_Surface *surface_load_from_icon(const char *iconpath)
+{
+    char path[PATH_MAX];
+    sprintf(path, "%s/%s", icon_dir, iconpath);
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        return NULL;
+    }
+    SDL_Surface *s = bitmapread(f);
+    fclose(f);
+    return s;
+}
+
 void cursor_warp(SDL_Point point)
 {
     SDL_WarpMouseInWindow(sdl_window, point.x, point.y);
 }
 
-SDL_Cursor *cursor_create(void *pixels, int width, int height, int depth)
+SDL_Cursor *cursor_create_from_icon(char *iconpath)
 {
-    /* Currently, we only support mono bitmaps */
-    assert(depth == SDL_BITSPERPIXEL(static_bitmap_pixel_format));
+    SDL_Surface *surface = surface_load_from_icon(iconpath);
+    if (surface == NULL) {
+        return NULL;
+    }
 
-    const size_t sdl_cursor_height = (height < 16) ? height : 16;
+    /* Could just user CreateColorCursor... */
+    if (surface->format->format != static_bitmap_pixel_format) {
+        SDL_FreeSurface(surface);
+        return NULL;
+    }
+
+    int depth = 1;
+    const size_t sdl_cursor_height = (surface->h < 16) ? surface->h : 16;
     const size_t sdl_cursor_size = sdl_cursor_height * 16 / 8;
-    int row_byte_width = width * depth / 8;
+    int row_byte_width = surface->w * depth / 8;
     int cursor_row_byte_width = 16 * depth / 8;
     Uint8 data[sdl_cursor_size];
     Uint8 mask[sdl_cursor_size];
-    Uint8 *source_white = (Uint8 *)pixels;
+    Uint8 *source_white = (Uint8 *)surface->pixels;
     Uint8 *source_black = source_white;
-  
-    if (height >= 32) {
-        source_black = &(((Uint8 *)pixels)[16 * row_byte_width]);
+
+    if (surface->h>= 32) {
+        source_black = &(((Uint8 *)surface->pixels)[16 * row_byte_width]);
     }
 
     for (size_t i = 0, x = 0, y = 0; i < sdl_cursor_size; ++i, ++x) {
@@ -181,7 +206,7 @@ void texture_destroy(TEXTURE *texture)
     free(texture);
 }
 
-static SDL_Texture *create_empty_target_texture(int width, int height) {
+static SDL_Texture *create_empty_target_sdl_texture(int width, int height) {
     SDL_Texture *sdl_texture = SDL_CreateTexture(sdl_renderer, preferred_pixel_format, SDL_TEXTUREACCESS_TARGET, width, height);
     if (sdl_texture == NULL) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create dynamic texture: %s", SDL_GetError());
@@ -196,13 +221,8 @@ static SDL_Texture *create_empty_target_texture(int width, int height) {
     return sdl_texture;
 }
 
-TEXTURE *texture_create_empty(int width, int height)
+static TEXTURE *texture_create(SDL_Texture *sdl_texture, int width, int height)
 {
-    SDL_Texture *sdl_texture = create_empty_target_texture(width, height);
-    if (sdl_texture == NULL) {
-        return NULL;
-    }
-
     TEXTURE *new_texture = malloc(sizeof(TEXTURE));
     if (new_texture == NULL) {
         return NULL;
@@ -216,6 +236,45 @@ TEXTURE *texture_create_empty(int width, int height)
     new_texture->rect.h = height;
 
     return new_texture;
+}
+
+TEXTURE *texture_create_empty(int width, int height)
+{
+    SDL_Texture *sdl_texture = create_empty_target_sdl_texture(width, height);
+    if (sdl_texture == NULL) {
+        return NULL;
+    }
+
+    return texture_create(sdl_texture, width, height);
+}
+
+static TEXTURE *texture_create_from_surface(SDL_Surface *surface)
+{
+    SDL_Texture *sdl_texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
+
+    if (sdl_texture == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create static texture: %s", SDL_GetError());
+        return NULL;
+    }
+
+    if (SDL_SetTextureBlendMode(sdl_texture, SDL_BLENDMODE_BLEND)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode on texture: %s", SDL_GetError());
+        return NULL;
+    }
+
+    return texture_create(sdl_texture, surface->w, surface->h);
+}
+
+TEXTURE *texture_create_from_icon(const char *iconpath)
+{
+    SDL_Surface *surface = surface_load_from_icon(iconpath);
+    if (surface == NULL) {
+        return NULL;
+    }
+
+    TEXTURE *texture = texture_create_from_surface(surface);
+    SDL_FreeSurface(surface);
+    return texture;
 }
 
 TEXTURE *texture_create_from_pixels(void *pixels, int width, int height, int depth)
@@ -234,31 +293,11 @@ TEXTURE *texture_create_from_pixels(void *pixels, int width, int height, int dep
         return NULL;
     }
 
-    SDL_Texture *sdl_texture = SDL_CreateTextureFromSurface(sdl_renderer, surface);
+    TEXTURE *texture = texture_create_from_surface(surface);
     SDL_FreeSurface(surface);
-
-    if (sdl_texture == NULL) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create static texture: %s", SDL_GetError());
-        return NULL;
-    }
-
-    if (SDL_SetTextureBlendMode(sdl_texture, SDL_BLENDMODE_BLEND)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode on texture: %s", SDL_GetError());
-        return NULL;
-    }
-
-    TEXTURE *new_texture = malloc(sizeof(TEXTURE));
-    if (new_texture == NULL) {
-        return NULL;
-    }
-
-    new_texture->sdl_texture = sdl_texture;
-    new_texture->orig = 1;
-    new_texture->rect.x = 0;
-    new_texture->rect.y = 0;
-    new_texture->rect.w = width;
-    new_texture->rect.h = height;
+    return texture;
 }
+
 
 /* Expose width/height of our texture, but don't leak the 'internal' x/y.
  * That way madness lies...
@@ -351,7 +390,7 @@ void texture_scroll(TEXTURE *texture, SDL_Rect region, int delta_x, int delta_y,
     region.x += texture->rect.x;
     region.y += texture->rect.y;
 
-#if DEBUG
+#if 0
     /* Validate that our source rect is inside texture */
     SDL_Rect clipped_src;
     SDL_bool valid_intersection = SDL_IntersectRect(&texture->rect, &region, &clipped_region);
@@ -382,7 +421,7 @@ void texture_scroll(TEXTURE *texture, SDL_Rect region, int delta_x, int delta_y,
 
     /* Copy texture_src (bit of region to preserve) to temporary texture */
     SDL_Rect temp_rect = {.x = 0, .y = 0, .w = texture_src.w, .h = texture_src.h};
-    SDL_Texture *temp_sdl_texture = create_empty_target_texture(temp_rect.w, temp_rect.h);
+    SDL_Texture *temp_sdl_texture = create_empty_target_sdl_texture(temp_rect.w, temp_rect.h);
     SDL_SetRenderTarget(sdl_renderer, temp_sdl_texture);
     SDL_SetTextureAlphaMod(texture->sdl_texture, SDL_ALPHA_OPAQUE);
     SDL_SetTextureColorMod(texture->sdl_texture, 0xFF, 0xFF, 0xFF);
@@ -407,4 +446,27 @@ void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_tex
     };
     texture_fill_rect(dst_texture, dst_rect, bg_color);
     texture_copy(dst_texture, point, src_texture, fg_color);
+}
+
+
+#define LOAD_ICON(var) {var = texture_create_from_icon("server/" #var); if (!var) return 0;}
+#define LOAD_CURSOR(var) {var = cursor_create_from_icon("server/" #var); if (!var) return 0;}
+TEXTURE *def_pattern;
+SDL_Cursor *mouse_arrow;
+SDL_Cursor *mouse_box;
+SDL_Cursor *mouse_bull;
+SDL_Cursor *mouse_bull2;
+SDL_Cursor *mouse_cross;
+SDL_Cursor *mouse_cup;
+SDL_Cursor *mouse_cut;
+int load_server_icons() {
+    LOAD_ICON(def_pattern);
+    LOAD_CURSOR(mouse_arrow);
+    LOAD_CURSOR(mouse_box);
+    LOAD_CURSOR(mouse_bull);
+    LOAD_CURSOR(mouse_bull2);
+    LOAD_CURSOR(mouse_cross);
+    LOAD_CURSOR(mouse_cup);
+    LOAD_CURSOR(mouse_cut);
+    return 1;
 }

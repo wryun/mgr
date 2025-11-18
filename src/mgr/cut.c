@@ -23,7 +23,6 @@
 #include "do_event.h"
 #include "font_subs.h"
 #include "get_text.h"
-#include "icon_server.h"
 #include "intersect.h"
 #include "mouse_get.h"
 #include "subs.h"
@@ -41,6 +40,7 @@ static unsigned long data2[MAXROWS];            /* bit data for other glyph */
 
 static struct entry **table;            /* hash table */
 
+#if 0
 /* get_hash -- given bitmap, get hash code */
 int get_hash(map, x, y, w, h, how)
 BITMAP *map;
@@ -176,6 +176,8 @@ WINDOW *win;
     //CLEAR(W(window),BIT_NOT(BIT_DST));
 }
 
+#endif
+
 /* paste -- stuff global buffer into input stream */
 void paste(void)
 {
@@ -194,6 +196,7 @@ void paste(void)
 int cut(mode)
 int mode;
 {
+#if 0 /* libbitblit rewrite */
     register int i, j;
     register WINDOW *win = active;              /* window to cut text from */
     int count = 0;                              /* # of snarfed chars */
@@ -491,6 +494,8 @@ int mode;
     }
 
     return(count);
+#endif
+    return 0;
 }
 
 void rubber_band_cut( void)

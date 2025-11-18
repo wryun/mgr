@@ -20,7 +20,6 @@
 
 #include "proto.h"
 #include "font_subs.h"
-#include "icon_server.h"
 #include "mouse_get.h"
 /* #defines */
 #define MAX_LIST        100     /* max number of choices */

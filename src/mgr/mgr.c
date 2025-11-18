@@ -44,7 +44,6 @@
 #include "erase_win.h"
 #include "font_subs.h"
 #include "graphics.h"
-#include "icon_server.h"
 #include "mouse_get.h"
 #include "put_window.h"
 #include "sigdata.h"
@@ -58,7 +57,7 @@ static struct timespec set_poll = {
 };
 static char *mouse_dev = MOUSE_DEV;
 static char *mouse_type = NULL;
-TEXTURE *pattern = &def_pattern;
+TEXTURE *pattern;
 #ifdef MOVIE
 char *log_command = NULL;         /* process to pipe logging info to */
 FILE *log_file = NULL;            /* file pointer for logging */
@@ -486,6 +485,8 @@ int main(int argc, char **argv)
         {
             FILE *fp;
 
+#if 0
+            // libbitblit refactor
             if ((fp = fopen(optarg, "rb")) != (FILE *)0) {
                 if ((pattern = bitmapread(fp)) == (BITMAP *)0) {
                     fprintf(stderr, "mgr: Invalid background pattern bitmap %s.\n", optarg);
@@ -497,6 +498,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "mgr: Can't open background pattern bitmap %s.\n", optarg);
                 exit(1);
             }
+#endif
 
             break;
         }
@@ -625,7 +627,7 @@ int main(int argc, char **argv)
     SDL_ShowCursor(SDL_ENABLE);
 
     /* get the default font file */
-    if (default_font || (default_font = getenv(DEFAULT_FONT))) {
+    if (default_font || (default_font = getenv(DEFAULT_FONT_VAR))) {
         font = open_font(default_font);
     }
 
@@ -658,8 +660,13 @@ int main(int argc, char **argv)
         }
     }
 
+    if (!load_server_icons()) {
+        perror("mgr: Unable to load some of the default server icons");
+    }
+    pattern = def_pattern;
+
     copyright(screen, "");
-    SETMOUSEICON(&mouse_cup);
+    SETMOUSEICON(mouse_cup);
     /* always look for keyboard and mouse input */
     FD_ZERO( &mask);
     FD_ZERO( &to_poll);

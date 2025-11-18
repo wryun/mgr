@@ -40,7 +40,7 @@
 
 #define STARTFILE       ".mgrc"         /* name of mgr startup file */
 #define HOST            "win "          /* name of host for utmp file */
-#define DEFAULT_FONT    "DEFAULT_FONT"  /* default font environ variable (full path name) */
+#define DEFAULT_FONT_VAR "DEFAULT_FONT"  /* default font environ variable (full path name) */
 #define DUP_CHAR        '\005'          /* default dup character for DUPKEY mode */
 
 #define COLORMAP_SIZE   10              /* max number of "built-in" colors */
@@ -102,8 +102,8 @@ char *strchr();
 
 #define ACTIVE_OFF() border(active, BORDER_THIN)
 
-#define SETMOUSEICON(x) (bit_cursor(x))
-#define DEFAULT_MOUSE_CURSOR ((active && active->cursor)? active->cursor: &mouse_arrow)
+#define SETMOUSEICON(x) (SDL_SetCursor(x))
+#define DEFAULT_MOUSE_CURSOR ((active && active->cursor)? active->cursor: mouse_arrow)
 
 /* short hand */
 

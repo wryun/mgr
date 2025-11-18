@@ -22,7 +22,6 @@
 #include "do_event.h"
 #include "font_subs.h"
 #include "get_menus.h"
-#include "icon_server.h"
 #include "print.h"
 #include "put_window.h"
 #include "shape.h"

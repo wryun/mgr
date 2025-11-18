@@ -34,7 +34,6 @@
 #include "proto.h"
 #include "font_subs.h"
 #include "graphics.h"
-#include "icon_server.h"
 
 extern TEXTURE *default_font;
 
@@ -59,10 +58,12 @@ typedef struct rect {
 } RECT;
 static RECT clip1, clip2, clip3;        /* holes in the galaxy */
 /* variables */
-static TEXTURE *logo[] =
+static char *logo_icon_files[] =
 {
-    &ball_1, &ball_2, &ball_3, &ball_4, &ball_5, &ball_6, &ball_7, &ball_8
+    "server/ball_1", "server/ball_2", "server/ball_3", "server/ball_4", "server/ball_5", "server/ball_6", "server/ball_7", "server/ball_8"
 };
+TEXTURE *notice = NULL;
+TEXTURE *logo[sizeof(logo_icon_files) / sizeof(logo_icon_files[0])] = {NULL};
 
 static short maxv, maxh; /* display size */
 static short hmaxv, hmaxh;      /* 1/2 display size */
@@ -214,14 +215,28 @@ static void dofly (where) TEXTURE *where;
     } while (--i);
 }
 
+static void load_icons() {
+    int i;
+
+    notice = texture_create_from_icon("server/cr");
+
+    for (i = 0; i < sizeof(logo_icon_files) / sizeof(logo_icon_files[0]); ++i) {
+        logo[i] = texture_create_from_icon(logo_icon_files[i]);
+    }
+}
+
 /* copyright */
 void copyright(TEXTURE *where, char *password)
 {
-    TEXTURE *notice = &cr;
     int i = 0;
     char rbuf[64], *readp = rbuf;
     char *crypt();
     int at_startup = (*password == 0);
+
+    if (!notice) {
+        load_icons();
+    }
+
     SDL_Rect where_rect = texture_get_rect(where);
     SDL_Rect notice_rect = texture_get_rect(notice);
     SDL_Rect logo_rect = texture_get_rect(logo[0]);

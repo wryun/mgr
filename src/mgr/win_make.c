@@ -21,7 +21,6 @@
 #include "border.h"
 #include "font_subs.h"
 #include "graphics.h"
-#include "icon_server.h"
 #include "new_window.h"
 #include "put_window.h"
 #include "subs.h"

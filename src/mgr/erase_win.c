@@ -5,10 +5,10 @@
 
 #include "defs.h"
 
-#include "icon_server.h"
 #include "mgr.h"
 
 /* Bit_pattern -- fill DST bitmap with SRC, preserving alignment */
+#if 0
 static void Bit_pattern(dst, dx, dy, wide, high, func, src)
 register BITMAP *dst, *src;
 register int dx, dy;
@@ -53,10 +53,14 @@ int func;
 }
 
 BITMAP *bg = NULL;
+#endif
 
 /* erase_win */
-void erase_win(BITMAP *map)
+void erase_win(TEXTURE *map)
 {
+#if 0
+    // TODO libbitblit refactor - can't remember what I intended to do here.
+    // How are the textures working again?
     // TODO this is obviously wrong if map is not the entire screen. Testing perf.
     if (!bg) {
         bg = bit_alloc(BIT_WIDE(map), BIT_HIGH(map), NULL_DATA, BIT_DEPTH(map));
@@ -71,4 +75,5 @@ void erase_win(BITMAP *map)
     }
 
     bit_blit_color(map, 0, 0, BIT_WIDE(map), BIT_HIGH(map), &C_WHITE, &C_BLACK, bg, 0, 0);
+#endif
 }
