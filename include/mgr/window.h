@@ -251,12 +251,12 @@
 /* other macros */
 
 #define Scalex(x) \
-	(W(flags)&W_ABSCOORDS ?  (x) :  (x) * (int)BIT_WIDE(W(window))/GMAX)
+	(W(flags)&W_ABSCOORDS ?  (x) :  (x) * (int)window_rect.w/GMAX)
 #define Scaley(y) \
-	(W(flags)&W_ABSCOORDS ?  (y) :  (y) * (int)BIT_HIGH(W(window))/GMAX)
+	(W(flags)&W_ABSCOORDS ?  (y) :  (y) * (int)window_rect.h/GMAX)
 #define Scalexy(y) \
 	(W(flags)&W_ABSCOORDS ?  (y) : \
-	 (y) * (int)(BIT_HIGH(W(window))+BIT_WIDE(W(window)))/(2*GMAX))
+	 (y) * (int)(window_rect.h+window_rect.w)/(2*GMAX))
 
 #define FSIZE(c)	((int) (W(font)->head.c))
 #define WIDE	        BIT_WIDE(window)

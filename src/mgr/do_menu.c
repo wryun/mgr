@@ -131,7 +131,7 @@ int color;              /* raster op containing colors */
 }
 /* do_menus */
 struct menu_result *do_menus(screen, mouse, x, y, font, menu_list, menu, exit_code)
-BITMAP *screen;                 /* bitmap screen */
+TEXTURE *screen;                 /* bitmap screen */
 int mouse;                      /* fd to get mouse coordinates */
 int x, y;                        /* where the menu goes on the screen */
 struct font *font;              /* font to use for menus */

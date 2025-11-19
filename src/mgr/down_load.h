@@ -1,2 +1,1 @@
-void down_load(WINDOW *win, BITMAP *window, BITMAP *text);
-/* }}} */
+void down_load(WINDOW *win, TEXTURE *window, TEXTURE *text);

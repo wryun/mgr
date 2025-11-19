@@ -12,6 +12,7 @@
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_mouse.h>
 
 /* potentially changable defines for mgr */
 

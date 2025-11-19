@@ -135,7 +135,6 @@ static int b_compget(char *datap, int bcount, int bct1, FILE *fp)
 
 SDL_Surface *bitmapread(FILE *fp)
 {
-    BITMAP *bp = 0;
     SDL_Surface *surface;
     char *datap;
     int h, w;
@@ -147,6 +146,7 @@ SDL_Surface *bitmapread(FILE *fp)
 
     if (!bitmaphead(fp, &w, &h, &d, &sizefile1, &bm_compressed)) {
         return NULL;
+    }
 
     sizemem1 = bit_linesize(w, d);
 
@@ -156,13 +156,18 @@ SDL_Surface *bitmapread(FILE *fp)
     }
 
     /* TODO */
-    if (d !== 1) {
+    if (d != 1) {
         return NULL;
     }
     surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, d, SDL_PIXELFORMAT_INDEX1MSB);
     if (!surface) {
         return NULL;
     }
+
+    const SDL_Color bitmap_palette_colors[] = {
+        {0x00, 0x00, 0x00, SDL_ALPHA_TRANSPARENT},
+        {0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE},
+    };
 
     if (SDL_SetPaletteColors(surface->format->palette, bitmap_palette_colors, 0, 2) < 0) {
         return NULL;

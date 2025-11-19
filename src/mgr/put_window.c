@@ -48,7 +48,7 @@
 /* Scroll text from current line onwards */
 #define TEXT_SCROLL_Y(delta_y) \
     { \
-        SDL_Rect region = texture_get_rect(text); \
+        SDL_Rect region = text_rect; \
         region.y = W(y) - fsizehigh; \
         region.h -= region.y; \
         texture_scroll(text, region, 0, (delta_y), W(bg_color)); \
@@ -57,7 +57,7 @@
 /* Scroll text within current line */
 #define TEXT_SCROLL_X(delta_x) \
     { \
-        SDL_Rect region = texture_get_rect(text); \
+        SDL_Rect region = text_rect; \
         region.x = W(x); \
         region.w -= region.x; \
         region.y = W(y) - fsizehigh; \
@@ -136,7 +136,8 @@ void set_size(WINDOW *win)
     if (W(text.w) > 0) {
         set_winsize(ACTIVE(to_fd), W(text.h) / FSIZE(high), W(text.w) / FSIZE(wide));
     } else {
-        set_winsize(W(to_fd), BIT_HIGH(W(window)) / FSIZE(high), BIT_WIDE(W(window)) / FSIZE(wide));
+        SDL_Rect region = texture_get_rect(W(window));
+        set_winsize(W(to_fd), region.h / FSIZE(high), region.w / FSIZE(wide));
     }
 }
 
@@ -186,6 +187,10 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
     if (win == active) {
         cursor_off();
     }
+
+    SDL_Rect text_rect = texture_get_rect(text);
+    SDL_Rect screen_rect = texture_get_rect(screen);
+    SDL_Rect window_rect = texture_get_rect(window);
 
     /* do each character */
     for (indx = 0; c = *buff++, indx < buff_count && !done; indx++) {
@@ -423,8 +428,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     int div = W(esc)[1] == 0 ? 1 : W(esc)[1];
                     int n = W(esc)[0] * fsizehigh / div;
 
-                    if (W(y) + n > T_HIGH) {
-                        texture_scroll(text, texture_get_rect(text), 0, n, W(bg_color));
+                    if (W(y) + n > text_rect.h) {
+                        texture_scroll(text, text_rect, 0, n, W(bg_color));
                         done++;
                     } else {
                         W(y) += n;
@@ -435,8 +440,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
 #endif
 
-                if (W(y) + fsizehigh > T_HIGH) {
-                    texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
+                if (W(y) + fsizehigh > text_rect.h) {
+                    texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
                     done++;
                 } else {
                     W(y) += fsizehigh;
@@ -522,12 +527,17 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             }
             /* E_CLEAREOL   -- clear to end of line */
             case E_CLEAREOL:           /* clear to end of line */
-                bit_blit(text, W(x), W(y) - fsizehigh, T_WIDE - W(x), fsizehigh, BG_OP, 0, 0, 0);
+            {
+                SDL_Rect eol_rect = {.x = W(x), .y = W(y) - fsizehigh, .w = text_rect.w - W(x), .h = fsizehigh};
+                texture_fill_rect(text, eol_rect, W(bg_color));
                 break;
+            }
             /* E_CLEAREOS   -- clear to end of window */
             case E_CLEAREOS:           /* clear to end of window */
-                bit_blit(text, W(x), W(y) - fsizehigh, T_WIDE - W(x), fsizehigh, BG_OP, 0, 0, 0);
-                bit_blit(text, 0, W(y), T_WIDE, T_HIGH - W(y), BG_OP, 0, 0, 0);
+                SDL_Rect eol_rect = {.x = W(x), .y = W(y) - fsizehigh, .w = text_rect.w - W(x), .h = fsizehigh};
+                texture_fill_rect(text, eol_rect, W(bg_color));
+                SDL_Rect eos_rect = {.x = 0, .y = W(y), .w = text_rect.w, .h = text_rect.h - W(y)};
+                texture_fill_rect(text, eos_rect, W(bg_color));
                 break;
             /* E_SETCURSOR  -- set the character cursor */
             case E_SETCURSOR:
@@ -536,6 +546,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* E_BLEEP      -- highlight a section of the screen */
             case E_BLEEP:
 
+#if 0
                 if (cnt > 2) {
                     register int *p = W(esc);
 
@@ -543,13 +554,14 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         break;
                     }
 
-                    p[2] = BETWEEN(1, p[2], BIT_WIDE(screen) - 1);
-                    p[3] = BETWEEN(1, p[3], BIT_WIDE(screen) - 1);
+                    p[2] = BETWEEN(1, p[2], screen_rect.w - 1);
+                    p[3] = BETWEEN(1, p[3], screen_rect.w - 1);
                     bit_blit(screen, p[0], p[1], p[2], p[3], BIT_NOT(BIT_DST), 0, 0, 0);
                     fsleep();
                     bit_blit(screen, p[0], p[1], p[2], p[3], BIT_NOT(BIT_DST), 0, 0, 0);
                     done++;
                 }
+#endif
 
                 break;
             /* E_FONT       -- pick a new font */
@@ -644,9 +656,9 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     expose(win);
                     shape(x, y,
                           cols?cols * fsizewide + 2 * W(borderwid):
-                          2 * W(borderwid) + WIDE,
+                          2 * W(borderwid) + window_rect.w,
                           lines?lines * fsizehigh + 2 * W(borderwid):
-                          2 * W(borderwid) + HIGH);
+                          2 * W(borderwid) + window_rect.w);
                     ACTIVE_ON();
 
                     if (!(W(flags) & W_ACTIVE && mousein(mousex, mousey, win, 0))) {
@@ -728,6 +740,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                 W(code) = T_GRUNCH;
                 break;
+#if 0
 #ifdef XMENU
             /* E_XMENU      -- extended menu stuff */
             case E_XMENU:
@@ -776,6 +789,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 }
             }
             break;
+#endif
 #endif
             /* E_MENU       -- get a menu */
             case E_MENU:               /* get a menu */
@@ -903,6 +917,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 int i = W(esc)[0];
                 unsigned int ind, r, g, b, maxi;
 
+#if 0
                 if (cnt == 0) {         /* read or allocate palette entry */
                     if (i >= 0) {
                         getpalette( screen, (unsigned int)i, &r, &g, &b, &maxi);
@@ -938,6 +953,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     setpalette( screen, (unsigned int)i, r, g, b, maxi);
                 }
 
+#endif
                 break;
             }
             /* E_BITGET     -- transfer a bitmap from server to client */
@@ -949,16 +965,23 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 int offset = W(esc)[2];
                 int which = *W(esc);
                 int size = W(esc)[1];
-                BITMAP *m; /* = W(bitmaps)[which-1]; */
                 unsigned char *data;
 
-                if
-                (
-                    cnt > 1
-                    && which > 0
-                    && which <= MAXBITMAPS
+                if (cnt <= 1 || which <= 0 || which > MAXBITMAPS) {
+                    break;
+                }
+
+                TEXTURE *m = W(bitmaps)[which - 1];
+                if (m == NULL) {
+                    break;
+                }
+
+                SDL_Rect m_rect = texture_get_rect(m);
+
+                if (size + offset <= B_SIZE8(BIT_WIDE(m), BIT_HIGH(m), BIT_DEPTH(m))) {
                     && (m = W(bitmaps)[which - 1]) != (BITMAP *)0
-                    && size + offset <= B_SIZE8(BIT_WIDE(m), BIT_HIGH(m), BIT_DEPTH(m))) {
+                    && size + offset <= 
+
                     data = bit_save(m);
                     write(W(to_fd), data + offset, size);
                     free(data);
@@ -1054,6 +1077,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             case E_SHAPE:
 
 
+#if 0
                 ACTIVE_OFF();
 
                 if (win != active) {
@@ -1076,6 +1100,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     done++;
                 }
+#endif
 
                 break;
             /* E_BITBLT     -- do a bit blit */
@@ -1106,12 +1131,12 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     W(x) += Scalex(*W(esc));
                 }
 
-                if (W(x) + fsizewide > WIDE && !(W(flags) & W_NOWRAP)) {
-                    W(x) = WIDE - fsizewide;
+                if (W(x) + fsizewide > text_rect.w && !(W(flags) & W_NOWRAP)) {
+                    W(x) = text_rect.w - fsizewide;
                 }
 
-                if (W(y) > HIGH) {
-                    W(y) = HIGH - fsizehigh;
+                if (W(y) > text_rect.h) {
+                    W(y) = text_rect.h - fsizehigh;
                 }
 
                 break;
@@ -1126,8 +1151,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     register int x = W(esc)[cnt - 1] * fsizewide;
                     register int y = W(esc)[cnt] * fsizehigh;
 
-                    if (x == BETWEEN(-1, x, T_WIDE - fsizewide) &&
-                        y == BETWEEN(-1, y, T_HIGH)) {
+                    if (x == BETWEEN(-1, x, text_rect.w - fsizewide) &&
+                        y == BETWEEN(-1, y, text_rect.h)) {
                         W(y) = y + fsizehigh;
                         W(x) = x;
                     }
@@ -1167,9 +1192,9 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 case 1:        /* setup scrolling region (~aka vt100) */
 
                     if (W(esc)[0] >= 0 && W(esc)[1] >= W(esc)[0] &&
-                        W(esc)[1] * fsizehigh < BIT_HIGH(W(window))) {
+                        W(esc)[1] * fsizehigh < window_rect.h) {
                         W(text.x) = 0;
-                        W(text.w) = BIT_WIDE(W(window));
+                        W(text.w) = window_rect.w;
                         W(text.y) = fsizehigh * W(esc[0]);
                         W(text.h) = fsizehigh * (1 + W(esc[1])) - W(text.y);
 
@@ -1534,11 +1559,11 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             case C_TAB:
                 W(x) = ((W(x) / fsizewide + 8) & ~7) * fsizewide;
 
-                if (W(x) + fsizewide >= T_WIDE) {
+                if (W(x) + fsizewide >= text_rect.w) {
                     W(x) = 0;
 
-                    if (W(y) + fsizehigh > T_HIGH) {
-                        texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
+                    if (W(y) + fsizehigh > text_rect.h) {
+                        texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
                         done++;
                     } else {
                         W(y) += fsizehigh;
@@ -1553,8 +1578,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* C_NL -- line feed */
             case C_NL:                 /* line feed */
 
-                if (W(y) + fsizehigh > T_HIGH) {
-                    texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
+                if (W(y) + fsizehigh > text_rect.h) {
+                    texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
                     done++;
                 } else {
                     W(y) += fsizehigh;
@@ -1564,8 +1589,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* default -- print a character */
             default:
 
-                if (W(y) > T_HIGH) {
-                    W(y) = T_HIGH - fsizehigh;
+                if (W(y) > text_rect.h) {
+                    W(y) = text_rect.h - fsizehigh;
                 }
 
                 /* TODO W(style) implementation... */
@@ -1574,13 +1599,13 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                 W(x) += fsizewide;
 
-                if (W(x) + fsizewide > T_WIDE && !(W(flags) & W_NOWRAP)) {
+                if (W(x) + fsizewide > text_rect.w && !(W(flags) & W_NOWRAP)) {
                     W(x) = 0;
                     W(y) += fsizehigh;
 
-                    if (W(y) > T_HIGH) {
+                    if (W(y) > text_rect.h) {
                         W(y) -= fsizehigh;
-                        texture_scroll(text, texture_get_rect(text), 0, fsizehigh, W(bg_color));
+                        texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
                         done++;
                     }
                 }
