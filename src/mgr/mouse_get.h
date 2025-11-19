@@ -1,5 +1,5 @@
-struct SDL_Event;
-typedef struct SDL_Event SDL_Event;
+union SDL_Event;
+typedef union SDL_Event SDL_Event;
 
 int mouse_get_sdl(SDL_Event *event, int *x, int *y);
 int mouse_get_poll(int *x, int *y);

@@ -120,10 +120,10 @@ unsigned char color_map[COLORMAP_SIZE] = {
     0                   /* root pattern bg */
 };
 
-SDL_Color WHITE = {
+SDL_Color C_WHITE = {
     0xFF, 0xFF, 0xFF, 0xFF
 };
-SDL_Color BLACK = {
+SDL_Color C_BLACK = {
     0x00, 0x00, 0x00, 0xFF
 };
 

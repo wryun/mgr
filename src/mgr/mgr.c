@@ -298,10 +298,10 @@ void display_windows()
 
     do {
         SDL_Point window_point = {.x = W(x0), .y = W(y0)};
-        texture_copy(screen, window_point, W(border), WHITE);
+        texture_copy(screen, window_point, W(border), C_WHITE);
     } while ((win = W(prev)) != active->prev);
 
-    screen_present(screen);
+    screen_present();
 }
 
 

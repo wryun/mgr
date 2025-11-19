@@ -74,7 +74,9 @@ static SDL_Window *sdl_window;
 /* We create a texture even for the actual device so we don't have to redraw completely
  * between rerenders (SDL's backbuffer is considered invalid after each present).
  * This is just the way mgr works (for now...). The remaining blocker for removing this
- * is the menu system, which draws on top of the windows and blocks everything up.
+ * is the menu system, which draws on top of the windows and has its own event loop.
+ *
+ * We'd probably see a significant performance bump without this.
  */
 static TEXTURE *screen_texture;
 
@@ -238,6 +240,16 @@ static TEXTURE *texture_create(SDL_Texture *sdl_texture, int width, int height)
     return new_texture;
 }
 
+TEXTURE *texture_clone(TEXTURE *src_texture) {
+    TEXTURE *dst_texture = texture_create_empty(texture->rect.w, texture->rect.h);
+    if (!dst_texture) {
+        return NULL;
+    }
+    SDL_Point p = {.x = 0, .y = 0};
+    texture_copy(dst_texture, p, src_texture, C_WHITE);
+    return dst_texture;
+}
+
 TEXTURE *texture_create_empty(int width, int height)
 {
     SDL_Texture *sdl_texture = create_empty_target_sdl_texture(width, height);
@@ -322,7 +334,7 @@ void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
 void texture_clear(TEXTURE *texture, SDL_Color color) {
     SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(sdl_renderer, &(texture->rect));
+    SDL_RenderFillRect(sdl_renderer, &texture->rect);
 }
 
 void texture_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color, int line_width)

@@ -256,8 +256,8 @@ void new_window(), move_window();
 #include <sys/types.h>
 #include <sys/time.h>
 
-extern SDL_Color WHITE;
-extern SDL_Color BLACK;
+extern SDL_Color C_WHITE;
+extern SDL_Color C_BLACK;
 
 extern SDL_Color fg_colors[];
 extern SDL_Color bg_colors[];

@@ -214,7 +214,7 @@ int mode;
     BITMAP *src, *shrunk_src;                   /* source bitmaps */
 
     if (!mode) {
-        SETMOUSEICON(&mouse_cut);
+        SETMOUSEICON(mouse_cut);
         button = move_mouse(screen, mouse, &mousex, &mousey, 0);
         SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
     }

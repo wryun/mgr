@@ -158,7 +158,7 @@ struct font *curr_font;
         W(bitmaps)[i] = (TEXTURE *) 0;
     }
 
-    W(cursor) = &mouse_arrow;
+    W(cursor) = mouse_arrow;
     W(stack) = (WINDOW *) 0;
     W(main) = win;
     W(alt) = (WINDOW *) 0;
@@ -368,9 +368,9 @@ void new_window()
         return;
     }
 
-    SETMOUSEICON(&mouse_box);
+    SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
-    SETMOUSEICON(&mouse_arrow);
+    SETMOUSEICON(mouse_arrow);
     get_rect(screen, mouse, mousex, mousey, &dx, &dy, 0);
     do_button(0);
 

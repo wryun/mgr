@@ -5,4 +5,3 @@ int menu_get(struct menu_state *state, int mouse, int button, int exit);
 struct menu_state *menu_remove(struct menu_state *state);
 int menu_destroy(struct menu_state *state);
 struct menu_state *menu_copy(register struct menu_state *menu);
-/* }}} */

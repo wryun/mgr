@@ -15,17 +15,18 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <SDL2/SDL.h>
+
 #include "defs.h"
 #include "menu.h"
 
 #include "proto.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "mouse_get.h"
 /* #defines */
 #define MAX_LIST        100     /* max number of choices */
 #define HOT             4       /* distance to icon hot spot */
-
-#define Pr_ropall(S, color)  bit_rect(S, 0, 0, BIT_WIDE(S), BIT_HIGH(S), &color)
 
 /*	The height of each selection area (i.e. word) in the pop-up menu.
         The 2 extra pixels create a 1-pixel boarder above and below each word.
@@ -33,36 +34,45 @@
 #define BAR_HEIGHT              (font->head.high + 2)
 
 /* put_str -- put a character string into a bitmap - only used for menus */
-void put_str(map, x, y, font, color, str)
-BITMAP *map;
+void put_str(dest, x, y, font, fg_color, bg_color, str)
+TEXTURE *dest;
 register int x;
 int y;
 struct font *font;
-COLOR *color;
+SDL_Color fg_color;
+SDL_Color bg_color;
 register char *str;
 {
     register unsigned char c;
-    register int wide = font->head.wide;
-    register int high = font->head.high;
+
+    SDL_Point char_loc = {.x = x, .y = y - font->head.high};
 
     while ((c = *str++) != '\0') {
-        bit_blit_color(map, x, y - high, wide, high, color, NULL, font->glyph[c], 0, 0);
-        x += wide;
+        texture_copy_withbg(dest, char_loc, font->glyph[c], fg_color, bg_color);
+        char_loc.x += font->head.wide;
     }
 }
+
 void menu_render(struct menu_state *state)
 {
-    bit_blit_color(screen, state->menu_startx, state->menu_starty, BIT_WIDE(state->menu), BIT_HIGH(state->menu),
-                   &C_WHITE, NULL, state->menu, 0, 0);
+    texture_copy(state->screen, state->menu_start, state->menu, C_WHITE);
 
     if (state->current >= 0) {
-        int y_bar_start = state->current * state->bar_sizey;
-        bit_blit_color(screen, state->menu_startx + MENU_BORDER, state->menu_starty + MENU_BORDER + y_bar_start,
-                       state->bar_sizex, state->bar_sizey,
-                       &C_WHITE, NULL, state->inverse_inside, 0, y_bar_start);
+        SDL_Rect rect_sel = {
+            .x = 0,
+            .y = state->current * state->bar_sizey,
+            .w = state->bar_sizex,
+            .h = state->bar_sizey,
+        };
+        TEXTURE *inverse_sel = texture_create_child(state->inverse_inside, rect_sel);
+        SDL_Point p = state->menu_start;
+        p.x += MENU_BORDER + rect_sel.x;
+        p.y += MENU_BORDER + rect_sel.y;
+        texture_copy(screen, p, inverse_sel, C_WHITE);
+        texture_destroy(inverse_sel);
     }
 
-    bit_present(screen);
+    screen_present();
 }
 
 /* menu_define -- allocate space for and initialize menu */
@@ -76,9 +86,9 @@ int color;              /* raster op function containing the colors to use for t
     register int i, incr, count; /* counters */
     int size_x = 0, size_y = 0;
     struct menu_state *state;   /* menu state */
-    BITMAP *menu,                       /* menu image */
-           *inside;             /* box - border */
-    BITMAP *inverse_inside;
+    TEXTURE *menu,              /* menu image */
+            *inside;            /* box - border */
+    TEXTURE *inverse_inside;
     int box_x, box_y;           /* dimensions of menu box */
 
     /* find size of box */
@@ -97,33 +107,29 @@ int color;              /* raster op function containing the colors to use for t
 
     /* build box */
 
-    /* menus are DEPTH bits deep, even though they are just text.
-        This is because their colors are fixed at creation time, and
-        we'd have to cache the DEPTH version anyway
-     */
+    menu = texture_create_empty(box_x, box_y);
+    SDL_Rect menu_rect = {.x = MENU_BORDER, .y = MENU_BORDER, .w = size_x, .h = size_y};
+    inside = texture_create_child(menu, menu_rect);
 
-    menu = bit_alloc(box_x, box_y, NULL_DATA, BIT_DEPTH(screen));
-    inside = bit_create(menu, MENU_BORDER, MENU_BORDER, size_x, size_y);
-
-    inverse_inside = bit_alloc(size_x, size_y, NULL_DATA, BIT_DEPTH(screen));
+    inverse_inside = texture_create_empty(size_x, size_y);
 
     /* paint text into box */
 
-    Pr_ropall(menu, C_WHITE);
-    Pr_ropall(inside, C_BLACK);
-    Pr_ropall(inverse_inside, C_WHITE);
+    texture_clear(menu, C_WHITE);
+    texture_clear(inside, C_BLACK);
+    texture_clear(inverse_inside, C_WHITE);
 
     for (i = 0, incr = BAR_HEIGHT - 1; i < count; i++, incr += BAR_HEIGHT) {
-        put_str(inside, 1, incr, font, &C_WHITE, list[i]);
-        put_str(inverse_inside, 1, incr, font, &C_BLACK, list[i]);
+        put_str(inside, 1, incr, font, C_WHITE, C_BLACK, list[i]);
+        put_str(inverse_inside, 1, incr, font, C_BLACK, C_WHITE, list[i]);
     }
 
     /* save the menu state */
 
     if ((state = malloc(sizeof(struct menu_state))) == (struct menu_state *) 0) {
-        bit_destroy(inside);
-        bit_destroy(menu);
-        bit_destroy(inverse_inside);
+        texture_destroy(inside);
+        texture_destroy(menu);
+        texture_destroy(inverse_inside);
 
         return(state);
     }
@@ -151,37 +157,39 @@ int color;              /* raster op function containing the colors to use for t
     state->current = 0;
     state->next = -1;
     state->flags = 0;
-    state->screen = (BITMAP *) 0;
+    state->screen = NULL;
 
-    bit_destroy(inside);
+    texture_destroy(inside);
 
     return(state);
 }
 /* menu_setup -- put the menu on the display */
 struct menu_state *menu_setup(state, screen, x, y, start)
 struct menu_state *state;       /* existing menu state */
-BITMAP *screen;                 /* where to put the menu */
+TEXTURE *screen;                 /* where to put the menu */
 int x, y;                        /* current offset of mouse on screen */
 int start;                      /* preselected item */
 {
     /* position the box on the screen */
 
-    if (BIT_WIDE(state->menu) > BIT_WIDE(screen) ||
-        BIT_HIGH(state->menu) > BIT_HIGH(screen)) {
-        return((struct menu_state *) 0);
+    SDL_Rect screen_rect = texture_get_rect(screen);
+    SDL_Rect menu_rect = texture_get_rect(state->menu);
+
+    if (menu_rect.w > screen_rect.w ||
+        menu_rect.h > screen_rect.h) {
+        return NULL;
     }
 
-    x = Min(x, BIT_WIDE(screen) - BIT_WIDE(state->menu));
-    y = Min(y, BIT_HIGH(screen) -
-            BIT_HIGH(state->menu) - state->bar_sizey);
+    x = Min(x, screen_rect.w - menu_rect.w);
+    y = Min(y, screen_rect.h - menu_rect.h - state->bar_sizey);
     y = Max(y, state->bar_sizey + HOT);
 
     /* initialize the menu */
 
     state->screen = screen;
     state->current = start;
-    state->menu_startx = x;
-    state->menu_starty = y;
+    state->menu_start.x = x;
+    state->menu_start.y = y;
 
     //menu_render(state);
 
@@ -194,24 +202,19 @@ int mouse;                      /* fd to read mouse data from */
 int button;                     /* button termination condition (not yet)*/
 int exit;                       /* off-menu exit codes */
 {
-    register BITMAP *inside;    /* the menu */
     int x_mouse, y_mouse;
     int push;
 
-    if (state == (struct menu_state *) 0) {
+    if (state == NULL) {
         return(-1);
     }
 
-    SETMOUSEICON(&mouse_bull);
+    SDL_Rect menu_rect = texture_get_rect(state->menu);
+
+    SETMOUSEICON(mouse_bull);
 
     state->exit = 0;
     state->current = -1;
-
-    /* set up text region */
-
-    inside = bit_create(state->screen, state->menu_startx + MENU_BORDER,
-                        state->menu_starty + MENU_BORDER - state->bar_sizey,
-                        state->bar_sizex, state->bar_sizey * (state->count + 2));
 
     /* track the mouse */
     do {
@@ -222,7 +225,7 @@ int exit;                       /* off-menu exit codes */
             push = mouse_get_wait(&x_mouse, &y_mouse);
         }
 
-        if (x_mouse + HOT <= state->menu_startx) {
+        if (x_mouse + HOT <= state->menu_start.x) {
             if (exit & EXIT_LEFT) {
                 state->exit = EXIT_LEFT;
                 break;
@@ -230,7 +233,7 @@ int exit;                       /* off-menu exit codes */
 
             state->current = -1;
             continue;
-        } else if (x_mouse + HOT >= state->menu_startx + BIT_WIDE(state->menu)) {
+        } else if (x_mouse + HOT >= state->menu_start.x + menu_rect.w) {
             if (exit & EXIT_RIGHT) {
                 state->exit = EXIT_RIGHT;
                 break;
@@ -238,7 +241,7 @@ int exit;                       /* off-menu exit codes */
 
             state->current = -1;
             continue;
-        } else if (y_mouse + HOT <= state->menu_starty) {
+        } else if (y_mouse + HOT <= state->menu_start.y) {
             if (exit & EXIT_TOP) {
                 state->exit = EXIT_TOP;
                 break;
@@ -246,7 +249,7 @@ int exit;                       /* off-menu exit codes */
 
             state->current = -1;
             continue;
-        } else if (y_mouse + HOT >= state->menu_starty + BIT_HIGH(state->menu)) {
+        } else if (y_mouse + HOT >= state->menu_start.y + menu_rect.h) {
             if (exit & EXIT_BOTTOM) {
                 state->exit = EXIT_BOTTOM;
                 break;
@@ -256,10 +259,9 @@ int exit;                       /* off-menu exit codes */
             continue;
         }
 
-        state->current = BETWEEN(0, state->count - 1, (state->count + 2) * (y_mouse + HOT - state->menu_starty - MENU_BORDER) / BIT_HIGH(inside));
+        state->current = BETWEEN(0, state->count - 1, (y_mouse + HOT - state->menu_start.y - MENU_BORDER) / state->bar_sizey);
     } while (push != button);
 
-    bit_destroy(inside);
     SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
 
     return(0);
@@ -278,8 +280,12 @@ struct menu_state *state;
 
     menu_remove(state);
 
-    if (state->menu != (BITMAP *)0) {
-        bit_destroy(state->menu);
+    if (state->menu != NULL) {
+        texture_destroy(state->menu);
+    }
+
+    if (state->inverse_inside != NULL) {
+        texture_destroy(state->inverse_inside);
     }
 
     if (state->action != (struct menu_action *) 0) {
@@ -317,27 +323,35 @@ register struct menu_state *menu;
     /* copy menu image */
 
     if (menu->menu) {
-        tmp->menu = bit_alloc(BIT_WIDE(menu->menu),
-                              BIT_HIGH(menu->menu), NULL_DATA, BIT_DEPTH(menu->menu));
-        bit_blit_color(tmp->menu, 0, 0, BIT_WIDE(tmp->menu), BIT_HIGH(tmp->menu),
-                       &C_WHITE, NULL, menu->menu, 0, 0);
-        tmp->inverse_inside = bit_alloc(BIT_WIDE(menu->inverse_inside),
-                                        BIT_HIGH(menu->inverse_inside), NULL_DATA, BIT_DEPTH(menu->inverse_inside));
-        bit_blit_color(tmp->inverse_inside, 0, 0, BIT_WIDE(tmp->inverse_inside), BIT_HIGH(tmp->inverse_inside),
-                       &C_WHITE, NULL, menu->inverse_inside, 0, 0);
+        tmp->menu = texture_clone(menu->menu);
+        if (!tmp->menu) {
+            free(tmp);
+            return NULL;
+        }
+        tmp->inverse_inside = texture_clone(menu->inverse_inside);
+        if (!tmp->inverse_inside) {
+            texture_destroy(tmp->menu);
+            free(tmp);
+            return NULL;
+        }
     }
 
     /* copy menu values */
 
-    if (menu->action != (struct menu_action *) 0) {
+    if (menu->action != NULL) {
         tmp->action = (struct menu_action *)
                       malloc(sizeof(struct menu_action) * menu->count);
 
-        if (tmp->action) {
-            for (i = 0; i < menu->count; i++) {
-                tmp->action[i].value = strcpy(malloc(strlen(menu->action[i].value) + 1), menu->action[i].value);
-                tmp->action[i].next_menu = menu->action[i].next_menu;
-            }
+        if (!tmp->action) {
+            texture_destroy(tmp->menu);
+            texture_destroy(tmp->inverse_inside);
+            free(tmp);
+            return NULL;
+        }
+
+        for (i = 0; i < menu->count; i++) {
+            tmp->action[i].value = strcpy(malloc(strlen(menu->action[i].value) + 1), menu->action[i].value);
+            tmp->action[i].next_menu = menu->action[i].next_menu;
         }
     }
 

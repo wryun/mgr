@@ -12,6 +12,7 @@ extern TEXTURE *texture_create_child(TEXTURE *src_texture, SDL_Rect rect);
 extern TEXTURE *texture_create_empty(int width, int height);
 extern TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth);
 extern TEXTURE *texture_create_from_icon(const char *iconpath);
+extern TEXTURE *texture_clone(TEXTURE *src_texture);
 
 extern void texture_destroy(TEXTURE *texture);
 

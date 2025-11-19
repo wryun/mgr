@@ -145,7 +145,7 @@ int state;
     }
 
     SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE};
-    texture_fill_rect(where, rect, WHITE);
+    texture_fill_rect(where, rect, C_WHITE);
 
     return(0);
 }
@@ -243,7 +243,7 @@ void copyright(TEXTURE *where, char *password)
 
     /* clear display */
 
-    texture_clear(where, BLACK);
+    texture_clear(where, C_BLACK);
 
     if (at_startup) {
         /* get the cr notice hole */
@@ -256,7 +256,7 @@ void copyright(TEXTURE *where, char *password)
         SDL_Point notice_point = {
             .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
         };
-        texture_copy(where, notice_point, notice, WHITE);
+        texture_copy(where, notice_point, notice, C_WHITE);
 
         /* get the globe hole */
 
@@ -286,7 +286,7 @@ void copyright(TEXTURE *where, char *password)
     /* kick off stars */
 
     fly(where);
-    screen_present(where);
+    screen_present();
 
     /* keep drawing stars until enough read from kb to stop */
     for (;;) {
@@ -357,9 +357,9 @@ void copyright(TEXTURE *where, char *password)
 
         if (at_startup && (++i % 2)) {
             SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
-            texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], WHITE, BLACK);
+            texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], C_WHITE, C_BLACK);
         }
 
-        screen_present(where);
+        screen_present();
     }
 }
