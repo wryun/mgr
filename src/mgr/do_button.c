@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <SDL2/SDL_mouse.h>
+
 #include "defs.h"
 #include "event.h"
 #include "menu.h"
@@ -24,6 +26,7 @@
 #include "erase_win.h"
 #include "font_subs.h"
 #include "get_menus.h"
+#include "graphics.h"
 #include "intersect.h"
 #include "mouse_get.h"
 #include "set_mode.h"
@@ -75,7 +78,7 @@ void _quit(void)
 
     do_cmd( 'q' );      /* do the quiting command */
     {
-        bit_destroy(screen); bit_destroy(prime);
+        texture_destroy(screen);
     }
 }
 /* redraw -- redraw screen, restore contents of saved windows */
@@ -207,20 +210,21 @@ void do_button(button) int button;
 #ifdef VI
 
         if (active && ACTIVE(flags) & W_VI) {
+            SDL_Rect window_rect = texture_get_rect(ACTIVE(window));
 
             int x = mousex - (ACTIVE(x0) + ACTIVE(text).x);
             int y = mousey - (ACTIVE(y0) + ACTIVE(text).y);
-            int dx = ACTIVE(text).wide ?
-                     ACTIVE(text).wide : BIT_WIDE(ACTIVE(window));
-            int dy = ACTIVE(text).wide ?
-                     ACTIVE(text).high : BIT_HIGH(ACTIVE(window));
+            int dx = ACTIVE(text).w ?
+                     ACTIVE(text).w : window_rect.w;
+            int dy = ACTIVE(text).w ?
+                     ACTIVE(text).h : window_rect.h;
 
             if (x < 0 || x > dx) {
                 break;
             }
 
             if (y >= 0 && y <= dy) {
-                char buff[10];
+                char buff[30];
                 sprintf(buff, "%dH%d|",
                         y / ACTIVE(font)->head.high + 1,
                         x / ACTIVE(font)->head.wide + 1);

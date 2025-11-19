@@ -1,7 +1,5 @@
-struct texture;
-typedef struct texture TEXTURE;
-
 extern TEXTURE *screen_init(int width, int height);
+extern void screen_render();
 extern void screen_present();
 extern void screen_flush();
 

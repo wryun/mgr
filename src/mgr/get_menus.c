@@ -55,7 +55,8 @@ register char *str;
 
 void menu_render(struct menu_state *state)
 {
-    texture_copy(state->screen, state->menu_start, state->menu, C_WHITE);
+    screen_render();
+    texture_copy(NULL, state->menu_start, state->menu, C_WHITE);
 
     if (state->current >= 0) {
         SDL_Rect rect_sel = {
@@ -68,7 +69,7 @@ void menu_render(struct menu_state *state)
         SDL_Point p = state->menu_start;
         p.x += MENU_BORDER + rect_sel.x;
         p.y += MENU_BORDER + rect_sel.y;
-        texture_copy(screen, p, inverse_sel, C_WHITE);
+        texture_copy(NULL, p, inverse_sel, C_WHITE);
         texture_destroy(inverse_sel);
     }
 

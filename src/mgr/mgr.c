@@ -289,7 +289,7 @@ void display_windows()
     register WINDOW *win;               /* current window to update */
 
     if (active == NULL) {
-        screen_present();
+        screen_render();
 
         return;
     }
@@ -301,7 +301,7 @@ void display_windows()
         texture_copy(screen, window_point, W(border), C_WHITE);
     } while ((win = W(prev)) != active->prev);
 
-    screen_present();
+    screen_render();
 }
 
 
@@ -718,11 +718,17 @@ int main(int argc, char **argv)
         int ticks = SDL_GetTicks();
         int time_since_render_ms = ticks - last_render_ticks;
 
+        /* Without this, SDL sometimes seems to decide to not
+         * flush on RenderPresent, and since we don't have a normal 60fps
+         * game style loop we _really_ need the flush.
+         * TODO: confirm this behaviour.
+         */
         screen_flush();
 
         if (dirty && time_since_render_ms > UPDATE_INTERVAL_MS) {
             erase_win(screen);
             display_windows();
+            screen_present();
 
             last_render_ticks = ticks;
             dirty = 0;

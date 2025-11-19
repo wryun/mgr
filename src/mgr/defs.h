@@ -184,14 +184,6 @@ typedef struct texture TEXTURE;
 struct SDL_Cursor;
 typedef struct SDL_Cursor SDL_Cursor;
 
-typedef struct {        /* used for text regions */
-    int x, y, wide, high;
-} rectangle;
-
-typedef struct  {       /* some day */
-    int x, y;
-} point;
-
 typedef struct window {         /* primary window structure */
     struct window *next; /* next window */
     struct window *prev; /* previous window */
@@ -206,14 +198,14 @@ typedef struct window {         /* primary window structure */
     TEXTURE *char_cursor_backup;     /* TODO - temp hack so we don't lose cursor data */
     struct font *font;  /* this is the font */
 
-    rectangle text;     /* location of text region within window */
+    SDL_Rect text;     /* location of text region within window */
     int x0, y0;         /* origin of window on screen */
     int x, y;           /* cursor character position */
     int gx, gy;         /* graphics cursor */
     int op;             /* raster op function (see bitmap.h)  TODO - remove */
     SDL_Color fg_color;
     SDL_Color bg_color;
-    int style;          /* character style normal/inverse video  TODO - ? how is this different from W_REVERSE anyway? */
+    int style;          /* character style normal/inverse video  TODO - ? how is this different from W_REVERSE anyway? EDIT: applies not to whole window */
     /* int background;	Unused: background color WOB or BOW */
     int curs_type;      /* cursor type */
 
@@ -258,11 +250,15 @@ void new_window(), move_window();
 
 extern SDL_Color C_WHITE;
 extern SDL_Color C_BLACK;
+extern SDL_Color C_GREY_ALPHA;
 
 extern SDL_Color fg_colors[];
 extern SDL_Color bg_colors[];
 extern SDL_Color fg_bright_colors[];
 extern SDL_Color bg_bright_colors[];
+
+struct texture;
+typedef struct texture TEXTURE;
 
 extern char *full_menu[];
 extern char *main_menu[];
@@ -275,7 +271,7 @@ extern function active_functions[];
 
 extern int next_window;
 extern struct font *font;
-extern TEXTURE *screen, *prime;
+extern TEXTURE *screen;
 extern fd_set mask;
 extern fd_set to_poll;
 extern WINDOW *active;

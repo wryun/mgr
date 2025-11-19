@@ -22,9 +22,9 @@
 
 #include <SDL2/SDL.h>
 
+#include "defs.h"
 #include "graphics.h"
 #include "bitmap.h"
-#include "defs.h"
 
 
 /* Wrapper around an SDL texture that allows us to:
@@ -73,8 +73,9 @@ static SDL_Renderer *sdl_renderer;
 static SDL_Window *sdl_window;
 /* We create a texture even for the actual device so we don't have to redraw completely
  * between rerenders (SDL's backbuffer is considered invalid after each present).
- * This is just the way mgr works (for now...). The remaining blocker for removing this
- * is the menu system, which draws on top of the windows and has its own event loop.
+ * This is just the way mgr works (for now...). The remaining blockers for removing this
+ * is the menu system and the window resizing one, each of which draws on top of the windows
+ * and has their own event loop.
  *
  * We'd probably see a significant performance bump without this.
  */
@@ -105,15 +106,18 @@ TEXTURE *screen_init(int width, int height)
     return screen_texture;
 }
 
-void screen_present()
+void screen_render()
 {
     SDL_SetRenderTarget(sdl_renderer, NULL);
     SDL_RenderCopy(sdl_renderer, screen_texture->sdl_texture, NULL, NULL);
+}
+
+void screen_present()
+{
     SDL_RenderPresent(sdl_renderer);
 }
 
 void screen_flush()
-{
     SDL_RenderFlush(sdl_renderer);
 }
 
@@ -324,7 +328,7 @@ SDL_Rect texture_get_rect(TEXTURE *texture) {
 
 void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
 {
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderTarget(sdl_renderer, texture && texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     rect.x += texture->rect.x;
     rect.y += texture->rect.y;
@@ -332,14 +336,14 @@ void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
 }
 
 void texture_clear(TEXTURE *texture, SDL_Color color) {
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderTarget(sdl_renderer, texture && texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(sdl_renderer, &texture->rect);
 }
 
 void texture_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color, int line_width)
 {
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderTarget(sdl_renderer, texture && texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     rect.x += texture->rect.x;
     rect.y += texture->rect.y;
@@ -358,14 +362,14 @@ void texture_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color, int line_wid
 
 void texture_point(TEXTURE *texture, SDL_Point point, SDL_Color color)
 {
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderTarget(sdl_renderer, texture && texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderDrawPoint(sdl_renderer, texture->rect.x + point.x, texture->rect.y + point.y);
 }
 
 void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_Color color)
 {
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
+    SDL_SetRenderTarget(sdl_renderer, texture && texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderDrawLine(sdl_renderer, texture->rect.x + start.x, texture->rect.y + start.y, texture->rect.x + end.x, texture->rect.y + end.y);
 }
@@ -381,8 +385,8 @@ void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, S
 
     SDL_SetTextureColorMod(src_texture->sdl_texture, fg_color.r, fg_color.g, fg_color.b);
     SDL_SetTextureAlphaMod(src_texture->sdl_texture, fg_color.a);
-    SDL_SetRenderTarget(sdl_renderer, dst_texture->sdl_texture);
-    SDL_RenderCopy(sdl_renderer, src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
+    SDL_SetRenderTarget(sdl_renderer, dst_texture && dst_texture->sdl_texture);
+    SDL_RenderCopy(sdl_renderer, dst_texture && src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
 }
 
 /* Move part of a texture, leaving 'empty' space set to bg_color.
@@ -456,8 +460,8 @@ void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_tex
         .x = point.x, .y = point.y,
         .w = src_texture->rect.w, .h = src_texture->rect.h,
     };
-    texture_fill_rect(dst_texture, dst_rect, bg_color);
-    texture_copy(dst_texture, point, src_texture, fg_color);
+    texture_fill_rect(dst_texture && dst_texture, dst_rect, bg_color);
+    texture_copy(dst_texture && dst_texture, point, src_texture, fg_color);
 }
 
 

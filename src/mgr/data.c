@@ -126,6 +126,13 @@ SDL_Color C_WHITE = {
 SDL_Color C_BLACK = {
     0x00, 0x00, 0x00, 0xFF
 };
+/* We can't be sure the SDL renderer can do XORs via blendmodes,
+ * so we use this instead so the user can see either black or white
+ * behind.
+ */
+SDL_Color C_GREY_ALPHA = {
+    0x7F, 0x7F, 0x7F, 0x7F
+};
 
 SDL_Color fg_colors[8] = {
     {0x00, 0x00, 0x00, 0xFF},
@@ -173,7 +180,7 @@ SDL_Color bg_bright_colors[8] = {
 
 int next_window = 0;                      /* next available window count */
 struct font *font;                      /* default font */
-TEXTURE *screen, *prime;                  /* default screen */
+TEXTURE *screen;                        /* default screen */
 WINDOW *active = (WINDOW *) 0;          /* window connected to keyboard */
 WINDOW *last_active = (WINDOW *) 0;     /* previous window connected to keyboard */
 int button_state = 0;                   /* state of the mouse buttons */

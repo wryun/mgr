@@ -13,13 +13,8 @@
 
 #include "defs.h"
 
+#include "graphics.h"
 #include "mouse_get.h"
-
-/* #defines */
-#define Box(screen, x, y, dx, dy) \
-    type ? \
-    bit_line(screen, x, y, x + dx, y + dy, BIT_NOT(BIT_DST)) : \
-    box(screen, x, y, dx, dy)
 
 /* box -- draw a box */
 void box(screen, x1, y1, dx, dy)
@@ -42,10 +37,13 @@ int x1, y1, dx, dy;
         dy = 3;
     }
 
-    bit_blit(screen, x1 + 1, y1, dx - 1, 1, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
-    bit_blit(screen, x1 + 1, y1 + dy, dx - 1, 1, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
-    bit_blit(screen, x1, y1, 1, dy, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
-    bit_blit(screen, x1 + dx, y1, 1, dy, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
+    SDL_Rect rect = {
+        .x = x1,
+        .y = y1,
+        .w = dx,
+        .h = dy,
+    };
+    texture_rect(NULL, rect, C_GREY_ALPHA, 2);
 }
 /* get_rect */
 void get_rect(screen, mouse, x, y, dx, dy, type)
@@ -61,8 +59,16 @@ int type;                       /* rectangle or line */
     for (;;) {
         *dx = x_mouse - x;
         *dy = y_mouse - y;
-        Box(screen, x, y, *dx, *dy);
-        bit_present(screen);
+        screen_render();
+        if (type == 1) {
+            SDL_Point start = {.x = x, .y = y};
+            SDL_Point end = {.x = x + *dx, .y = y + *dy};
+            texture_line(NULL, start, end, C_GREY_ALPHA);
+        } else {
+            box(screen, x, y, *dx, *dy);
+        }
+        screen_present();
+        screen_flush();
         button = mouse_get_wait(&x_mouse, &y_mouse);
 
         do {

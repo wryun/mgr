@@ -8,6 +8,7 @@
 
 /* Terminal emulator */
 #include <mgr/font.h>
+#include <mgr/window.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <errno.h>
@@ -48,7 +49,7 @@
 #define TEXT_SCROLL_Y(delta_y) \
     { \
         SDL_Rect region = texture_get_rect(text); \
-        region.y += W(y) - fsizehigh; \
+        region.y = W(y) - fsizehigh; \
         region.h -= region.y; \
         texture_scroll(text, region, 0, (delta_y), W(bg_color)); \
     }
@@ -57,7 +58,7 @@
 #define TEXT_SCROLL_X(delta_x) \
     { \
         SDL_Rect region = texture_get_rect(text); \
-        region.x += W(x); \
+        region.x = W(x); \
         region.w -= region.x; \
         region.y = W(y) - fsizehigh; \
         region.h = fsizehigh; \
@@ -132,8 +133,8 @@ void set_size(WINDOW *win)
         return;                         /* just return if user requested */
     }
 
-    if (W(text.wide) > 0) {
-        set_winsize(ACTIVE(to_fd), W(text.high) / FSIZE(high), W(text.wide) / FSIZE(wide));
+    if (W(text.w) > 0) {
+        set_winsize(ACTIVE(to_fd), W(text.h) / FSIZE(high), W(text.w) / FSIZE(wide));
     } else {
         set_winsize(W(to_fd), BIT_HIGH(W(window)) / FSIZE(high), BIT_WIDE(W(window)) / FSIZE(wide));
     }
@@ -171,9 +172,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
         }
     }
 
-    if (W(text.wide)) {
-        SDL_Rect rect = {.x = text.x, .y = text.y, .w = text.wide, .h = text.high};
-        text = texture_create_child(window, rect);
+    if (W(text.w)) {
+        text = texture_create_child(window, W(text));
     }
 
     if (text == NULL) {
@@ -359,36 +359,23 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 break;
             /* E_ADDLINE    -- add a new line */
             case E_ADDLINE:
-                TEXT_SCROLL(W(y) - fsizehigh, (*W(esc) || 1) * fsizehigh);
+                TEXT_SCROLL_Y((*W(esc) || 1) * fsizehigh);
                 done++;
                 break;
             /* E_ADDCHAR    -- insert a character */
             case E_ADDCHAR:
-            {
-                SDL_Rect region = texture_get_rect(text);
-                region.x += W(x);
-                region.w -= region.x;
-                region.y = W(y) - fsizehigh;
-                region.h = fsizehigh;
-                texture_scroll(text, region, (*W(esc) || 1) * fsizewide, 0, W(bg_color));
-            }
+                TEXT_SCROLL_X((*W(esc) || 1) * fsizewide);
+                break;
             break;
             /* E_DELETELINE -- delete a line */
             case E_DELETELINE:         /* delete a line */
-                TEXT_SCROLL(W(y) - fsizehigh, -(*W(esc) || 1) * fsizehigh);
+                TEXT_SCROLL_Y(-(*W(esc) || 1) * fsizehigh);
                 done++;
             break;
             /* E_DELETECHAR -- delete a character */
             case E_DELETECHAR:
-            {
-                SDL_Rect region = texture_get_rect(text);
-                region.x += W(x);
-                region.w -= region.x;
-                region.y = W(y) - fsizehigh;
-                region.h = fsizehigh;
-                texture_scroll(text, region, -(*W(esc) || 1) * fsizewide, 0, W(bg_color));
-            }
-            break;
+                TEXT_SCROLL_X(-(*W(esc) || 1) * fsizewide);
+                break;
             /* E_UPLINE     -- up 1 line */
             case E_UPLINE:             /* up 1 line */
 #ifdef FRACCHAR
@@ -592,7 +579,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     W(y) += FSIZE(baseline) - baseline;
 
                     if (W(y) < fsizehigh) {
-                        TEXT_SCROLL(W(y) - fsizehigh, fsizehigh);
+                        TEXT_SCROLL_Y(fsizehigh);
                         W(y) = fsizehigh;
                         done++;
                     }
@@ -602,6 +589,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* E_MOUSE      -- move the mouse or change cursor shape  */
             case E_MOUSE:
 
+#if 0
                 if (cnt == 0 || (cnt == 1 && win == active)) {
 
                     if (cnt == 0) {
@@ -628,6 +616,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                         mousey = BETWEEN(0, mousey, BIT_HIGH(screen) - 1);
                     }
                 }
+#endif
 
                 break;
             /* E_SIZE       -- reshape window: cols, rows */
@@ -1180,28 +1169,28 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                     if (W(esc)[0] >= 0 && W(esc)[1] >= W(esc)[0] &&
                         W(esc)[1] * fsizehigh < BIT_HIGH(W(window))) {
                         W(text.x) = 0;
-                        W(text.wide) = BIT_WIDE(W(window));
+                        W(text.w) = BIT_WIDE(W(window));
                         W(text.y) = fsizehigh * W(esc[0]);
-                        W(text.high) = fsizehigh * (1 + W(esc[1])) - W(text.y);
+                        W(text.h) = fsizehigh * (1 + W(esc[1])) - W(text.y);
 
                         if (W(y) < W(text.y) + fsizehigh) {
                             W(y) = W(text.y) + fsizehigh;
                         }
 
-                        if (W(y) > W(text.high)) {
-                            W(y) = W(text.high);
+                        if (W(y) > W(text.h)) {
+                            W(y) = W(text.h);
                         }
                     }
 
                     break;
                 case 3:                /* set up entire region */
-                    W(text.wide) = Scalex(W(esc[2]));
-                    W(text.high) = Scaley(W(esc[3]));
+                    W(text.w) = Scalex(W(esc[2]));
+                    W(text.h) = Scaley(W(esc[3]));
                     W(text.x) = Scalex(W(esc[0]));
                     W(text.y) = Scaley(W(esc[1]));
 
-                    if (W(text.high) >= fsizehigh * MIN_Y &&
-                        W(text.wide) >= fsizewide * MIN_X) {
+                    if (W(text.h) >= fsizehigh * MIN_Y &&
+                        W(text.w) >= fsizewide * MIN_X) {
                         W(x) = 0;
                         W(y) = fsizehigh;
                         W(flags) &= ~W_SNARFABLE;
@@ -1210,17 +1199,17 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     W(text.x) = 0;
                     W(text.y) = 0;
-                    W(text.wide) = 0;
-                    W(text.high) = 0;
+                    W(text.w) = 0;
+                    W(text.h) = 0;
                     break;
                 case 4:        /* set up entire region (use rows, cols) */
                     W(text.x) = W(esc[0]) * fsizewide;
                     W(text.y) = W(esc[1]) * fsizehigh;
-                    W(text.wide) = W(esc[2]) * fsizewide;
-                    W(text.high) = W(esc[3]) * fsizehigh;
+                    W(text.w) = W(esc[2]) * fsizewide;
+                    W(text.h) = W(esc[3]) * fsizehigh;
 
-                    if (W(text.high) >= fsizehigh * MIN_Y &&
-                        W(text.wide) >= fsizewide * MIN_X) {
+                    if (W(text.h) >= fsizehigh * MIN_Y &&
+                        W(text.w) >= fsizewide * MIN_X) {
                         W(x) = 0;
                         W(y) = fsizehigh;
                         break;
@@ -1235,8 +1224,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     W(text.x) = 0;
                     W(text.y) = 0;
-                    W(text.wide) = 0;
-                    W(text.high) = 0;
+                    W(text.w) = 0;
+                    W(text.h) = 0;
                     break;
                 }
 
@@ -1269,7 +1258,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     W(flags) |= W_REVERSE;
                     {
-                        COLOR temp = W(fg_color);
+                        SDL_Color temp = W(fg_color);
                         W(fg_color) = W(bg_color);
                         W(bg_color) = temp;
                     }
@@ -1362,7 +1351,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     W(flags) &= ~W_REVERSE;
                     {
-                        COLOR temp = W(fg_color);
+                        SDL_Color temp = W(fg_color);
                         W(fg_color) = W(bg_color);
                         W(bg_color) = temp;
                     }
@@ -1580,8 +1569,8 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
                 }
 
                 /* TODO W(style) implementation... */
-                SDL_Point char_loc = {.x = x, .y = y - fsizehigh};
-                texture_copy_withbg(dest, char_loc, font->glyph[c], fg_color, bg_color);
+                SDL_Point char_loc = {.x = W(x), .y = W(y) - fsizehigh};
+                texture_copy_withbg(text, char_loc, font->glyph[c], W(fg_color), W(bg_color));
 
                 W(x) += fsizewide;
 

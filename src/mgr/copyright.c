@@ -286,6 +286,7 @@ void copyright(TEXTURE *where, char *password)
     /* kick off stars */
 
     fly(where);
+    screen_render();
     screen_present();
 
     /* keep drawing stars until enough read from kb to stop */
@@ -360,6 +361,7 @@ void copyright(TEXTURE *where, char *password)
             texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], C_WHITE, C_BLACK);
         }
 
+        screen_present();
         screen_present();
     }
 }
