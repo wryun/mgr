@@ -1,4 +1,4 @@
-extern BITMAP *pattern;
+extern TEXTURE *pattern;
 extern char *log_command;
 extern FILE *log_file;
 

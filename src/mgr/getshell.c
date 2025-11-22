@@ -8,6 +8,7 @@
 
 /* start a shell */
 /* #includes */
+#define _GNU_SOURCE
 #include <mgr/bitblit.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,6 +16,7 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <termios.h>
@@ -94,8 +96,8 @@ char *last_tty()
     return(line);
 }
 /* get_path -- get a complete path name from command */
-static char Path[512];
-static char start[512];
+static char Path[PATH_MAX];
+static char start[PATH_MAX - 1];
 
 char *get_path(name)
 char *name;

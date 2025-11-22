@@ -16,6 +16,7 @@
  * Really, that MGR 'blocks' on mouse events is probably what should be
  * fixed here.
  */
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_mouse.h>
 
 #include "proto.h"
@@ -34,6 +35,25 @@ static int button_map[8] = {
 
 /* SDL also tracks additional buttons; MGR doesn't expect more than 3. */
 #define ALL_BUTTONS (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK)
+
+int mouse_get_sdl(SDL_Event *event, int *x, int *y)
+{
+    switch (event->type) {
+    case SDL_MOUSEMOTION:
+        *x = event->motion.x;
+        *y = event->motion.y;
+
+        return button_map[event->motion.state & ALL_BUTTONS];
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+        return button_map[SDL_GetMouseState(x, y) & ALL_BUTTONS];
+    default:
+        fprintf(stderr, "invalid request of mouse_get_sdl");
+        exit(1);
+
+        return 0;
+    }
+}
 
 /* mouse_get */
 /* primary mouse interface
@@ -78,25 +98,6 @@ int mouse_get_poll(int *x, int *y)
     }
 
     return -1; /* -1 means there was nothing there. */
-}
-
-int mouse_get_sdl(SDL_Event *event, int *x, int *y)
-{
-    switch (event->type) {
-    case SDL_MOUSEMOTION:
-        *x = event->motion.x;
-        *y = event->motion.y;
-
-        return button_map[event->motion.state & ALL_BUTTONS];
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-        return button_map[SDL_GetMouseState(x, y) & ALL_BUTTONS];
-    default:
-        fprintf(stderr, "invalid request of mouse_get_sdl");
-        exit(1);
-
-        return;
-    }
 }
 
 /* map_mouse buttons (for non-left handers) */

@@ -9,6 +9,7 @@
 /* Create a new window */
 /* #includes */
 #include <mgr/font.h>
+#include <mgr/window.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ int x, y, dx, dy;
 int fnt;
 {
     struct font *curr_font;
+    SDL_Rect screen_rect = texture_get_rect(screen);
 
     if (dx < 0) {
         x += dx, dx = -dx;
@@ -69,16 +71,16 @@ int fnt;
         y += dy, dy = -dy;
     }
 
-    if (x >= BIT_WIDE(screen) || y >= BIT_HIGH(screen)) {
+    if (x >= screen_rect.w || y >= screen_rect.h) {
         return(0);
     }
 
-    if (x + dx >= BIT_WIDE(screen)) {
-        dx = BIT_WIDE(screen) - x;
+    if (x + dx >= screen_rect.w) {
+        dx = screen_rect.w - x;
     }
 
-    if (y + dy >= BIT_HIGH(screen)) {
-        dy = BIT_HIGH(screen) - y;
+    if (y + dy >= screen_rect.h) {
+        dy = screen_rect.h - y;
     }
 
     curr_font = Get_font(fnt);
@@ -149,8 +151,8 @@ struct font *curr_font;
 
     W(text.x) = 0;
     W(text.y) = 0;
-    W(text.wide) = 0;
-    W(text.high) = 0;
+    W(text.w) = 0;
+    W(text.h) = 0;
 
     W(bitmap) = (TEXTURE *) 0;
 
@@ -196,6 +198,7 @@ char *start;
 {
     register WINDOW *win = active;
     struct font *curr_font;
+    SDL_Rect screen_rect = texture_get_rect(screen);
 
     if (dx < 0) {
         x += dx, dx = -dx;
@@ -209,12 +212,12 @@ char *start;
         x = 0;
     }
 
-    if (x + dx >= BIT_WIDE(screen)) {
-        dx = BIT_WIDE(screen) - x;
+    if (x + dx >= screen_rect.w) {
+        dx = screen_rect.w - x;
     }
 
-    if (y + dy >= BIT_HIGH(screen)) {
-        dy = BIT_HIGH(screen) - y;
+    if (y + dy >= screen_rect.h) {
+        dy = screen_rect.h - y;
     }
 
     curr_font = Get_font(fnt);
