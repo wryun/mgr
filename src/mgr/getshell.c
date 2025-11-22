@@ -95,14 +95,14 @@ char *last_tty()
 {
     return(line);
 }
-/* get_path -- get a complete path name from command */
-static char Path[PATH_MAX];
-static char start[PATH_MAX - 1];
 
+static char Path[PATH_MAX];
+/* get_path -- get a complete path name from command */
 char *get_path(name)
 char *name;
 {
     register char *next, *list;
+    char *start;
 
     if (strchr("/.", *name)) {
         if (access(name, X_OK) == 0) {
@@ -112,7 +112,7 @@ char *name;
         }
     }
 
-    strcpy(start, getenv("PATH"));
+    start = strdup(getenv("PATH"));
 
     for (list = start; (next = strchr(list, ':')); list = next + 1) {
         *next = '\0';
