@@ -24,7 +24,7 @@
 #include "do_button.h"
 #include "font_subs.h"
 #include "get_font.h"
-#include "get_rect.h"
+#include "window_box.h"
 #include "getshell.h"
 #include "mgr.h"
 #include "put_window.h"

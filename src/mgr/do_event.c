@@ -22,10 +22,9 @@
 #include "border.h"
 #include "do_button.h"
 #include "font_subs.h"
-#include "get_rect.h"
 #include "get_text.h"
 #include "intersect.h"
-#include "move_box.h"
+#include "window_box.h"
 #include "write_ok.h"
 /* #defines */
 #define FSIZE(c)        ((int) (W(font)->head.c))       /* from put_window.c */
@@ -125,7 +124,7 @@ int *args;     /* the arg list */
         sweep++;
 
         if (!swept) {
-            get_rect(screen, mouse, mousex, mousey, &x, &y, 1);
+            get_rect(mouse, mousex, mousey, &x, &y, 1);
         }
 
         sprintf(str, "%d %d %d %d", mousex - W(x0), mousey - W(y0),
@@ -135,7 +134,7 @@ int *args;     /* the arg list */
         sweep++;
 
         if (!swept) {
-            get_rect(screen, mouse, mousex, mousey, &x, &y, 0);
+            get_rect(mouse, mousex, mousey, &x, &y, 0);
         }
 
         sprintf(str, "%d %d %d %d", mousex - W(x0), mousey - W(y0),
@@ -145,7 +144,7 @@ int *args;     /* the arg list */
         sweep++;
 
         if (!swept) {
-            get_rect(screen, mouse, mousex, mousey, &x, &y, 0);
+            get_rect(mouse, mousex, mousey, &x, &y, 0);
         }
 
         sprintf(str, "%d %d %d %d", mousex, mousey,
@@ -155,7 +154,7 @@ int *args;     /* the arg list */
         sweep++;
 
         if (!swept) {
-            move_box(screen, mouse, &mousex, &mousey, x, y, 1);
+            move_box(mouse, &mousex, &mousey, x, y, 1);
         }
 
         sprintf(str, "%d %d", mousex - W(x0), mousey - W(y0));
@@ -164,7 +163,7 @@ int *args;     /* the arg list */
         sweep++;
 
         if (!swept) {
-            move_box(screen, mouse, &mousex, &mousey, x, y, 1);
+            move_box(mouse, &mousex, &mousey, x, y, 1);
         }
 
         sprintf(str, "%d %d", mousex, mousey);

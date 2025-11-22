@@ -20,11 +20,11 @@
 #include "do_event.h"
 #include "erase_win.h"
 #include "font_subs.h"
-#include "get_rect.h"
 #include "graphics.h"
 #include "intersect.h"
 #include "put_window.h"
 #include "subs.h"
+#include "window_box.h"
 
 /* shape -- reshape a window to specified dimensions */
 int shape(int x, int y, int dx, int dy)
@@ -108,7 +108,7 @@ void shape_window(void)
     SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
     SETMOUSEICON(DEFAULT_MOUSE_CURSOR);
-    get_rect(screen, mouse, mousex, mousey, &dx, &dy, 0);
+    get_rect(mouse, mousex, mousey, &dx, &dy, 0);
     do_button(0);
 
     /* look for shape event here */
@@ -145,7 +145,7 @@ void stretch_window(void)
     dy = mousey - y0;
     /* x0,y0 is corner farthest from mouse. x0+dx,y0+dx is mouse position */
 
-    get_rect(screen, mouse, x0, y0, &dx, &dy, 0);
+    get_rect(mouse, x0, y0, &dx, &dy, 0);
     do_button(0);
 
     /* look for shape event here */

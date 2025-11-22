@@ -17,7 +17,7 @@
 #include "border.h"
 #include "do_event.h"
 #include "mouse_get.h"
-#include "move_box.h"
+#include "window_box.h"
 #include "shape.h"
 
 /* move_window */
@@ -29,7 +29,7 @@ void move_window()
     int sx = ACTIVE(x0);
     int sy = ACTIVE(y0);
 
-    move_box(screen, mouse, &sx, &sy, dx, dy, 0);
+    move_box(mouse, &sx, &sy, dx, dy, 0);
 
     /* adjust window state */
 

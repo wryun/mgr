@@ -17,7 +17,7 @@
 #include "mouse_get.h"
 
 /* box -- draw a box */
-void box(x1, y1, dx, dy)
+static void box(x1, y1, dx, dy)
 int x1, y1, dx, dy;
 {
     if (dx < 0) {
@@ -44,9 +44,8 @@ int x1, y1, dx, dy;
     };
     texture_rect(NULL, rect, C_GREY_ALPHA, 2);
 }
-/* get_rect */
+
 void get_rect(mouse, x, y, dx, dy, type)
-TEXTURE *screen;         /* where to sweep out the box */
 int mouse;                      /* file to get mouse coords from */
 int x, y;                        /* starting position */
 register int *dx, *dy;           /* box width,height */
@@ -75,5 +74,28 @@ int type;                       /* rectangle or line */
                 return;
             }
         } while ((button = mouse_get_poll(&x_mouse, &y_mouse)) != -1);
+    }
+}
+
+void move_box(mouse, x, y, dx, dy, how)
+int mouse;                      /* file to get mouse coords from */
+register int *x, *y;             /* starting position */
+register int dx, dy;             /* box size */
+int how;                                        /* termination condition */
+{
+    register int button;
+
+    for (;;) {
+        screen_render();
+        box(*x, *y, dx, dy);
+        screen_present();
+        screen_flush();
+        button = mouse_get_wait(x, y);
+
+        do {
+            if (how ? button == 0 : button != 0) {
+                return;
+            }
+        } while ((button = mouse_get_poll(x, y)) != -1);
     }
 }
