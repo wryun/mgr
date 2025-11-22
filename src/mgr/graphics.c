@@ -22,6 +22,8 @@
 
 #include <SDL2/SDL.h>
 
+#include <mgr/window.h>
+
 #include "defs.h"
 #include "graphics.h"
 #include "bitmap.h"
@@ -61,8 +63,8 @@ static SDL_PixelFormatEnum preferred_pixel_format = SDL_PIXELFORMAT_ABGR8888;
  * need to be reconsidered...
  */
 static const SDL_Color bitmap_palette_colors[] = {
-  {0x00, 0x00, 0x00, SDL_ALPHA_TRANSPARENT},
-  {0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE},
+    {0x00, 0x00, 0x00, SDL_ALPHA_TRANSPARENT},
+    {0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE},
 };
 
 
@@ -466,7 +468,6 @@ void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_tex
     texture_fill_rect(dst_texture, dst_rect, bg_color);
     texture_copy(dst_texture, point, src_texture, fg_color);
 }
-
 
 #define LOAD_ICON(var) {var = texture_create_from_icon("server/" #var); if (!var) return 0;}
 #define LOAD_CURSOR(var) {var = cursor_create_from_icon("server/" #var); if (!var) return 0;}

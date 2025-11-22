@@ -371,7 +371,7 @@ void new_window()
     SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
     SETMOUSEICON(mouse_arrow);
-    get_rect(screen, mouse, mousex, mousey, &dx, &dy, 0);
+    get_rect(mouse, mousex, mousey, &dx, &dy, 0);
     do_button(0);
 
     (void) create_window( mousex, mousey, dx, dy, -1, 0 );

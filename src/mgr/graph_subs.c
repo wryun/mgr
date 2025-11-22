@@ -9,7 +9,11 @@
 /* graphics subs  - mostly from the BLIT */
 
 /* #includes */
-#include <mgr/bitblit.h>
+#include <SDL2/SDL.h>
+
+#include "defs.h"
+#include "graphics.h"
+
 /* #defines */
 #define labs(x, y)               if ((x = y) < 0) x = -x
 #define BIG                     0x7fff
@@ -23,8 +27,8 @@ static long resid(a, b, x, y) register int a, b, x, y;
     long result = 0;
     long u = b * ((long)a * a - (long)x * x);
     long v = (long)a * y * y;
-    register q = u > BIG? HUGE / u: BIG;
-    register r = v > BIG? HUGE / v: BIG;
+    int q = u > BIG? HUGE / u: BIG;
+    int r = v > BIG? HUGE / v: BIG;
 
     while (a || b) {
         if (result >= 0 && b) {
@@ -52,19 +56,21 @@ static long resid(a, b, x, y) register int a, b, x, y;
  * from x1,y1 to x2,y2
  */
 
-void ellip1(screen, x0, y0, a, b, x1, y1, x2, y2, f)
-BITMAP *screen;
-int x0, y0, a, b, x1, y1, x2, y2, f;
+void ellip1(screen, x0, y0, a, b, x1, y1, x2, y2, c)
+TEXTURE *screen;
+int x0, y0, a, b, x1, y1, x2, y2;
+SDL_Color c;
 {
     int z;
     int dx = y1 > 0? 1: y1 < 0? -1: x1 > 0? -1: 1;
     int dy = x1 > 0? -1: x1 < 0? 1: y1 > 0? -1: 1;
     long a2 = (long)a * a;
     long b2 = (long)b * b;
-    register long dex = b2 * (2 * dx * x1 + 1);
-    register long e;
-    register long dey = a2 * (2 * dy * y1 + 1);
-    register long ex, ey, exy;
+    long dex = b2 * (2 * dx * x1 + 1);
+    long e;
+    long dey = a2 * (2 * dy * y1 + 1);
+    long ex, ey, exy;
+    SDL_Point p;
 
     e = resid(a, b, x1, y1);
     a2 *= 2;
@@ -87,14 +93,17 @@ int x0, y0, a, b, x1, y1, x2, y2, f;
             dex += b2;
         }
 
-        bit_point(screen, x0 + x1, y0 + y1, f);
+        p.x = x0 + x1;
+        p.y = y0 + y1;
+        texture_point(screen, p, c);
 
         if (x1 == 0) {
             dy = -dy;
             dey = -dey + a2;
         } else if (y1 == 0) {
             for (z = x1; abs(z += dx) <= a;) {
-                bit_point(screen, x0 + z, y0 + y1, f);
+                p.x = x0 + z;
+                texture_point(screen, p, c);
             }
 
             dx = -dx;
@@ -118,12 +127,12 @@ long x;
  */
 
 void nearby(x1, y1, x2, y2, rx, ry)
-register int x1, y1, x2, y2;
+int x1, y1, x2, y2;
 int *rx, *ry;
 {
     long eps, exy;  /*integers but many bits*/
     int d, dy;
-    register dx;
+    int dx;
     eps = sq(x2) + sq(y2) - sq(x1) - sq(y1);
     d = eps > 0? -1: 1;
 
@@ -152,26 +161,32 @@ int *rx, *ry;
 }
 
 /* circle  -- circle of radius r centered at x1,y1 */
-void circle(b, x1, y1, r, f)
-BITMAP *b;
+void circle(t, x1, y1, r, c)
+TEXTURE *t;
 int x1;
 register int y1;
-int r, f;
+int r;
+SDL_Color c;
 {
-    register err = 0;           /* x^2 + y^2 - r^2 */
-    register dxsq = 1;          /* (x+dx)^2-x^2*/
-    register dysq = 1 - 2 * r;
-    register exy;
+    int err = 0;           /* x^2 + y^2 - r^2 */
+    int dxsq = 1;          /* (x+dx)^2-x^2*/
+    int dysq = 1 - 2 * r;
+    int exy;
     int x0 = x1;
-    register y0 = y1 - r;
+    int y0 = y1 - r;
+    SDL_Point p;
 
     y1 += r;
 
     while (y1 > y0) {
-        bit_point(b, x0, y0, f);
-        bit_point(b, x0, y1, f);
-        bit_point(b, x1, y0, f);
-        bit_point(b, x1, y1, f);
+        p.x = x0; p.y = y0;
+        texture_point(t, p, c);
+        p.y = y1;
+        texture_point(t, p, c);
+        p.x = x1;
+        texture_point(t, p, c);
+        p.y = y0;
+        texture_point(t, p, c);
         exy = err + dxsq + dysq;
 
         if (-exy <= err + dxsq) {
@@ -189,20 +204,24 @@ int r, f;
         }
     }
 
-    bit_point(b, x0, y0, f);
-    bit_point(b, x1, y0, f);
+    p.x = x0; p.y = y0;
+    texture_point(t, p, c);
+    p.x = x1;
+    texture_point(t, p, c);
 }
 /* ellipse -- draw an ellipse centered at x0,y0 with half-axes a,b */
-void ellipse(screen, x, y, a, b, f)
-BITMAP *screen;
+void ellipse(screen, x, y, a, b, c)
+TEXTURE *screen;
 int x, y;
 int a, b;
-int f;
+SDL_Color c;
 {
     if (a == 0 || b == 0) {
-        bit_line(screen, x - a, y - b, x + a, y + b, f);
+        SDL_Point start = {.x = x - a, .y = y - b};
+        SDL_Point end = {.x = x + a, .y = y + b};
+        texture_line(screen, start, end, c);
     } else {
-        ellip1(screen, x, y, a, b, 0, b, 0, b, f);
+        ellip1(screen, x, y, a, b, 0, b, 0, b, c);
     }
 }
 /* arc */
@@ -219,14 +238,16 @@ int f;
  *	the horizontal, vertical, and diagonal axes
  */
 
-void arc(bp, x0, y0, x2, y2, x1, y1, f)
-register BITMAP *bp;
-int x0, y0, x2, y2, x1, y1, f;
+void arc(t, x0, y0, x2, y2, x1, y1, c)
+TEXTURE *t;
+int x0, y0, x2, y2, x1, y1;
+SDL_Color c;
 {
-    register dx, dy;
-    register eps;  /* x^2 + y^2 - r^2 */
+    int dx, dy;
+    int eps;  /* x^2 + y^2 - r^2 */
     int dxsq, dysq;  /* (x+dx)^2-x^2, ...*/
     int ex, ey, exy;
+    SDL_Point p;
 
     x1 = x1 - x0;
     y1 = y1 - y0;
@@ -266,7 +287,9 @@ int x0, y0, x2, y2, x1, y1, f;
             dysq += 2;
         }
 
-        bit_point(bp, x0 + x1, y0 + y1, f);
+        p.x = x0 + x1;
+        p.y = y0 + y1;
+        texture_point(t, p, c);
         /* bit_blit(bp,x0+x1-1,y0+y1-1,2,2,f,NULL_DATA,0,0); */
     }while (!(x1 == x2 && y1 == y2)); /* Note1 */
 

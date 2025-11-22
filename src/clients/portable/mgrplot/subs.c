@@ -14,7 +14,7 @@
 #define Y(x)  (scale?(int)((Yf(x)-ymin) * yscale):Yf(x))
 #define X(x)	(scale?(int)(((x)-xmin) * xscale):(x))
 #define dprintf	if(debug)fprintf
-#define GMAX 	999
+#define GMAX 	9999
 
 static int scale = 0;			/* TRUE if scaling on */
 static int xmin = 0 ,ymin = 0;		/* minimum plotting coord */

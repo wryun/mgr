@@ -35,7 +35,7 @@
 #define MIN_Y           1               /* minimum # of rows in a window */
 #define MIN_X           5               /* min # of columns in a window */
 #define MAX_PATH        100             /* max path length for font file */
-#define GMAX            1000L           /* max graphics coordinate */
+#define GMAX            10000L          /* max graphics coordinate */
 #define MOUSE_BUFF      30              /* size of mouse input buffer */
 #define MSG_MODEMASK    02              /* invalid permission mask for tty */
 

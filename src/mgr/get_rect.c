@@ -17,8 +17,7 @@
 #include "mouse_get.h"
 
 /* box -- draw a box */
-void box(screen, x1, y1, dx, dy)
-BITMAP *screen;
+void box(x1, y1, dx, dy)
 int x1, y1, dx, dy;
 {
     if (dx < 0) {
@@ -46,8 +45,8 @@ int x1, y1, dx, dy;
     texture_rect(NULL, rect, C_GREY_ALPHA, 2);
 }
 /* get_rect */
-void get_rect(screen, mouse, x, y, dx, dy, type)
-BITMAP *screen;         /* where to sweep out the box */
+void get_rect(mouse, x, y, dx, dy, type)
+TEXTURE *screen;         /* where to sweep out the box */
 int mouse;                      /* file to get mouse coords from */
 int x, y;                        /* starting position */
 register int *dx, *dy;           /* box width,height */
@@ -65,7 +64,7 @@ int type;                       /* rectangle or line */
             SDL_Point end = {.x = x + *dx, .y = y + *dy};
             texture_line(NULL, start, end, C_GREY_ALPHA);
         } else {
-            box(screen, x, y, *dx, *dy);
+            box(x, y, *dx, *dy);
         }
         screen_present();
         screen_flush();

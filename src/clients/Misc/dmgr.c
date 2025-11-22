@@ -41,7 +41,7 @@ static char	RCSid_[] = "$Source: /tmp/mgrsrc/demo/misc/RCS/dmgr.c,v $$Revision: 
 
 /* mgr defines */
 
-#define GMAX	1000		/* maximum coordinate */
+#define GMAX	10000		/* maximum coordinate */
 
 /* these should be calculated from the ditroff input file */
 
