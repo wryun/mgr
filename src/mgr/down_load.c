@@ -26,38 +26,33 @@
 #include "font_subs.h"
 #include "get_font.h"
 #include "get_menus.h"
+#include "graphics.h"
 #include "win_subs.h"
 #include "write_ok.h"
 
 /* get_map -- find bitmap associated with window id */
-static BITMAP *get_map(id, sub)
+static TEXTURE *get_map(id, sub)
 int id;                         /* pid of process controlling window */
 int sub;                        /* window number of this window */
 {
     register WINDOW *win;
-    register BITMAP *map;
 
     for (win = active; win != (WINDOW *) 0; win = W(next)) {
         if (W(pid) == id && W(num) == sub) {
-            map = bit_alloc(BIT_WIDE(W(window)), BIT_HIGH(W(window)), (DATA *)0, BIT_DEPTH(W(window)));
-
-            if (map) {
-                bit_blit(map, 0, 0, BIT_WIDE(map), BIT_HIGH(map), BIT_SRC, W(window), 0, 0);
-            }
-
-            return(map);
+            return W(window);
         }
     }
 
-    return((BITMAP *)0);
+    return NULL;
 }
 
 /* down_load */
-void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
+void down_load(win, window, text) register WINDOW *win; TEXTURE *window, *text;
 {
     WINDOW *win2;
     int cnt;
     int id;
+    SDL_Rect window_rect = texture_get_rect(window);
 
     cnt = W(esc_cnt);
 
@@ -142,8 +137,8 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
         dbgprintf('y', (stderr, "%s: drawing [%s] to %d\r\n",
                         W(tty), W(snarf), *W(esc)));
 
-        if (*W(esc) > 0 && W(bitmaps)[*W(esc) - 1] == (BITMAP *) 0) {
-            W(bitmaps)[*W(esc) - 1] = bit_alloc(x + strlen(W(snarf)) * FSIZE(wide), y, (DATA *)0, 1); /* text is always 1 bit deep */
+        if (*W(esc) > 0 && W(bitmaps)[*W(esc) - 1] == NULL) {
+            W(bitmaps)[*W(esc) - 1] = texture_create_empty(x + strlen(W(snarf)) * FSIZE(wide), y);
             dbgprintf('y', (stderr, "%s: STRING creating %d (%dx%d)\n",
                             W(tty), *W(esc), x + strlen(W(snarf)) * FSIZE(wide), y));
         }
@@ -202,7 +197,7 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
     /* T_GMAP    -- load bitmap from a file */
     case T_GMAP:
     {
-        BITMAP *b;
+        TEXTURE *b;
         FILE *fp = (FILE *)0;
         char filename[MAX_PATH];
         char buff[20];
@@ -223,16 +218,15 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
             *buff = '\0';
         }
 
-        if (bmi >= 0 && bmi < MAXBITMAPS
-            && read_ok(filename)
-            && (fp = fopen(filename, "r")) != (FILE *)0
-            && (b = bitmapread(fp))) {
+        if (bmi >= 0 && bmi < MAXBITMAPS && read_ok(filename)) {
+            b = texture_create_from_file(filename);
             if (W(bitmaps[bmi])) {
-                bit_destroy(W(bitmaps[bmi]));
+                texture_destroy(W(bitmaps[bmi]));
             }
 
             W(bitmaps[bmi]) = b;
-            sprintf(buff + strlen(buff), "%d %d %d\n", BIT_WIDE(b), BIT_HIGH(b), BIT_DEPTH(b));
+            SDL_Rect t_rect = texture_get_rect(b);
+            sprintf(buff + strlen(buff), "%d %d %d\n", t_rect.w, t_rect.h, 1);  /* TODO depth? */
         } else {
             strcat(buff, "\n");
         }
@@ -248,9 +242,8 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
     case T_SMAP:
     {
         FILE *fp;
-        BITMAP *b = 0;
+        TEXTURE *b = 0;
         int exists;             /* file already exists */
-        int free_b = 0;
         int num = *W(esc);
 
         switch (cnt) {
@@ -264,16 +257,9 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
 
             break;
         case 0:                 /* my window */
-            free_b++;
-            b = bit_alloc(BIT_WIDE(window), BIT_HIGH(window), (DATA *)0, BIT_DEPTH(window));
-
-            if (b) {
-                bit_blit(b, 0, 0, BIT_WIDE(b), BIT_HIGH(b), BIT_SRC, window, 0, 0);
-            }
-
+            b = window;
             break;
         case 2:                 /* other guy's window */
-            free_b++;
             b = get_map(num, W(esc[1]));
             break;
         }
@@ -281,22 +267,10 @@ void down_load(win, window, text) register WINDOW *win; BITMAP *window, *text;
         dbgprintf('y', (stderr, "saving...\n"));
 
         if (b && W(snarf) && ((exists = access(W(snarf), 0)),
-                              write_ok(W(snarf))) &&
-            (fp = fopen(W(snarf), "w")) != (FILE *)0) {
-            dbgprintf('y', (stderr, "saving bitmap %d x %d on %s (%d)\n",
-                            BIT_WIDE(b), BIT_HIGH(b), W(snarf), fileno(fp)));
-
-            if (exists < 0) { /* file just created */
-                fchown(fileno(fp), getuid(), getgid());
-            }
-
-            bitmapwrite( fp, b);
-            fclose(fp);
+                              write_ok(W(snarf)))) {
+            dbgprintf('y', (stderr, "saving bitmap to %s\n", W(snarf)));
+            texture_save_to_file(W(snarf), b);
             dbgprintf('y', (stderr, "saved on %s\n", W(snarf)));
-        }
-
-        if (b && free_b) {
-            bit_destroy(b);
         }
     }
     break;

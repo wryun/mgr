@@ -298,6 +298,49 @@ TEXTURE *texture_create_from_icon(const char *iconpath)
     return texture;
 }
 
+TEXTURE *texture_create_from_file(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        return NULL;
+    }
+    SDL_Surface *s = bitmapread(f);
+    fclose(f);
+
+    if (!s) {
+        return NULL;
+    }
+
+    return texture_create_from_surface(s);
+}
+
+int texture_save_to_file(const char *path, TEXTURE *texture) {
+    FILE *f = fopen(path, "wb");
+    if (!f) {
+        return 0;
+    }
+
+    SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, texture->rect.w, texture->rect.h, 32, preferred_pixel_format);
+    if (!surface) {
+        return 0;
+    }
+
+
+    TEXTURE *temp = texture_clone(texture);
+    if (!temp) {
+        SDL_FreeSurface(surface);
+        return 0;
+    }
+
+    SDL_RenderReadPixels(sdl_renderer, NULL, surface->format->format, surface->pixels, surface->pitch);
+    bitmapwrite(f, surface);
+
+    SDL_FreeSurface(surface);
+    texture_destroy(temp);
+    
+    fclose(f);
+    return 1;
+}
+
 TEXTURE *texture_create_from_pixels(void *pixels, int width, int height, int depth)
 {
     /* Currently, we only support mono bitmaps */
@@ -318,7 +361,6 @@ TEXTURE *texture_create_from_pixels(void *pixels, int width, int height, int dep
     SDL_FreeSurface(surface);
     return texture;
 }
-
 
 /* Expose width/height of our texture, but don't leak the 'internal' x/y.
  * That way madness lies...

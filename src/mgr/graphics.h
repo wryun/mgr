@@ -11,6 +11,8 @@ extern TEXTURE *texture_create_empty(int width, int height);
 extern TEXTURE *texture_create_from_pixels(void *pixels, int wide, int high, int depth);
 extern TEXTURE *texture_create_from_icon(const char *iconpath);
 extern TEXTURE *texture_clone(TEXTURE *src_texture);
+extern TEXTURE *texture_create_from_file(const char *path);
+extern int texture_save_to_file(const char *path, TEXTURE *t);
 
 extern void texture_destroy(TEXTURE *texture);
 

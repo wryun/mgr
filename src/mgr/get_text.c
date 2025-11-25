@@ -20,12 +20,13 @@
 #define BOTTOM  3
 #define ALL     4
 
+#if 0
 /* tbox -- draw a box */
 #define INVERT(screen, x, y, wide, high) \
     bit_blit(screen, x, y, wide, high, BIT_NOT(BIT_DST), NULL_DATA, 0, 0);
 
 static void tbox(screen, x1, y1, dx, dy, side)
-BITMAP *screen;
+TEXTURE *screen;
 int x1, y1, dx, dy;
 int side;
 {
@@ -111,10 +112,11 @@ int gx, gy;              /* character size (in pixels) */
         return(0);
     }
 }
+#endif
 
 /* get_text */
 int get_text(screen, mouse, x, y, dx, dy, win, c)
-BITMAP *screen;         /* where to sweep out the box */
+TEXTURE *screen;         /* where to sweep out the box */
 int mouse;                      /* file to get mouse coords from */
 int x, y;                        /* starting position */
 register int *dx, *dy;           /* box width,height */
@@ -129,8 +131,11 @@ int c;                          /* E_SWTEXT or E_SWTEXTT */
     int lastdx, lastdy;                         /* previous dx,dy */
     int newx = *dx * FSIZE(wide);
     int newy = *dy * FSIZE(high);
-    rectangle text;
 
+    return 1;
+
+#if 0
+    rectangle text;
     /* set up text regions */
 
     if (c == E_SWTEXT) {                        /* no text region */
@@ -176,4 +181,5 @@ int c;                          /* E_SWTEXT or E_SWTEXTT */
     do_box(screen, x, y, dx, dy, top, left, cols, rows, gx, gy);        /* off*/
 
     return(1);
+#endif
 }

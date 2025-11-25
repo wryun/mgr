@@ -121,10 +121,6 @@ struct font *curr_font;
 {
     register int i;
 
-#ifdef MGR_ALIGN
-    alignwin(screen, &x, &dx, SUM_BDR);
-#endif
-
     W(font) = curr_font;
     W(x) = 0;
     W(y) = curr_font->head.high;

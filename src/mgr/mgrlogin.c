@@ -29,6 +29,8 @@
 #include <mgr/font.h>
 #include <mgr/window.h>
 
+#include "defs.h"
+#include "graphics.h"
 #include "proto.h"
 #include "font_subs.h"
 #include "set_mode.h"
@@ -49,7 +51,6 @@
 
 /* variables */
 struct font *font;
-BITMAP *screen;
 
 #ifdef DEBUG
 int debug = 0;
@@ -144,7 +145,7 @@ void cutebox(int bx, int by, int bw, int bh)
 /* quit */
 void quit(int sig)
 {
-    bit_destroy(screen);
+    texture_destroy(screen);
     reset_tty(0);
     exit(1);
 }
@@ -320,7 +321,7 @@ int main(int argc, char *argv[])
 
         if (ret == 27) {
             /* exec to usual login -- not implemented yet */
-            bit_destroy(screen);
+            texture_destroy(screen);
             reset_tty(0);
             exit(0);
         } else {
@@ -360,7 +361,7 @@ int main(int argc, char *argv[])
                     signal(i, SIG_DFL);
                 }
 
-                bit_destroy(screen);
+                texture_destroy(screen);
                 reset_tty(0);
                 initgroups(pw->pw_name, pw->pw_gid);
                 setgid(pw->pw_gid);

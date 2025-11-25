@@ -18,6 +18,7 @@
 
 #include "defs.h"
 #include "event.h"
+#include "graphics.h"
 #include "menu.h"
 
 #include "proto.h"
@@ -41,6 +42,8 @@ BITMAP *text;                           /* window's text region */
     char coords[1024];                  /* space for return value */
     char *start = coords;       /* start of reply */
     register WINDOW *win2;              /* generic window pntr */
+    SDL_Rect window_rect = texture_get_rect(W(window));
+    SDL_Rect screen_rect = texture_get_rect(screen);
 
     if (W(flags) & W_DUPKEY) {
         sprintf(coords, "%c ", W(dup));
@@ -112,7 +115,7 @@ BITMAP *text;                           /* window's text region */
         break;
     case G_TEXT:                        /* text region size: x,y,wide,high */
         sprintf(start, "%d %d %d %d\n",
-                W(text.x), W(text.y), W(text.wide), W(text.high));
+                W(text.x), W(text.y), W(text.w), W(text.h));
         break;
     case G_MOUSE:                                       /* mouse coordinates */
         sprintf(start, "%d %d %d\n", mousex, mousey, RPT_BUTTON());
@@ -124,8 +127,8 @@ BITMAP *text;                           /* window's text region */
                     RPT_BUTTON());
         } else {
             sprintf(start, "%ld %ld %d\n",
-                    (mousex - W(x0)) * GMAX / BIT_WIDE(W(window)),
-                    (mousey - W(y0)) * GMAX / BIT_HIGH(W(window)),
+                    (mousex - W(x0)) * GMAX / window_rect.w,
+                    (mousey - W(y0)) * GMAX / window_rect.h,
                     RPT_BUTTON());
         }
 
@@ -149,6 +152,7 @@ BITMAP *text;                           /* window's text region */
         register char status;
 
         for (win2 = active; win2 != (WINDOW *) 0; win2 = win2->next) {
+            SDL_Rect win2_border_rect = texture_get_rect(win2->border);
             if (*W(esc) == G_ALLMINE && win2->main != W(main)) {
                 continue;
             }
@@ -162,8 +166,8 @@ BITMAP *text;                           /* window's text region */
             sprintf(start + strlen(start), "%d %d %d %d %s %d %c %d\n",
                     win2->x0,
                     win2->y0,
-                    BIT_WIDE(win2->border),
-                    BIT_HIGH(win2->border),
+                    win2_border_rect.w,
+                    win2_border_rect.h,
                     win2->tty + strlen(win2->tty) - 2,
                     win2->num,
                     status,
@@ -202,10 +206,10 @@ BITMAP *text;                           /* window's text region */
         strcpy(start, "localhost");
         gethostname(start, sizeof(coords));
         sprintf(start + strlen(start), " %d %d %d %d\n",
-                BIT_WIDE(screen),
-                BIT_HIGH(screen),
+                screen_rect.w,
+                screen_rect.h,
                 SUM_BDR,
-                BIT_DEPTH(screen));
+                32); /* TODO depth? */
         break;
     case G_ID:                                          /* client window id */
 

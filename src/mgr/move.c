@@ -38,12 +38,6 @@ void move_window()
 
     shape(sx, sy, dx, dy);
     bit_present(screen);
-#ifdef MGR_ALIGN
-
-    if (dx != BIT_WIDE(ACTIVE(border)) || dy != BIT_HIGH(ACTIVE(border))) {
-        do_event(EVENT_SHAPE, active, E_MAIN);
-    } else
-#endif
     do_event(EVENT_MOVE, active, E_MAIN);
 
     /* wait till button is released */

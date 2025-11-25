@@ -60,10 +60,6 @@ int shape(int x, int y, int dx, int dy)
         return(-1);
     }
 
-#ifdef MGR_ALIGN
-    alignwin(screen, &sx, &w, ACTIVE(borderwid));
-#endif
-
     /* adjust window state */
     ACTIVE(x0) = sx;
     ACTIVE(y0) = sy;

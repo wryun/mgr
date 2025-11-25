@@ -23,6 +23,7 @@
 #include "do_button.h"
 #include "font_subs.h"
 #include "get_text.h"
+#include "graphics.h"
 #include "intersect.h"
 #include "window_box.h"
 #include "write_ok.h"
@@ -70,6 +71,8 @@ int *args;     /* the arg list */
     static int x, y;
     char *get_id();
     int code;           /* for text sweeping */
+    SDL_Rect window_rect = texture_get_rect(W(window));
+    SDL_Rect border_rect = texture_get_rect(W(border));
 
 
 #ifdef DEBUG
@@ -115,8 +118,8 @@ int *args;     /* the arg list */
         if (W(flags) & W_ABSCOORDS) {
             sprintf(str, "%d %d", mousex - W(x0), mousey - W(y0));
         } else {
-            sprintf(str, "%ld %ld", (mousex - W(x0)) * GMAX / BIT_WIDE(W(window)),
-                    (mousey - W(y0)) * GMAX / BIT_HIGH(W(window)));
+            sprintf(str, "%ld %ld", (mousex - W(x0)) * GMAX / window_rect.w,
+                    (mousey - W(y0)) * GMAX / window_rect.h);
         }
 
         break;
@@ -214,7 +217,7 @@ int *args;     /* the arg list */
         break;
     case E_WINSIZE:                     /* send other windows size */
         sprintf(str, "%d %d %d %d",
-                W(x0), W(y0), BIT_WIDE(W(border)), BIT_HIGH(W(border)));
+                W(x0), W(y0), border_rect.w, border_rect.h);
         break;
     case E_WHOSIZE:                     /* send other windows size */
 
@@ -226,7 +229,7 @@ int *args;     /* the arg list */
 
         if (win) {
             sprintf(str, "%d %d %d %d",
-                    W(x0), W(y0), BIT_WIDE(W(border)), BIT_HIGH(W(border)));
+                    W(x0), W(y0), border_rect.w, border_rect.h);
         } else {
             *str = '\0';
         }

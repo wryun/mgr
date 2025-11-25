@@ -35,6 +35,7 @@
 #include "do_event.h"
 #include "erase_win.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "intersect.h"
 #include "mgr.h"
 #include "mouse_get.h"
@@ -196,7 +197,7 @@ register WINDOW *win;                   /* window to hide */
  *				all buttons released completes the action.
  */
 int move_mouse(screen, mouse, x, y, how)
-BITMAP *screen;
+TEXTURE *screen;
 int mouse, *x, *y;
 int how;
 {
@@ -206,7 +207,6 @@ int how;
         button = mouse_get_poll(x, y);
 
         if (button == -1) {
-            bit_present(screen);
             button = mouse_get_wait(x, y);
         }
     }while (how ? button != 0 : button == 0);
@@ -363,38 +363,15 @@ void suspend(void)
 
 #endif
 }
-#ifdef MGR_ALIGN
-/* alignwin -- align a window so a byte boundary occurs somewhere insode the border */
-void alignwin(screen, x, dx, slop)
-register BITMAP *screen;
-register int *x, *dx;
-int slop;
-{
-    register int adjust = (BIT_X(screen) + *x) & 7;
-
-    if (adjust > 0 && adjust < (8 - slop)) {
-        *x -= adjust;
-        dbgprintf('A', (stderr, "Adjusting x by %d", adjust));
-    }
-
-    dbgprintf('A', (stderr, " at [%d/%d]\r\n", *x, (*x) & 7));
-
-    adjust = (adjust + *dx) & 7;
-
-    if (adjust > slop) {
-        *dx += 8 - adjust;
-        dbgprintf('A', (stderr, "Adjusting dx by %d\r\n", 8 - adjust));
-    }
-
-    dbgprintf('A', (stderr, " at [%d/%d]\r\n", *x + *dx, (*x + *dx) & 7));
-}
-#endif /* MGR_ALIGN */
 
 /* cursor_ok -- make sure icon is valid */
 int cursor_ok(map)
-BITMAP *map;                    /* cursor icon */
+TEXTURE *map;                    /* cursor icon */
 {
+    return 0;
+    /* TODO cursor setting not implemented
     return(map != NULL && BIT_WIDE(map) >= 16 && BIT_HIGH(map) >= 32);
+    */
     /* might like to check contents of bitmap to be reasonable */
 }
 
@@ -413,6 +390,7 @@ void cursor_on()
         return;
     }
 
+    /* TODO move cursor handling to main render loop; this should set a window prop
     cursoron = 1;
     WINDOW *win = active;
 
@@ -458,6 +436,7 @@ void cursor_on()
                        &W(fg_color), NULL, 0, 0, 0);
         break;
     }
+    */
 }
 
 void cursor_off()
@@ -472,6 +451,7 @@ void cursor_off()
         return;
     }
 
+    /* TODO move cursor handling to main render loop; this should set a window prop
     cursoron = 0;
     WINDOW *win = active;
 
@@ -480,6 +460,7 @@ void cursor_off()
                    W(font->head.wide) + 2, W(font->head.high) + 2,
                    &W(bg_color), NULL,
                    W(char_cursor_backup), 0, 0);
+    */
 }
 
 /* system command - turn off root privileges */
