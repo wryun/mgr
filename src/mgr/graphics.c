@@ -91,7 +91,7 @@ TEXTURE *screen_init(int width, int height)
         return NULL;
     }
 
-    if (SDL_CreateWindowAndRenderer(width, height, SDL_WINDOW_OPENGL, &sdl_window, &sdl_renderer)) {
+    if (SDL_CreateWindowAndRenderer(width, height, 0, &sdl_window, &sdl_renderer)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window and renderer: %s", SDL_GetError());
         return NULL;
     }

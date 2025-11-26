@@ -13,9 +13,9 @@ OBJS=		Write.o border.o copyright.o cut.o \
                 down_load.o erase_win.o font_subs.o get_font.o get_info.o \
 		get_menus.o get_text.o getshell.o graph_subs.o graphics.o \
 		bitmap.o intersect.o mgr.o mouse_get.o move.o \
-                move_box.o new_window.o print.o put_window.o \
+                new_window.o print.o put_window.o \
                 set_mode.o shape.o sigdata.o startup.o subs.o utmp.o \
-                win_make.o win_subs.o write_ok.o popen.o # win_stack.o
+                window_box.o win_make.o win_subs.o write_ok.o popen.o # win_stack.o
 
 all:		mgr mgrlogin
 

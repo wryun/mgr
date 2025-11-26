@@ -466,6 +466,8 @@ int main(int argc, char **argv)
     char *screen_dev = SCREEN_DEV;      /* name of frame buffer */
     char *default_font = (char * )0;    /* default font */
 
+    timestamp();                                /* initialize the timestamp */
+
     sprintf(start_file, "%s/%s", getenv("HOME"), STARTFILE);
 
     /* parse arguments */

@@ -145,7 +145,7 @@ int state;
     }
 
     SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE};
-    texture_fill_rect(where, rect, C_WHITE);
+    texture_fill_rect(where, rect, state ? C_WHITE : C_BLACK);
 
     return(0);
 }
@@ -286,8 +286,6 @@ void copyright(TEXTURE *where, char *password)
     /* kick off stars */
 
     fly(where);
-    screen_render();
-    screen_present();
 
     /* keep drawing stars until enough read from kb to stop */
     for (;;) {
@@ -361,7 +359,7 @@ void copyright(TEXTURE *where, char *password)
             texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], C_WHITE, C_BLACK);
         }
 
-        screen_present();
+        screen_render();
         screen_present();
     }
 }

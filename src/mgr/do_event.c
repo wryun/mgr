@@ -32,6 +32,21 @@
 #define SUB_SIZE        256                             /* max temp str size */
 #define START_SIZE   16          /* default starting size of sweep object */
 
+int timestamp()
+{
+    static long offset = 0;
+    struct timeval timeval;
+
+    gettimeofday(&timeval, 0l);
+
+    if (offset == 0) {
+        offset = timeval.tv_sec;
+        return(0);
+    } else {
+        return((timeval.tv_sec - offset) * 100 + timeval.tv_usec / 10000);
+    }
+}
+
 /* event_args -- extract numeric argument from sweep events */
 static char *event_args(str, count, args)
 char *str;        /*  beginning of args */

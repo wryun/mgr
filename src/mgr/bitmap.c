@@ -150,6 +150,7 @@ SDL_Surface *bitmapread(FILE *fp)
 
     sizemem1 = bit_linesize(w, d);
 
+
     if (sizefile1 > sizemem1) {
         size1diff = sizefile1 - sizemem1;
         sizefile1 = sizemem1;
@@ -191,7 +192,7 @@ SDL_Surface *bitmapread(FILE *fp)
                 b_compget(datap, size1diff, 1, fp);
             }
 
-            datap += sizemem1;
+            datap += surface->pitch;
         }
     } else {
         while (h-- > 0) {
@@ -204,7 +205,7 @@ SDL_Surface *bitmapread(FILE *fp)
                 fseek(fp, size1diff, 1);
             }
 
-            datap += sizemem1;
+            datap += surface->pitch;
         }
     }
 
@@ -229,7 +230,7 @@ int bitmapwrite(FILE *fp, SDL_Surface *surface)
 
     w = surface->w;
     h = surface->h;
-    d = surface->pitch;
+    d = surface->format->BitsPerPixel;
     B_PUTHDR8(&head, w, h, d);
     sizefile1 = B_SIZE8(w, 1, d);
 
@@ -245,7 +246,7 @@ int bitmapwrite(FILE *fp, SDL_Surface *surface)
             return 0;
         }
 
-        datap += sizemem1;
+        datap += surface->pitch;
     }
 
     return 1;

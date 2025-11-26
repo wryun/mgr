@@ -16,6 +16,7 @@
 
 #include "border.h"
 #include "do_event.h"
+#include "graphics.h"
 #include "mouse_get.h"
 #include "window_box.h"
 #include "shape.h"
@@ -23,27 +24,17 @@
 /* move_window */
 void move_window()
 {
-    int button;
-    int dx = BIT_WIDE(ACTIVE(border));
-    int dy = BIT_HIGH(ACTIVE(border));
+    SDL_Rect br = texture_get_rect(ACTIVE(border));
     int sx = ACTIVE(x0);
     int sy = ACTIVE(y0);
 
-    move_box(mouse, &sx, &sy, dx, dy, 0);
+    move_box(mouse, &sx, &sy, br.w, br.y, 0);
 
     /* adjust window state */
 
     mousex += sx - ACTIVE(x0);
     mousey += sy - ACTIVE(y0);
 
-    shape(sx, sy, dx, dy);
-    bit_present(screen);
+    shape(sx, sy, br.w, br.y);
     do_event(EVENT_MOVE, active, E_MAIN);
-
-    /* wait till button is released */
-    do {
-        button = mouse_get_wait(&sx, &sy);
-    }
-
-    while (button != 0);
 }

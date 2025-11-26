@@ -17,6 +17,7 @@
 #include "do_menu.h"
 #include "erase_win.h"
 #include "font_subs.h"
+#include "graphics.h"
 #include "get_font.h"
 #include "mouse_get.h"
 #include "new_window.h"
@@ -89,6 +90,7 @@ unsigned char *init, *start;
 {
     struct font *fp = Get_font( font );
     int i;
+    SDL_Rect screen_rect = texture_get_rect(screen);
 
     dbgprintf('S', (stderr, "starting shell %s\r\n", shell? *shell: "???"));
 
@@ -100,12 +102,12 @@ unsigned char *init, *start;
         dy = DEFAULT_LINES * fp->head.high + 2 * SUM_BDR;
     }
 
-    if (dx > BIT_WIDE(screen)) {
-        dx = BIT_WIDE(screen);
+    if (dx > screen_rect.w) {
+        dx = screen_rect.w;
     }
 
-    if (dy > BIT_HIGH(screen)) {
-        dy = BIT_HIGH(screen);
+    if (dy > screen_rect.h) {
+        dy = screen_rect.h;
     }
 
     /*
@@ -114,10 +116,10 @@ unsigned char *init, *start;
      * Ensures that window will fit on screen.
      */
     {
-        int tile_pos = (BIT_WIDE(screen) - dx) / 16;
+        int tile_pos = (screen_rect.w - dx) / 16;
 
-        if ((BIT_HIGH(screen) - dy) / 16 < tile_pos) {
-            tile_pos = (BIT_HIGH(screen) - dy) / 18;
+        if ((screen_rect.h - dy) / 16 < tile_pos) {
+            tile_pos = (screen_rect.w - dy) / 18;
         }
 
         tile_pos = next_windowset_id() % (tile_pos + 1);

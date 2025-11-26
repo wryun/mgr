@@ -30,6 +30,7 @@
 int shape(int x, int y, int dx, int dy)
 {
     int sx, sy, w, h;
+    SDL_Rect screen_rect = texture_get_rect(screen);
 
     if (dx > 0) {
         sx = x; w = dx;
@@ -47,12 +48,12 @@ int shape(int x, int y, int dx, int dy)
         sx = 0;
     }
 
-    if (sx + w >= BIT_WIDE(screen)) {
-        w = BIT_WIDE(screen) - sx;
+    if (sx + w >= screen_rect.w) {
+        w = screen_rect.w - sx;
     }
 
-    if (sy + h >= BIT_HIGH(screen)) {
-        h = BIT_HIGH(screen) - sy;
+    if (sy + h >= screen_rect.h) {
+        h = screen_rect.h - sy;
     }
 
     if (w < 2 * ACTIVE(borderwid) + ACTIVE(font)->head.wide * MIN_X ||
@@ -63,33 +64,28 @@ int shape(int x, int y, int dx, int dy)
     /* adjust window state */
     ACTIVE(x0) = sx;
     ACTIVE(y0) = sy;
-    BITMAP *old_border = ACTIVE(border);
-    ACTIVE(border) = bit_alloc(w, h, NULL, 1);
-    ACTIVE(window) = bit_create(ACTIVE(border),
-                                ACTIVE(borderwid),
-                                ACTIVE(borderwid),
-                                w - ACTIVE(borderwid) * 2,
-                                h - ACTIVE(borderwid) * 2);
-
+    TEXTURE *old_border = ACTIVE(border);
+    TEXTURE *old_window = ACTIVE(window);
+    ACTIVE(border) = texture_create_empty(w, h);
+    SDL_Rect window_rect = {.x = ACTIVE(borderwid), .y = ACTIVE(borderwid), .w = dx - ACTIVE(borderwid) * 2, .h = dy - ACTIVE(borderwid) * 2};
+    ACTIVE(window) = texture_create_child(ACTIVE(border), window_rect);
     texture_clear(ACTIVE(window), ACTIVE(bg_color));
-
     border(active, BORDER_THIN);
-    bit_blit(ACTIVE(border), 0, 0,
-             BIT_WIDE(old_border) - ACTIVE(borderwid),
-             BIT_HIGH(old_border) - ACTIVE(borderwid),
-             BIT_SRC, old_border, 0, 0);
+    SDL_Point p = {0};
+    texture_copy(ACTIVE(window), p, old_window, C_WHITE);
 
     /* make sure character cursor is in a good spot */
-    if (ACTIVE(x) > BIT_WIDE(ACTIVE(window))) {
+    if (ACTIVE(x) > window_rect.w) {
         ACTIVE(x) = 0;
         ACTIVE(y) += ((int)(ACTIVE(font)->head.high));
     }
 
-    if (ACTIVE(y) > BIT_HIGH(ACTIVE(window))) {
-        ACTIVE(y) = BIT_HIGH(ACTIVE(window)) - ((int)(ACTIVE(font)->head.high));
+    if (ACTIVE(y) > window_rect.h) {
+        ACTIVE(y) = window_rect.h - ((int)(ACTIVE(font)->head.high));
     }
 
-    bit_destroy(old_border);
+    texture_destroy(old_window);
+    texture_destroy(old_border);
 
     un_covered();
     set_size(active);
@@ -118,6 +114,7 @@ void stretch_window(void)
 {
     int dx, dy;
     int x0, x1, y0, y1;
+    SDL_Rect br = texture_get_rect(ACTIVE(border));
 
     SETMOUSEICON(mouse_box);
     move_mouse(screen, mouse, &mousex, &mousey, 0);
@@ -125,8 +122,8 @@ void stretch_window(void)
 
     x0 = ACTIVE(x0);
     y0 = ACTIVE(y0);
-    x1 = x0 + BIT_WIDE(ACTIVE(border));
-    y1 = y0 + BIT_HIGH(ACTIVE(border));
+    x1 = x0 + br.w;
+    y1 = y0 + br.h;
 
     if (2 * (mousex - x0) < x1 - x0) {
         x0 = x1;

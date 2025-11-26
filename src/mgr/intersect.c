@@ -13,16 +13,19 @@
 #include <stdio.h>
 
 #include "defs.h"
+#include "graphics.h"
 
 /* intersect */
 int intersect(win1, win2) register WINDOW *win1, *win2;
 {
+    SDL_Rect win1_br = texture_get_rect(win1->border);
+    SDL_Rect win2_br = texture_get_rect(win2->border);
     return
         (!(
-             win1->x0 + BIT_WIDE(win1->border) < win2->x0 ||
-             win2->x0 + BIT_WIDE(win2->border) < win1->x0 ||
-             win1->y0 + BIT_HIGH(win1->border) < win2->y0 ||
-             win2->y0 + BIT_HIGH(win2->border) < win1->y0
+             win1->x0 + win1_br.w < win2->x0 ||
+             win2->x0 + win2_br.w < win1->x0 ||
+             win1->y0 + win1_br.h < win2->y0 ||
+             win2->y0 + win2_br.h < win1->y0
              ));
 }
 /* alone -- see if any window intersects any other */
@@ -45,15 +48,16 @@ register int x, y;
 register WINDOW *win;
 int how;                /* how:  0-> intersect   else -> point */
 {
+    SDL_Rect win_br = texture_get_rect(win->border);
     if (how == 0) {
         return(!(
-                   x + 16 < W(x0) || x > W(x0) + BIT_WIDE(win->border) ||
-                   y + 16 < W(y0) || y > W(y0) + BIT_HIGH(win->border)
+                   x + 16 < W(x0) || x > W(x0) + win_br.w ||
+                   y + 16 < W(y0) || y > W(y0) + win_br.h
                    ));
     } else {
         return(!(
-                   x < W(x0) || x > W(x0) + BIT_WIDE(win->border) ||
-                   y < W(y0) || y > W(y0) + BIT_HIGH(win->border)
+                   x < W(x0) || x > W(x0) + win_br.w ||
+                   y < W(y0) || y > W(y0) + win_br.h
                    ));
     }
 }
@@ -62,13 +66,13 @@ int in_text(x, y, win)
 register int x, y;
 register WINDOW *win;
 {
-    if (W(text.wide)) {
+    if (W(text.w)) {
         int x0 = W(x0) + W(text.x);
         int y0 = W(y0) + W(text.y);
 
         return(!(
-                   x < x0 || x > x0 + W(text.wide) ||
-                   y < y0 || y > y0 + W(text.high)
+                   x < x0 || x > x0 + W(text.w) ||
+                   y < y0 || y > y0 + W(text.h)
                    ));
     } else {
         return(mousein(x, y, win, 1));
