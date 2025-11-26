@@ -174,7 +174,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
     }
 
     if (W(text.w)) {
-        text = texture_create_child(window, W(text));
+        text = texture_create_child(W(window), W(text));
     }
 
     if (text == NULL) {
@@ -1579,7 +1579,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             case C_NL:                 /* line feed */
 
                 if (W(y) + fsizehigh > text_rect.h) {
-                    texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
+                    texture_scroll(text, text_rect, 0, -fsizehigh, W(bg_color));
                     done++;
                 } else {
                     W(y) += fsizehigh;
@@ -1605,7 +1605,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
 
                     if (W(y) > text_rect.h) {
                         W(y) -= fsizehigh;
-                        texture_scroll(text, text_rect, 0, fsizehigh, W(bg_color));
+                        texture_scroll(text, text_rect, 0, -fsizehigh, W(bg_color));
                         done++;
                     }
                 }

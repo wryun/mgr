@@ -392,8 +392,10 @@ void texture_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color, int line_wid
 {
     SDL_SetRenderTarget(sdl_renderer, texture ? texture->sdl_texture : NULL);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
-    rect.x += texture->rect.x;
-    rect.y += texture->rect.y;
+    if (texture) {
+        rect.x += texture->rect.x;
+        rect.y += texture->rect.y;
+    }
     if (line_width == 1) {
         SDL_RenderDrawRect(sdl_renderer, &rect);
     } else {
@@ -426,7 +428,7 @@ void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, S
     assert(src_texture != dst_texture);
 
     SDL_Rect dst_rect = {
-        .x = dst_texture->rect.x + point.x, .y = dst_texture->rect.y + point.y,
+        .x = (dst_texture ? dst_texture->rect.x : 0) + point.x, .y = (dst_texture ? dst_texture->rect.y : 0) + point.y,
         .w = src_texture->rect.w, .h = src_texture->rect.h,
     };
 
@@ -491,11 +493,11 @@ void texture_scroll(TEXTURE *texture, SDL_Rect region, int delta_x, int delta_y,
     SDL_RenderCopy(sdl_renderer, texture->sdl_texture, &texture_src, &temp_rect);
 
     /* Fill the whole thing with the background colour; easier than calculating rectangles... */
+    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
     SDL_SetRenderDrawColor(sdl_renderer, bg_color.r, bg_color.g, bg_color.b, bg_color.a);
     SDL_RenderFillRect(sdl_renderer, &region);
 
     /* Copy back onto original texture */
-    SDL_SetRenderTarget(sdl_renderer, texture->sdl_texture);
     SDL_RenderCopy(sdl_renderer, temp_sdl_texture, &temp_rect, &texture_target);
 
     SDL_DestroyTexture(temp_sdl_texture);
