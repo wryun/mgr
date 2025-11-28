@@ -65,8 +65,8 @@ static int log_now = 0;
 #endif
 void redo_select(void);
 
-#define HEIGHT 600
-#define WIDTH 800
+#define HEIGHT 1200
+#define WIDTH 2200
 
 /* sig_child -- catch dead children */
 static void sig_child(sig) int sig;

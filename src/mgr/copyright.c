@@ -175,13 +175,9 @@ static void fly (where) TEXTURE *where;
     init_all(where);   /* set up global variables */
 
     for (i = 0, stp = stars; i < NSTARS; i++, stp++) {
-        /* initialize galaxy */
-        do{
-            stp->x = Random();
-            stp->y = Random();
-            stp->z = (Random() % MAXZ) + 1;
-        } while (project(where, stp->x, stp->y, stp->z, ON)); /* on screen? */
-
+        stp->x = Random();
+        stp->y = Random();
+        stp->z = (Random() % MAXZ) + 1;
     }
 }
 /* dofly */
@@ -194,8 +190,6 @@ static void dofly (where) TEXTURE *where;
     stp = stars;
 
     do{
-        project(where, stp->x, stp->y, stp->z, OFF); /* turn star off*/
-
         if ((stp->z -= SPEED) <= 0) { /* star went past us */
             stp->x = Random();
             stp->y = Random();
@@ -252,11 +246,6 @@ void copyright(TEXTURE *where, char *password)
         clip1.y1 = (3 * where_rect.h - 2 * notice_rect.h) / 4 - SSIZE;
         clip1.x2 = clip1.x1 + SSIZE + notice_rect.w;
         clip1.y2 = clip1.y1 + SSIZE + notice_rect.h;
-
-        SDL_Point notice_point = {
-            .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
-        };
-        texture_copy(where, notice_point, notice, C_WHITE);
 
         /* get the globe hole */
 
@@ -352,14 +341,17 @@ void copyright(TEXTURE *where, char *password)
         }
 
         old_ticks = new_ticks;
-        dofly(where);
-
-        if (at_startup && (++i % 2)) {
-            SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
-            texture_copy_withbg(where, logo_target, logo[(i / 2) % 8], C_WHITE, C_BLACK);
-        }
 
         screen_render();
+        dofly(NULL);
+        if (at_startup) {
+            SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
+            texture_copy_withbg(NULL, logo_target, logo[(++i / 2) % 8], C_WHITE, C_BLACK);
+            SDL_Point notice_point = {
+                .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
+            };
+            texture_copy(NULL, notice_point, notice, C_WHITE);
+        }
         screen_present();
     }
 }

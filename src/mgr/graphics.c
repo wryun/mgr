@@ -377,8 +377,10 @@ void texture_fill_rect(TEXTURE *texture, SDL_Rect rect, SDL_Color color)
 {
     SDL_SetRenderTarget(sdl_renderer, texture ? texture->sdl_texture : NULL);
     SDL_SetRenderDrawColor(sdl_renderer, color.r, color.g, color.b, color.a);
-    rect.x += texture->rect.x;
-    rect.y += texture->rect.y;
+    if (texture) {
+        rect.x += texture->rect.x;
+        rect.y += texture->rect.y;
+    }
     SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
