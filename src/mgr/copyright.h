@@ -1,1 +1,1 @@
-void copyright(TEXTURE *where, char *password);
+void copyright(char *password);

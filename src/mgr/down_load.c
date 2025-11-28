@@ -143,11 +143,13 @@ void down_load(win, window, text) register WINDOW *win; TEXTURE *window, *text;
                             W(tty), *W(esc), x + strlen(W(snarf)) * FSIZE(wide), y));
         }
 
+#if 0
         if (*W(esc) > 0) {
             put_str(W(bitmaps)[*W(esc) - 1], x, y, W(font), W(op), W(snarf));
         } else {
             put_str(window, x, y, W(font), W(op), W(snarf));
         }
+#endif
     }
     break;
     /* T_YANK    -- fill yank buffer */

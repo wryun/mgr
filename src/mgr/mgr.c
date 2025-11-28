@@ -665,7 +665,7 @@ int main(int argc, char **argv)
     }
     pattern = def_pattern;
 
-    copyright(screen, "");
+    copyright("");
     SETMOUSEICON(mouse_cup);
     /* always look for keyboard and mouse input */
     FD_ZERO( &mask);

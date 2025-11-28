@@ -102,7 +102,7 @@ static void lock_screen(void)
     /* Mouse is off from mgr:main */
     /* cursor and active border off because of button handling */
 
-    copyright( screen, pwd? pwd->pw_passwd: "");
+    copyright(pwd? pwd->pw_passwd: "");
 
     erase_win( screen);
 

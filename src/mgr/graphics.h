@@ -2,6 +2,7 @@ extern TEXTURE *screen_init(int width, int height);
 extern void screen_render();
 extern void screen_present();
 extern void screen_flush();
+extern void screen_size(int *, int *);
 
 extern void cursor_warp(SDL_Point point);
 SDL_Cursor *cursor_create_from_icon(char *iconpath);

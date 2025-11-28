@@ -124,6 +124,10 @@ void screen_flush()
     SDL_RenderFlush(sdl_renderer);
 }
 
+void screen_size(int *w, int *h) {
+    SDL_GetWindowSize(sdl_window, w, h);
+}
+
 static SDL_Surface *surface_load_from_icon(const char *iconpath)
 {
     char path[PATH_MAX];

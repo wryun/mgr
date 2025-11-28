@@ -33,6 +33,7 @@
 
 #include "proto.h"
 #include "font_subs.h"
+#include "get_menus.h"
 #include "graphics.h"
 
 extern TEXTURE *default_font;
@@ -45,28 +46,15 @@ extern TEXTURE *default_font;
 #define SPEED   4               /* star speed */
 #define SCALE   (short)6        /* for rotator */
 #define COUNT   (short)2        /* for rotator */
-#define ON 1  /* plotting states */
-#define OFF 0
 #define Random() ((unsigned int)rand())
 
-/* types */
-/* for "star trek" clip areas */
-
-typedef struct rect {
-    short x1, y1;
-    short x2, y2;
-} RECT;
-static RECT clip1, clip2, clip3;        /* holes in the galaxy */
 /* variables */
 static char *logo_icon_files[] =
 {
     "server/ball_1", "server/ball_2", "server/ball_3", "server/ball_4", "server/ball_5", "server/ball_6", "server/ball_7", "server/ball_8"
 };
-TEXTURE *notice = NULL;
-TEXTURE *logo[sizeof(logo_icon_files) / sizeof(logo_icon_files[0])] = {NULL};
 
-static short maxv, maxh; /* display size */
-static short hmaxv, hmaxh;      /* 1/2 display size */
+static int w, h;
 static int clockwise = 0;
 
 static struct st {
@@ -74,19 +62,6 @@ static struct st {
 }
 stars[NSTARS];   /* our galaxy */
 
-/* init_all */
-void init_all(where) register TEXTURE *where;
-{
-    SDL_Rect rect = texture_get_rect(where);
-    maxv = rect.h;
-    hmaxv = maxv >> 1;
-    maxh = rect.w;
-    hmaxh = maxh >> 1;
-}
-static void flip(void)
-{
-    clockwise = !clockwise;
-}
 /* cordic */
 /* CORDIC rotator. Takes as args a point (x,y) and spins it */
 /* count steps counter-clockwise.                   1       */
@@ -95,7 +70,6 @@ static void flip(void)
 /*                                                 2        */
 /* Therefore a scale of 5 is 1.79 degrees/step and          */
 /* a scale of 4 is 3.57 degrees/step                        */
-
 static void cordic(x, y, scale, count)
 short *x, *y;
 register short scale, count;
@@ -121,67 +95,28 @@ register short scale, count;
     *x = tempx;
     *y = tempy;
 }
-/* xplot */
-static int xplot(where, x, y, state)
-register TEXTURE *where;
-register int x, y;
-int state;
-{
-    /* are we on the screen? If not, let the caller know*/
-    if (x < 0 || x >= maxh || y < 0 || y >= maxv) {
-        return(1);
-    }
 
-    if (!(x < clip1.x1 || x >= clip1.x2 || y < clip1.y1 || y >= clip1.y2)) {
-        return(0);
-    }
-
-    if (!(x < clip2.x1 || x >= clip2.x2 || y < clip2.y1 || y >= clip2.y2)) {
-        return(0);
-    }
-
-    if (!(x < clip3.x1 || x >= clip3.x2 || y < clip3.y1 || y >= clip3.y2)) {
-        return(0);
-    }
-
-    SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE};
-    texture_fill_rect(where, rect, state ? C_WHITE : C_BLACK);
-
-    return(0);
-}
-/* project */
-static int project(where, x, y, z, state)
-register TEXTURE *where;
+static int project(x, y, z)
 register short x, y, z;
-register short state;
 {
-
     /* one-point perspective projection */
     /* the offsets (maxh/2) and maxv/2) ensure that the
      * projection is screen centered
      */
-    x = (x / z) + hmaxh;
-    y = (y / z) + hmaxv;
+    x = (x / z) + (w >> 1);
+    y = (y / z) + (h >> 1);
 
-    return(xplot(where, x, y, state));
-
-}
-/* fly */
-static void fly (where) TEXTURE *where;
-{
-    register short i;
-    register struct st *stp;
-
-    init_all(where);   /* set up global variables */
-
-    for (i = 0, stp = stars; i < NSTARS; i++, stp++) {
-        stp->x = Random();
-        stp->y = Random();
-        stp->z = (Random() % MAXZ) + 1;
+    /* are we on the screen? If not, let the caller know*/
+    if (x < 0 || x >= w || y < 0 || y >= h) {
+        return 1;
     }
+
+    SDL_Rect rect = {.x = x, .y = y, .w = SSIZE, .h = SSIZE};
+    texture_fill_rect(NULL, rect, C_WHITE);
+    return 0;
 }
-/* dofly */
-static void dofly (where) TEXTURE *where;
+
+static void dofly()
 {
     register short i;
     register struct st *stp;
@@ -189,16 +124,16 @@ static void dofly (where) TEXTURE *where;
     i = NSTARS;
     stp = stars;
 
-    do{
+    do {
         if ((stp->z -= SPEED) <= 0) { /* star went past us */
+            stp->z = stp->x ? MAXZ : (Random() % MAXZ) + 1;
             stp->x = Random();
             stp->y = Random();
-            stp->z = MAXZ;
         } else {        /* rotate universe */
             cordic(&stp->x, &stp->y, SCALE, COUNT);
         }
 
-        if (project(where, stp->x, stp->y, stp->z, ON)) {
+        if (project(stp->x, stp->y, stp->z)) {
             /* if projection is off screen, get a new position */
             stp->x = Random();
             stp->y = Random();
@@ -209,149 +144,119 @@ static void dofly (where) TEXTURE *where;
     } while (--i);
 }
 
-static void load_icons() {
-    int i;
-
-    notice = texture_create_from_icon("server/cr");
-
-    for (i = 0; i < sizeof(logo_icon_files) / sizeof(logo_icon_files[0]); ++i) {
-        logo[i] = texture_create_from_icon(logo_icon_files[i]);
-    }
+int calc_delay(int previous, int ms) {
+    int remaining = ms + previous - SDL_GetTicks();
+    return remaining > 0 ? remaining : 0;
 }
 
 /* copyright */
-void copyright(TEXTURE *where, char *password)
+void copyright(char *password)
 {
     int i = 0;
     char rbuf[64], *readp = rbuf;
-    char *crypt();
     int at_startup = (*password == 0);
 
-    if (!notice) {
-        load_icons();
+    screen_size(&w, &h);
+
+    TEXTURE *notice = texture_create_from_icon("server/cr");
+    TEXTURE *logo[sizeof(logo_icon_files) / sizeof(logo_icon_files[0])];
+    for (i = 0; i < sizeof(logo_icon_files) / sizeof(logo_icon_files[0]); ++i) {
+        logo[i] = texture_create_from_icon(logo_icon_files[i]);
     }
 
-    SDL_Rect where_rect = texture_get_rect(where);
     SDL_Rect notice_rect = texture_get_rect(notice);
     SDL_Rect logo_rect = texture_get_rect(logo[0]);
 
-    /* clear display */
+    SDL_Point notice_point = {
+        .x = (w - notice_rect.w) / 2,
+        .y = (3 * h - 2 * notice_rect.h) / 4
+    };
 
-    texture_clear(where, C_BLACK);
-
-    if (at_startup) {
-        /* get the cr notice hole */
-
-        clip1.x1 = (where_rect.w - notice_rect.w) / 2 - SSIZE;
-        clip1.y1 = (3 * where_rect.h - 2 * notice_rect.h) / 4 - SSIZE;
-        clip1.x2 = clip1.x1 + SSIZE + notice_rect.w;
-        clip1.y2 = clip1.y1 + SSIZE + notice_rect.h;
-
-        /* get the globe hole */
-
-        clip2.x1 = (where_rect.w - logo_rect.w) / 2 - SSIZE;
-        clip2.y1 = (where_rect.h - 2 * logo_rect.h) / 4 - SSIZE;
-        clip2.x2 = clip2.x1 + SSIZE + logo_rect.w;
-        clip2.y2 = clip2.y1 + SSIZE + logo_rect.h;
+    SDL_Point logo_point = {
+        .x = (w - logo_rect.w) / 2,
+        .y = (h - 2 * logo_rect.h) / 4
+    };
 
 #ifdef MESSAGE
-        /* get the message hole */
+    SDL_Point message_point = {
+        .x = 10 - SSIZE,
+        .y = mode.h - font->head.high - 10 - SSIZE
+    };
 
-        clip3.x1 = 10 - SSIZE;
-        clip3.y1 = where_rect.h - font->head.high - 10 - SSIZE;
-        clip3.x2 = 10 + 2 * SSIZE + strlen(MESSAGE) * font->head.wide;
-        clip3.y2 = where_rect.h - 10 + 2 * SSIZE;
-        put_str(where, 10, clip3.y2 - SSIZE, font, BIT_SRC, MESSAGE);
-#else
-        clip3 = clip2;
+    TEXTURE *message = texture_create_empty(SSIZE + strlen(MESSAGE) * font->head.wide, SSIZE + font->head.high);
+    SDL_Rect message_rect = texture_get_rect(message);
+    put_str(message, SSIZE, 10 + SSIZE, font, C_WHITE, C_BLACK, MESSAGE);
 #endif
-    } else {
-        /* no messages during screen lock, just stars */
-        clip1.x1 = clip1.x2 = clip1.y1 = clip1.y2 = 0;
-        clip2 = clip1;
-        clip3 = clip1;
-    }
 
-    /* kick off stars */
-
-    fly(where);
+    int last_frame_ticks;
 
     /* keep drawing stars until enough read from kb to stop */
     for (;;) {
-        int old_ticks = SDL_GetTicks();
-        int new_ticks = old_ticks;
-        SDL_Event event;
-
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-            case SDL_QUIT:
-                // TODO
-                exit(1);
-            case SDL_TEXTINPUT:
-
-                if (at_startup) {
-                    return;
-                }
-
-                int len = strlen(event.text.text);
-                memcpy(readp, event.text.text, len);
-                readp += len;
-
-                if (*(readp - 1) == '\n' || *(readp - 1) == '\r') {
-                    *readp = '\0';
-
-                    if (strcmp(password, crypt(rbuf, password)) == 0) {
-                        memset(rbuf, 0, sizeof(rbuf));
-
-                        return; /* password matched, done */
-                    } else {
-                        readp = rbuf;
-                        flip();
-                    }
-                }
-
-                break;
-            case SDL_KEYDOWN:
-
-                if (at_startup) {
-                    return;
-                }
-
-                if (event.key.keysym.sym == SDLK_BACKSPACE && readp != rbuf) {
-                    readp -= 1;
-                }
-
-                break;
-            case SDL_MOUSEBUTTONDOWN:
-
-                if (at_startup) {
-                    return;
-                }
-
-                break;
-            default:
-                break;
-            }
-        }
-
-        new_ticks = SDL_GetTicks();
-
-        if ((new_ticks - old_ticks) < 50) {
-            SDL_Delay(50 - (new_ticks - old_ticks));
-        }
-
-        old_ticks = new_ticks;
-
+        int previous = SDL_GetTicks();
         screen_render();
-        dofly(NULL);
         if (at_startup) {
-            SDL_Point logo_target = {.x = clip2.x1 + SSIZE, .y = clip2.y1 + SSIZE};
-            texture_copy_withbg(NULL, logo_target, logo[(++i / 2) % 8], C_WHITE, C_BLACK);
-            SDL_Point notice_point = {
-                .x = clip1.x1 + SSIZE, .y = clip1.y1 + SSIZE,
-            };
             texture_copy(NULL, notice_point, notice, C_WHITE);
         }
+        dofly();
+        if (at_startup) {
+            texture_copy_withbg(NULL, logo_point, logo[(++i / 2) % 8], C_WHITE, C_BLACK);
+#ifdef MESSAGE
+            texture_copy_withbg(NULL, message_point, message, C_WHITE, C_BLACK);
+#endif
+        }
         screen_present();
+
+        SDL_Event event;
+
+        while (SDL_WaitEventTimeout(&event, calc_delay(previous, 65))) {
+            if (event.type == SDL_QUIT) {
+                // TODO
+                exit(1);
+            }
+
+            if (at_startup) {
+                if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_KEYDOWN) {
+                    goto exit;
+                }
+            } else {
+                switch (event.type) {
+                case SDL_TEXTINPUT:
+                    int len = strlen(event.text.text);
+                    memcpy(readp, event.text.text, len);
+                    readp += len;
+
+                    if (*(readp - 1) == '\n' || *(readp - 1) == '\r') {
+                        *readp = '\0';
+
+                        if (strcmp(password, crypt(rbuf, password)) == 0) {
+                            memset(rbuf, 0, sizeof(rbuf));
+
+                            goto exit;
+                        } else {
+                            readp = rbuf;
+                            clockwise = !clockwise;
+                        }
+                    }
+
+                    break;
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym == SDLK_BACKSPACE && readp != rbuf) {
+                        readp -= 1;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+exit:
+    texture_destroy(notice);
+#ifdef MESSAGE
+    texture_destroy(message);
+#endif
+    for (i = 0; i < sizeof(logo_icon_files) / sizeof(logo_icon_files[0]); ++i) {
+        texture_destroy(logo[i]);
     }
 }
