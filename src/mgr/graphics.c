@@ -104,6 +104,8 @@ TEXTURE *screen_init(int width, int height)
         preferred_pixel_format = pf;
     }
 
+    SDL_SetRenderDrawBlendMode(sdl_renderer, SDL_BLENDMODE_BLEND);
+
     screen_texture = texture_create_empty(width, height);
     return screen_texture;
 }
