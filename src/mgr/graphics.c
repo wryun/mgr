@@ -446,6 +446,30 @@ void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, S
     SDL_RenderCopy(sdl_renderer, src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
 }
 
+void texture_copy_repeat(TEXTURE *dst_texture, TEXTURE *src_texture, SDL_Color fg_color, SDL_Color bg_color)
+{
+    assert(src_texture != dst_texture);
+    int start_x = dst_texture ? dst_texture->rect.x : 0;
+    int start_y = dst_texture ? dst_texture->rect.y : 0;
+    int dst_w = start_x + (dst_texture ? dst_texture->rect.w : 0);
+    int dst_h = start_y + (dst_texture ? dst_texture->rect.h : 0);
+
+    texture_clear(dst_texture, bg_color);
+    SDL_SetTextureColorMod(src_texture->sdl_texture, fg_color.r, fg_color.g, fg_color.b);
+    SDL_SetTextureAlphaMod(src_texture->sdl_texture, fg_color.a);
+    SDL_SetRenderTarget(sdl_renderer, dst_texture ? dst_texture->sdl_texture : NULL);
+
+    for (SDL_Rect dst_rect = {
+        .x = start_x, .y = start_y,
+        .w = src_texture->rect.w, .h = src_texture->rect.h,
+    }; dst_rect.x < dst_w; dst_rect.x += dst_rect.w) {
+        for (; dst_rect.y < dst_h; dst_rect.y += dst_rect.h) {
+            SDL_RenderCopy(sdl_renderer, src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
+        }
+        dst_rect.y = start_y;
+    }
+}
+
 /* Move part of a texture, leaving 'empty' space set to bg_color.
  *
  * This is useful for add/del line (i.e. vert scroll) and add/del char (i.e. horiz scroll).

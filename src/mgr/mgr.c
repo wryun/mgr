@@ -463,7 +463,6 @@ int main(int argc, char **argv)
     int flag;
     char c;
     char start_file[MAX_PATH];          /* name of startup file */
-    char *screen_dev = SCREEN_DEV;      /* name of frame buffer */
     char *default_font = (char * )0;    /* default font */
 
     timestamp();                                /* initialize the timestamp */
@@ -483,9 +482,9 @@ int main(int argc, char **argv)
         /* p -- set background pattern */
         case 'p':
         {
+#if 0
             FILE *fp;
 
-#if 0
             // libbitblit refactor
             if ((fp = fopen(optarg, "rb")) != (FILE *)0) {
                 if ((pattern = bitmapread(fp)) == (BITMAP *)0) {
@@ -546,10 +545,6 @@ int main(int argc, char **argv)
         /* i -- set icon directory */
         case 'i':
             icon_dir = optarg;
-            break;
-        /* S -- set alternate frame buffer */
-        case 'S':
-            screen_dev = optarg;
             break;
 #   ifdef MOVIE
         /* Z -- set save file and start logging now */

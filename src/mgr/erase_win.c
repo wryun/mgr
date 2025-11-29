@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "defs.h"
+#include "graphics.h"
 
 #include "mgr.h"
 
@@ -58,6 +59,8 @@ BITMAP *bg = NULL;
 /* erase_win */
 void erase_win(TEXTURE *map)
 {
+    texture_copy_repeat(map, pattern, C_WHITE, C_BLACK);
+
 #if 0
     // TODO libbitblit refactor - can't remember what I intended to do here.
     // How are the textures working again?

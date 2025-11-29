@@ -26,6 +26,7 @@ extern void texture_line(TEXTURE *texture, SDL_Point start, SDL_Point end, SDL_C
 extern void texture_scroll(TEXTURE *texture, SDL_Rect region, int delta_x, int delta_y, SDL_Color bg_color);
 extern void texture_copy(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color);
 extern void texture_copy_withbg(TEXTURE *dst_texture, SDL_Point point, TEXTURE *src_texture, SDL_Color fg_color, SDL_Color bg_color);
+extern void texture_copy_repeat(TEXTURE *dst_texture, TEXTURE *src_texture, SDL_Color fg_color, SDL_Color bg_color);
 
 extern TEXTURE *def_pattern;
 extern SDL_Cursor *mouse_arrow;

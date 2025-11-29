@@ -116,7 +116,7 @@ int color;              /* raster op function containing the colors to use for t
 
     /* paint text into box */
 
-    texture_clear(menu, C_WHITE);
+    texture_clear(menu, C_GREY_ALPHA);
     texture_clear(inside, C_BLACK);
     texture_clear(inverse_inside, C_WHITE);
 
