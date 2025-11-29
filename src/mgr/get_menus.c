@@ -192,7 +192,7 @@ int start;                      /* preselected item */
     state->menu_start.x = x;
     state->menu_start.y = y;
 
-    //menu_render(state);
+    cursor_warp(state->menu_start);
 
     return(state);
 }
