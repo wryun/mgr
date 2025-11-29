@@ -66,7 +66,6 @@ int type;                       /* rectangle or line */
             box(x, y, *dx, *dy);
         }
         screen_present();
-        screen_flush();
         button = mouse_get_wait(&x_mouse, &y_mouse);
 
         do {
@@ -89,7 +88,6 @@ int how;                                        /* termination condition */
         screen_render(1);
         box(*x, *y, dx, dy);
         screen_present();
-        screen_flush();
         button = mouse_get_wait(x, y);
 
         do {

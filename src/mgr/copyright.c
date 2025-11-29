@@ -239,7 +239,6 @@ void copyright(int at_startup)
             texture_copy_withbg(NULL, message_point, message, C_WHITE, C_BLACK);
 #endif
         }
-        screen_flush();
         screen_present();
 
         SDL_Event event;

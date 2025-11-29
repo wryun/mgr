@@ -126,11 +126,6 @@ void screen_present()
     SDL_RenderPresent(sdl_renderer);
 }
 
-void screen_flush()
-{
-    SDL_RenderFlush(sdl_renderer);
-}
-
 void screen_size(int *w, int *h) {
     SDL_GetWindowSize(sdl_window, w, h);
 }
