@@ -61,10 +61,10 @@ static SDL_Color convert_op_to_color(WINDOW *win, int op) {
          * just average the current colours and add some transparency.
          */
         SDL_Color c = {
-            c.r = (W(fg_color).r & W(bg_color).r) + ((W(fg_color).r ^ W(bg_color).r) >> 1),
-            c.g = (W(fg_color).g & W(bg_color).g) + ((W(fg_color).g ^ W(bg_color).g) >> 1),
-            c.b = (W(fg_color).b & W(bg_color).b) + ((W(fg_color).b ^ W(bg_color).b) >> 1),
-            c.a = 0x7f
+            (W(fg_color).r & W(bg_color).r) + ((W(fg_color).r ^ W(bg_color).r) >> 1),
+            (W(fg_color).g & W(bg_color).g) + ((W(fg_color).g ^ W(bg_color).g) >> 1),
+            (W(fg_color).b & W(bg_color).b) + ((W(fg_color).b ^ W(bg_color).b) >> 1),
+            0x7f
         };
         return c;
     } else {
