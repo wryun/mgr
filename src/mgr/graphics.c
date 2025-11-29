@@ -451,22 +451,27 @@ void texture_copy_repeat(TEXTURE *dst_texture, TEXTURE *src_texture, SDL_Color f
     assert(src_texture != dst_texture);
     int start_x = dst_texture ? dst_texture->rect.x : 0;
     int start_y = dst_texture ? dst_texture->rect.y : 0;
-    int dst_w = start_x + (dst_texture ? dst_texture->rect.w : 0);
-    int dst_h = start_y + (dst_texture ? dst_texture->rect.h : 0);
+    int dst_w, dst_h;
+    if (dst_texture) {
+        dst_w = start_x + dst_texture->rect.w;
+        dst_h = start_y + dst_texture->rect.h;
+    } else {
+        screen_size(&dst_w, &dst_h);
+    }
 
     texture_clear(dst_texture, bg_color);
     SDL_SetTextureColorMod(src_texture->sdl_texture, fg_color.r, fg_color.g, fg_color.b);
     SDL_SetTextureAlphaMod(src_texture->sdl_texture, fg_color.a);
     SDL_SetRenderTarget(sdl_renderer, dst_texture ? dst_texture->sdl_texture : NULL);
 
-    for (SDL_Rect dst_rect = {
-        .x = start_x, .y = start_y,
+    SDL_Rect dst_rect = {
         .w = src_texture->rect.w, .h = src_texture->rect.h,
-    }; dst_rect.x < dst_w; dst_rect.x += dst_rect.w) {
-        for (; dst_rect.y < dst_h; dst_rect.y += dst_rect.h) {
+    };
+
+    for (dst_rect.x = start_x; dst_rect.x < dst_w; dst_rect.x += dst_rect.w) {
+        for (dst_rect.y = start_y; dst_rect.y < dst_h; dst_rect.y += dst_rect.h) {
             SDL_RenderCopy(sdl_renderer, src_texture->sdl_texture, &(src_texture->rect), &dst_rect);
         }
-        dst_rect.y = start_y;
     }
 }
 

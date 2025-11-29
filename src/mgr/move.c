@@ -28,13 +28,13 @@ void move_window()
     int sx = ACTIVE(x0);
     int sy = ACTIVE(y0);
 
-    move_box(mouse, &sx, &sy, br.w, br.y, 0);
+    move_box(mouse, &sx, &sy, br.w, br.h, 0);
 
     /* adjust window state */
 
     mousex += sx - ACTIVE(x0);
     mousey += sy - ACTIVE(y0);
 
-    shape(sx, sy, br.w, br.y);
+    shape(sx, sy, br.w, br.h);
     do_event(EVENT_MOVE, active, E_MAIN);
 }
