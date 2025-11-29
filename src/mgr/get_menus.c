@@ -55,7 +55,7 @@ register char *str;
 
 void menu_render(struct menu_state *state)
 {
-    screen_render();
+    screen_render(1);
     texture_copy(NULL, state->menu_start, state->menu, C_WHITE);
 
     if (state->current >= 0) {

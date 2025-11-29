@@ -22,12 +22,14 @@
  */
 
 #include <mgr/font.h>
+#include <pwd.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <SDL2/SDL.h>
+#include <security/pam_appl.h>
 
 #include "defs.h"
 
@@ -61,6 +63,42 @@ static struct st {
     short x, y, z;
 }
 stars[NSTARS];   /* our galaxy */
+
+static int pam_conv_func(int num_msg, const struct pam_message **msg,
+                         struct pam_response **responses, void *appdata_ptr)
+{
+    *responses = calloc(num_msg, sizeof(struct pam_response));
+    if (!*responses) return PAM_CONV_ERR;
+
+    for (int i = 0; i < num_msg; i++) {
+        if (msg[i]->msg_style == PAM_PROMPT_ECHO_OFF) {
+            (*responses)[i].resp = strdup(appdata_ptr);
+        } else {
+            (*responses)[i].resp = NULL;
+        }
+        (*responses)[i].resp_retcode = 0;
+    }
+
+    return PAM_SUCCESS;
+}
+
+int check_password(char *password)
+{
+    struct passwd *pw = getpwuid(getuid());
+    if (!pw)
+        return 0;
+
+    pam_handle_t *pamh = NULL;
+    struct pam_conv conv = { pam_conv_func, password };
+
+    if (pam_start("login", pw->pw_name, &conv, &pamh) != PAM_SUCCESS)
+        return 0;
+
+    int ret = pam_authenticate(pamh, 0);
+    pam_end(pamh, ret);
+
+    return ret == PAM_SUCCESS;
+}
 
 /* cordic */
 /* CORDIC rotator. Takes as args a point (x,y) and spins it */
@@ -150,11 +188,10 @@ int calc_delay(int previous, int ms) {
 }
 
 /* copyright */
-void copyright(char *password)
+void copyright(int at_startup)
 {
     int i = 0;
     char rbuf[64], *readp = rbuf;
-    int at_startup = (*password == 0);
 
     screen_size(&w, &h);
 
@@ -188,12 +225,10 @@ void copyright(char *password)
     put_str(message, SSIZE, 10 + SSIZE, font, C_WHITE, C_BLACK, MESSAGE);
 #endif
 
-    int last_frame_ticks;
-
     /* keep drawing stars until enough read from kb to stop */
     for (;;) {
         int previous = SDL_GetTicks();
-        screen_render();
+        screen_render(0);
         if (at_startup) {
             texture_copy(NULL, notice_point, notice, C_WHITE);
         }
@@ -204,6 +239,7 @@ void copyright(char *password)
             texture_copy_withbg(NULL, message_point, message, C_WHITE, C_BLACK);
 #endif
         }
+        screen_flush();
         screen_present();
 
         SDL_Event event;
@@ -224,24 +260,27 @@ void copyright(char *password)
                     int len = strlen(event.text.text);
                     memcpy(readp, event.text.text, len);
                     readp += len;
-
-                    if (*(readp - 1) == '\n' || *(readp - 1) == '\r') {
-                        *readp = '\0';
-
-                        if (strcmp(password, crypt(rbuf, password)) == 0) {
-                            memset(rbuf, 0, sizeof(rbuf));
-
-                            goto exit;
-                        } else {
-                            readp = rbuf;
-                            clockwise = !clockwise;
-                        }
-                    }
-
                     break;
                 case SDL_KEYDOWN:
-                    if (event.key.keysym.sym == SDLK_BACKSPACE && readp != rbuf) {
-                        readp -= 1;
+                    switch(event.key.keysym.sym) {
+                    case SDLK_BACKSPACE:
+                        if (readp > rbuf) {
+                            readp -= 1;
+                        }
+                        break;
+                    case SDLK_RETURN:
+                        *readp = '\0';
+
+                        if (check_password(rbuf)) {
+                            memset(rbuf, 0, sizeof(rbuf));
+                            goto exit;
+                        }
+
+                        readp = rbuf;
+                        clockwise = !clockwise;
+                        break;
+                    default:
+                        break;
                     }
                     break;
                 default:

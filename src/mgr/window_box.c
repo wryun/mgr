@@ -57,7 +57,7 @@ int type;                       /* rectangle or line */
     for (;;) {
         *dx = x_mouse - x;
         *dy = y_mouse - y;
-        screen_render();
+        screen_render(1);
         if (type == 1) {
             SDL_Point start = {.x = x, .y = y};
             SDL_Point end = {.x = x + *dx, .y = y + *dy};
@@ -86,7 +86,7 @@ int how;                                        /* termination condition */
     register int button;
 
     for (;;) {
-        screen_render();
+        screen_render(1);
         box(*x, *y, dx, dy);
         screen_present();
         screen_flush();

@@ -289,7 +289,7 @@ void display_windows()
     register WINDOW *win;               /* current window to update */
 
     if (active == NULL) {
-        screen_render();
+        screen_render(1);
 
         return;
     }
@@ -301,7 +301,7 @@ void display_windows()
         texture_copy(screen, window_point, W(border), C_WHITE);
     } while ((win = W(prev)) != active->prev);
 
-    screen_render();
+    screen_render(1);
 }
 
 
@@ -665,7 +665,7 @@ int main(int argc, char **argv)
     }
     pattern = def_pattern;
 
-    copyright("");
+    copyright(1);
     SETMOUSEICON(mouse_cup);
     /* always look for keyboard and mouse input */
     FD_ZERO( &mask);

@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
-#include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -81,6 +80,7 @@ void _quit(void)
         texture_destroy(screen);
     }
 }
+
 /* redraw -- redraw screen, restore contents of saved windows */
 void redraw(void)
 {
@@ -94,24 +94,15 @@ void redraw(void)
         }
     }
 }
+
 static void lock_screen(void)
 {
-    WINDOW *win;
-    struct passwd *pwd = getpwuid( getuid());
-
     /* Mouse is off from mgr:main */
     /* cursor and active border off because of button handling */
 
-    copyright(pwd? pwd->pw_passwd: "");
-
-    erase_win( screen);
-
-    /* flush and ignore intervening mouse events */
-    int x, y;
-
-    while (mouse_get_poll( &x, &y) != -1) {
-    }
+    copyright(0);
 }
+
 /* quit -- quit with confirm */
 void quit(void)
 {

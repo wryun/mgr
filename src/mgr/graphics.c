@@ -108,10 +108,15 @@ TEXTURE *screen_init(int width, int height)
     return screen_texture;
 }
 
-void screen_render()
+void screen_render(int with_base_texture)
 {
     SDL_SetRenderTarget(sdl_renderer, NULL);
-    SDL_RenderCopy(sdl_renderer, screen_texture->sdl_texture, NULL, NULL);
+    if (with_base_texture) {
+        SDL_RenderCopy(sdl_renderer, screen_texture->sdl_texture, NULL, NULL);
+    } else {
+        SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0xFF);
+        SDL_RenderClear(sdl_renderer);
+    }
 }
 
 void screen_present()

@@ -1,1 +1,1 @@
-void copyright(char *password);
+void copyright(int at_startup);

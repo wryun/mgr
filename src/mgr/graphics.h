@@ -1,5 +1,5 @@
 extern TEXTURE *screen_init(int width, int height);
-extern void screen_render();
+extern void screen_render(int with_base_texture);
 extern void screen_present();
 extern void screen_flush();
 extern void screen_size(int *, int *);
