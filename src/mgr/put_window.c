@@ -959,7 +959,7 @@ int put_window(WINDOW *win, unsigned char *buff, int buff_count)
             /* E_BITGET     -- transfer a bitmap from server to client */
             case E_BITGET:
             {
-                fprintf(stderr, "MGR: E_PUSH disabled during libbitblit removal\n");
+                fprintf(stderr, "MGR: E_BITGET disabled during libbitblit removal\n");
 
 #if 0
                 int offset = W(esc)[2];
