@@ -9,7 +9,6 @@
 /* start a shell */
 /* #includes */
 #define _GNU_SOURCE
-#include <mgr/bitblit.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

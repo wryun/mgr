@@ -9,7 +9,6 @@
 /* LRU routines for font management */
 
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <errno.h>
 #include <limits.h>

@@ -8,8 +8,8 @@
 
 /* down load text -- called from put_window.c */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
+#include <mgr/window.h>
 #include <sys/file.h>
 #include <unistd.h>
 #include <string.h>
@@ -74,7 +74,7 @@ void down_load(win, window, text) register WINDOW *win; TEXTURE *window, *text;
         }
 
         if (*W(snarf)) {
-            W(menus)[*W(esc)] = do_menu(W(snarf), f, W(style));
+            W(menus)[*W(esc)] = do_menu(W(snarf), f);
 
             if (active == win) {
                 if (W(menu[0]) == *W(esc) && button_state == BUTTON_2) {

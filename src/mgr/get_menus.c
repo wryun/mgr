@@ -8,7 +8,6 @@
 
 /* low level popup menu management routines */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <string.h>
 #include <stdlib.h>
@@ -77,12 +76,11 @@ void menu_render(struct menu_state *state)
 }
 
 /* menu_define -- allocate space for and initialize menu */
-struct menu_state *menu_define(font, list, values, max, color)
+struct menu_state *menu_define(font, list, values, max)
 struct font *font;              /* which font to use for menu */
 char *list[];                   /* list of menu items */
 char *values[];                 /* list of return values */
 int max;                        /* max number of menu items */
-int color;              /* raster op function containing the colors to use for the menus */
 {
     register int i, incr, count; /* counters */
     int size_x = 0, size_y = 0;

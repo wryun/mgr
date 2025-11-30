@@ -9,7 +9,6 @@
 /* high level menu manipulation routines */
 
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -111,10 +110,9 @@ int x, y;
     return(0);
 }
 /* do_menu -- define a menu from menu download string */
-struct menu_state *do_menu(line, font, color)
+struct menu_state *do_menu(line, font)
 char *line;
 struct font *font;
-int color;              /* raster op containing colors */
 {
     register int count;
     char *fields[MAXITEMS];
@@ -127,7 +125,7 @@ int color;              /* raster op containing colors */
         return((struct menu_state *) 0);
     }
 
-    return(menu_define(font, fields, fields + count, count, color));
+    return menu_define(font, fields, fields + count, count);
 }
 /* do_menus */
 struct menu_result *do_menus(screen, mouse, x, y, font, menu_list, menu, exit_code)

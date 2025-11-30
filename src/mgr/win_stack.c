@@ -8,7 +8,6 @@
 
 /* push - pop window environment */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -54,8 +54,6 @@
 #define ROOT_COLOR_FG   6       /* root window fg color */
 #define ROOT_COLOR_BG   7       /* root window bg color */
 
-#define MENU_COLOR      BUILDOP(BIT_SRC, color_map[MENU_COLOR_FG], color_map[MENU_COLOR_BG])/* menu colors */
-
 #ifndef SUM_BDR         /* default thickness of window border on one side */
 #define SUM_BDR         5               /* odd, so SUM_BDR-OUT_BDR > OUT_BDR */
 #endif

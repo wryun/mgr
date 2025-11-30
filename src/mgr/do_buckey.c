@@ -6,7 +6,6 @@
  *       BELLCORE MAKES NO WARRANTY AND ACCEPTS NO LIABILITY FOR THIS PROGRAM.
  */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <mgr/share.h>
 #include <signal.h>

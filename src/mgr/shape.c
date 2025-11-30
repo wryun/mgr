@@ -8,7 +8,6 @@
 
 /* re-shape a window */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <stdio.h>
 
@@ -58,7 +57,7 @@ int shape(int x, int y, int dx, int dy)
 
     if (w < 2 * ACTIVE(borderwid) + ACTIVE(font)->head.wide * MIN_X ||
         h < 2 * ACTIVE(borderwid) + ACTIVE(font)->head.high * MIN_Y) {
-        return(-1);
+        return -1;
     }
 
     /* adjust window state */
@@ -67,7 +66,7 @@ int shape(int x, int y, int dx, int dy)
     TEXTURE *old_border = ACTIVE(border);
     TEXTURE *old_window = ACTIVE(window);
     ACTIVE(border) = texture_create_empty(w, h);
-    SDL_Rect window_rect = {.x = ACTIVE(borderwid), .y = ACTIVE(borderwid), .w = w - ACTIVE(borderwid) * 2, .h = w - ACTIVE(borderwid) * 2};
+    SDL_Rect window_rect = {.x = ACTIVE(borderwid), .y = ACTIVE(borderwid), .w = w - ACTIVE(borderwid) * 2, .h = h - ACTIVE(borderwid) * 2};
     ACTIVE(window) = texture_create_child(ACTIVE(border), window_rect);
     texture_clear(ACTIVE(window), ACTIVE(bg_color));
     border(active, BORDER_THIN);

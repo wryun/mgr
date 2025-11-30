@@ -9,8 +9,8 @@
 /* return info to client */
 
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
+#include <mgr/window.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -34,8 +34,8 @@
 /* get_info */
 void get_info(win, window, text)
 register WINDOW *win;                   /* window info is about */
-BITMAP *window;                         /* window's bitmap data */
-BITMAP *text;                           /* window's text region */
+TEXTURE *window;                         /* window's bitmap data */
+TEXTURE *text;                           /* window's text region */
 {
     int cnt = W(esc_cnt);               /* # of leading ESC #'s */
     int count;                          /* whatever */
@@ -44,6 +44,7 @@ BITMAP *text;                           /* window's text region */
     register WINDOW *win2;              /* generic window pntr */
     SDL_Rect window_rect = texture_get_rect(W(window));
     SDL_Rect screen_rect = texture_get_rect(screen);
+    SDL_Rect text_rect = texture_get_rect(text);
 
     if (W(flags) & W_DUPKEY) {
         sprintf(coords, "%c ", W(dup));
@@ -77,8 +78,8 @@ BITMAP *text;                           /* window's text region */
     switch (W(esc)[0]) {
     case G_TERMCAP:     /* send termcap entry back to shell */
     {
-        int lines = T_HIGH / FSIZE(high);
-        int cols = T_WIDE / FSIZE(wide);
+        int lines = text_rect.h / FSIZE(high);
+        int cols = text_rect.w / FSIZE(wide);
 
         sprintf(start, "px|mgr|mgr-%d|mgr teminal emulator:%s:li#%d:co#%d:bs:km:cl=^L:ta=^I:ce=\\E%c:cd=\\E%c:cm=\\E%%r%%d%c%%d%c:cs=\\E%%d%c%%d%c:al=\\E%c:dl=\\E%c:AL=\\E%%d%c:DL=\\E%%d%c:ic=\\E%c:dc=\\E%c:IC=\\E%%d%c:DC=\\E%%d%c:up=\\E%c:do=\\E%c:nd=\\E%c:hu=\\E1%c2%c:hd=\\E1%c2%c:ku=\\E[A:kd=\\E[B:kr=\\E[C:kl=\\E[D:so=\\E%c:se=\\E%c:us=\\E4%c:ue=\\E0%c:md=\\E2%c:mr=\\E1%c:me=\\E0%c:RA=\\E%d%c:SA=\\E%d%c:vs=\\E%d%c:vi=\\E%d%c:ve=\\E%c:\n",
                 lines, (W(flags) & W_NOWRAP)?".am":"am", lines, cols,
@@ -95,8 +96,8 @@ BITMAP *text;                           /* window's text region */
     }
     break;
     case G_WINSIZE:                                     /* cols, lines */
-        sprintf(start, "%d %d\n", T_WIDE / FSIZE(wide),
-                T_HIGH / FSIZE(high));
+        sprintf(start, "%d %d\n", text_rect.w / FSIZE(wide),
+                text_rect.h / FSIZE(high));
         break;
     case G_FONT:                                        /* font wide, high, # */
     {
@@ -135,7 +136,7 @@ BITMAP *text;                           /* window's text region */
         break;
     case G_COORDS:                                      /* window coords */
         sprintf(start, "%d %d %d %d\n", W(x0), W(y0),
-                WIDE, HIGH);
+                window_rect.w, window_rect.h);
         break;
     case G_STATUS:                                      /* window status */
         sprintf(start, "%c\n", W(flags) & W_ACTIVE

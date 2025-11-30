@@ -1,6 +1,5 @@
 /* read and process startup file */ /* this needs to be redone */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <mgr/share.h>
 #include <string.h>

@@ -8,7 +8,6 @@
 
 /* destroy a window */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <mgr/window.h>
 #include <sys/stat.h>

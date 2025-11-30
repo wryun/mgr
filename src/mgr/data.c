@@ -9,7 +9,6 @@
 /* static data items for window manager */
 
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 
 #include "defs.h"

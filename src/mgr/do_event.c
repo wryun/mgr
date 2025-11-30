@@ -8,7 +8,6 @@
 
 /* do a button event */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <string.h>
 #include <stdlib.h>

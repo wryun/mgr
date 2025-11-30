@@ -9,7 +9,6 @@
 /* see if two windows intersect */
 
 /* #includes */
-#include <mgr/bitblit.h>
 #include <stdio.h>
 
 #include "defs.h"

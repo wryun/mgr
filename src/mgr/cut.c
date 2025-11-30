@@ -8,7 +8,6 @@
 
 /* cut and paste text */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <unistd.h>
 #include <string.h>
@@ -33,9 +32,9 @@
 #define MAXCOLS         32              /* widest char (bits in u-long) */
 
 /* variables */
-static BITMAP *glyph;                           /* spot for glyph comparison */
+static TEXTURE *glyph;                           /* spot for glyph comparison */
 static unsigned long data[MAXROWS];             /* bit data for glyph */
-static BITMAP *check;                           /* other spot for glyph comparison */
+static TEXTURE *check;                           /* other spot for glyph comparison */
 static unsigned long data2[MAXROWS];            /* bit data for other glyph */
 
 static struct entry **table;            /* hash table */

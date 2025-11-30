@@ -1,6 +1,5 @@
 /* Figure out what to do with a button push */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/share.h>
 #include <mgr/font.h>
 #include <sys/stat.h>
@@ -111,7 +110,7 @@ void quit(void)
 
     /* confirm the quit */
 
-    state = menu_define(font, quit_menu, 0, 0, MENU_COLOR);
+    state = menu_define(font, quit_menu, 0, 0);
     state = menu_setup(state, screen, mousex, mousey, 0);
 
     /* The extra call to menu_get() makes the use of the mouse buttons
@@ -257,13 +256,13 @@ void do_button(button) int button;
         /* do a menu for no window, or active window */
         if (win == active || win == (WINDOW *) 0) {
             if (active && win == active) {
-                state = menu_define(font, active_menu, 0, 0, MENU_COLOR);
+                state = menu_define(font, active_menu, 0, 0);
                 which_menu = 1;
             } else if (next_window >= MAXWIN) {
-                state = menu_define(font, full_menu, 0, 0, MENU_COLOR);
+                state = menu_define(font, full_menu, 0, 0);
                 which_menu = 2;
             } else {
-                state = menu_define(font, main_menu, 0, 0, MENU_COLOR);
+                state = menu_define(font, main_menu, 0, 0);
                 which_menu = 3;
             }
 

@@ -8,7 +8,6 @@
 
 /* misc window and screen mangement routines */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #undef P_ALL
 #include <sys/wait.h>

@@ -8,7 +8,6 @@
 
 /* move a window */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <stdio.h>
 
 #include "defs.h"
@@ -20,6 +19,7 @@
 #include "mouse_get.h"
 #include "window_box.h"
 #include "shape.h"
+#include "subs.h"
 
 /* move_window */
 void move_window()
@@ -35,6 +35,8 @@ void move_window()
     mousex += sx - ACTIVE(x0);
     mousey += sy - ACTIVE(y0);
 
-    shape(sx, sy, br.w, br.h);
+    ACTIVE(x0) = sx;
+    ACTIVE(y0) = sy;
+    un_covered();
     do_event(EVENT_MOVE, active, E_MAIN);
 }

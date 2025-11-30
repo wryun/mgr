@@ -8,8 +8,8 @@
 
 /* font routines */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
+#include <mgr/window.h>
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>

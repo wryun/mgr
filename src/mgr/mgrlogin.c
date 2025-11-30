@@ -25,7 +25,6 @@
 #include <pwd.h>
 #include <netdb.h>
 #include <sysexits.h>
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <mgr/window.h>
 

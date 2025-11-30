@@ -1,6 +1,5 @@
 /* sweep out text rectangle */
 /* #includes */
-#include <mgr/bitblit.h>
 #include <mgr/font.h>
 #include <stdio.h>
 
