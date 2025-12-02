@@ -1,0 +1,32 @@
+This is a WIP refactor of mgr to use SDL2 and textures instead of
+bitmaps. It loses some of its beauty, but makes it a lot faster and
+easier to bring up on modern systems.
+
+As part of the refactor the old 'libbitblit' (which allowed one to
+target a bunch of different outputs) has been replaced by SDL2 (in
+some sense a modern equivalent of libbitblit?). That is, this is _not_
+the repository you want if you want to build mgr for a pre-2000
+system.
+
+It should build and run, and can render terminals (err, without
+cursors), but it's a bit of a mess in many ways and most client
+applications won't actually work.
+
+PLAN has some indication of the many things I'm currently thinking of
+doing.
+
+If you're crazy enough to try it now, with every somewhere between
+completely broken and mostly broken:
+
+- make sure you have libpam0g-dev and libsdl2-dev or similar
+- set ROOTDIR in Configfile to the location you cloned the repo
+
+    cd src/mgr
+    make
+    ./mgr
+
+Your system probably knows about mgr's terminal, but not about
+colours, so you may want to update terminfo/termcap using the files in
+the misc directory (but colours are also a bit broken). If you want to
+set the resolution, modify DEFAULT_WIDTH and DEFAULT_HEIGHT in
+Configfile.

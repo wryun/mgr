@@ -1,0 +1,92 @@
+Currently:
+- fixing the bits that I turned off to get things working
+  (e.g. all the #ifdefs and similar) and TODOs and //
+- horrifying amount of completely untested code... when it actually compiles,
+  a lot to check.
+
+- OTHER IN PROGRESS
+    - W(style) usage -> needs to be replaced with color, use bit_blit_color etc.
+        -> some of this has just been hacked out incorrectly - should have
+           fg/bg colours in window rather than style (?)
+    - mouse appearing now when it shouldn't (or originally didn't) with move to sdl cursor
+      (box drawing? Can't remember what else)
+    - colour support... (vile badly broken now, working before colours, need
+      to add to termcap + make sure mgr codes are still working)
+    - finish support of VT100 style [ colours (this should actually be pretty easy)
+- get rid of all the pre-compiled icon/font stuff
+  (unnecessary complexity) - or at least use xxd...
+- SIGWINCH sent in mgr?
+- SIGWINCH received from SDL?
+- dropped erase_win from suspend/lock; should check behaviour
+
+Fix the threading stuff:
+
+- this is _mostly_ done
+- need to fix signal handling
+- why weird -1 buffer overflow hack for shell read?
+- remove the random 'mouse_get_waits' and improve state machine on main loop
+     - menus with callbacks (i.e. do_button can return a 'menu'
+       rather than performing an immediate action)
+     - move/resize operations (get_rect)
+     - copy (get_text)
+     - after this, can drop 'screen' texture.
+
+Figure out how to fix enhance_font.
+
+Fix buckey_key things.
+- did something - need to check if working. Segfaults?
+
+Get cut/paste working. Will need to have main buffer. This will also fix block cursor
+
+Left/Right mouse button confusion? (HOWTO says left for main menu)
+
+Trackpad support/2 button support (keyboard modifier?)
+  - I ripped out the 3rd mouse button emu
+
+Support resolution things on startup; attempt to simplify Configfile
+as much as possible (just start killing all the options and remove the script).
+Drop m4 (?)
+   - also, .mgrrc at the same time...
+
+Separate out clients into those that build and those that don't.
+
+Fix raster op situation (i.e. change API, and convert things using
+B_SET/B_CLEAR to use fill_rect, and B_COPY to use copy, and...)
+
+Pull the usr folders into the main repo so it's trivial to build.
+ -> make sure I include the updated terminfo with home so top/nvi work
+
+Force LANG=C to avoid unicode issues? (how?)
+
+Reconstruct history - use modern uncrustify on both sides.
+
+RELEASE.
+
+Future stuff (?) <- STOP THINKING ABOUT THIS STUFF FOR NOW
+
+- handle texture reset? (or force SDL to OpenGL mode,
+  since I think then texture resets won't happen)
+- tile bg_pattern (? - PR open against SDL2 to support)
+- use fancy 'modern' tilemap gpu stuff
+  (i.e. effectively emulating an old style terminal, where
+  we just write a texture which has lookups into the 
+  font bitmap... though then we're tied to OpenGL; may
+  as well just use glfw... but this makes it hard to do the graphics modes)
+- profile to see where slow-downs actually are
+- add wayland and kmsdrm SDLWaitEvent to sdl2
+- add something to SDLWaitEvent so we can wait on fds as well (?)
+  - unclear how we can do this sanely in a cross-platformish way
+- make sure w3m works including image support
+  (i.e. add program for mgr style images? or sixel?)
+- Similarly, browsh (text firefox)
+- generalised better terminal support
+- consider having terminal windows support an HTML mode
+  (i.e. special escape sequence switches to HTML mode, and use
+  something like litehtml - or something fancier - to render...
+  + then send form subs etc. to stdout)
+- consider making some kind of protocol so we can do SDL in SDL and
+  support Netsurf (currently 1.2) and lite-xl
+  - am I reinventing Wayland? Support a Wayland subset sufficient for SDL?
+  - any socket? thrift sdl wrapper?
+  - unix domain socket with shm SDLSurfaces?
+  - ...
