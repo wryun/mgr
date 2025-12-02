@@ -35,6 +35,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <mgr/mgr.h>
 
 #ifndef P_BITOP		/* new in server */
