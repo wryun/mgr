@@ -23,4 +23,4 @@ clobber:	clean
 		$(RMF) core hpmgr
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

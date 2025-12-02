@@ -39,4 +39,4 @@ clobber:	clean
 		$(RMF) core $(PRGS)
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

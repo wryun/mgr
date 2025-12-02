@@ -35,4 +35,4 @@ widths:		widths.c
 fontview:	fontview.o
 		$(CC) -o $@ $(LDFLAGS) fontview.o $(LIBDIR)/libmgr.a
 
-include $(DEPFILE)
+-include $(DEPFILE)

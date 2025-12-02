@@ -38,4 +38,4 @@ clobber:	clean
 		$(RMF) core colormap fade screendump mgrlock mgrmag snap
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

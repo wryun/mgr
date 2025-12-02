@@ -22,4 +22,4 @@ clobber:	clean
 		$(RMF) core mgrplot
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

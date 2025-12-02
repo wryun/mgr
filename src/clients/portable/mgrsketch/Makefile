@@ -23,4 +23,4 @@ clobber:	clean
 		$(RMF) core mgrsketch
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

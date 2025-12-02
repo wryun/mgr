@@ -24,4 +24,4 @@ clobber:	clean
 		$(RMF) core setname ify
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

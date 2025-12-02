@@ -25,4 +25,4 @@ clobber:	clean
 		$(RMF) core $(PRGS) set_console
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

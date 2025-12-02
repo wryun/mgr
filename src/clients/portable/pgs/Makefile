@@ -24,4 +24,4 @@ clobber: clean
 	$(RMF) pgs
 	$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

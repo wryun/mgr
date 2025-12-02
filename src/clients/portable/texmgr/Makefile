@@ -37,4 +37,4 @@ clobber:
 		(cd libtex; make clobber)
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

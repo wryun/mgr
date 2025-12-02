@@ -37,4 +37,4 @@ clobber:	clean
 		$(RMF) core play_data get_maps to_ascii to_binary
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

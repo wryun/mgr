@@ -23,4 +23,4 @@ clobber:	clean
 		$(RMF) core vcr
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

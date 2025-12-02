@@ -21,4 +21,4 @@ clobber:	clean
 		$(RMF) core ico
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

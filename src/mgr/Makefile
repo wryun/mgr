@@ -3,6 +3,7 @@ include ../../Configfile
 _CPPFLAGS=	$(CPPFLAGS) $(MGRFLAGS) \
 		-DFONTDIR=\"$(FONTDIR)\" -DICONDIR=\"$(ICONDIR)\" \
 		-DDEFAULT_FONT=\"$(DEFAULT_FONT)\" \
+		-DDEFAULT_WIDTH=$(DEFAULT_WIDTH) -DDEFAULT_HEIGHT=$(DEFAULT_HEIGHT) \
                 -DSCREEN_DEV=\"$(SCREEN_DEV)\" -DMOUSE_DEV=\"$(MOUSE_DEV)\"
 
 CFLAGS=		$(CCFLAGS) $(_CPPFLAGS)
@@ -17,7 +18,7 @@ OBJS=		Write.o border.o copyright.o cut.o \
                 set_mode.o shape.o sigdata.o startup.o subs.o utmp.o \
                 window_box.o win_make.o win_subs.o write_ok.o popen.o # win_stack.o
 
-all:		mgr mgrlogin
+all:		mgr # mgrlogin
 
 mgr:		$(OBJS)
 		$(CC) $(LDFLAGS) -o mgr $(OBJS) $(EXTRALIBS) $(CRYPTLIB)
@@ -56,4 +57,4 @@ install:	all
 		install -c -m 644 mgr.1 $(MANDIR)/man1
 		install -c -m 644 font.5 $(MANDIR)/man5
 
-include $(DEPFILE)
+-include $(DEPFILE)

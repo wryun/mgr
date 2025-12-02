@@ -35,4 +35,4 @@ clobber:	clean
 		$(RMF) core client do send menus alias
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

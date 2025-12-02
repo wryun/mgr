@@ -30,4 +30,4 @@ clobber:	clean
 		$(RMF) libmgr.a
 		$(ZILCH) $(DEPFILE)
 
-include $(DEPFILE)
+-include $(DEPFILE)

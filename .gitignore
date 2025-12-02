@@ -2,7 +2,6 @@ tags
 .depend
 *.o
 .gdb_history
-Configfile
 doc/*.out
 src/clients/bitblit/simple/colormap
 src/clients/bitblit/simple/fade
