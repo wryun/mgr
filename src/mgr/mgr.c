@@ -609,7 +609,7 @@ int main(int argc, char **argv)
     }
 
     /* sdl init */
-    if ((screen = screen_init(WIDTH, HEIGHT)) == NULL) {
+    if ((screen = screen_init(DEFAULT_WIDTH, DEFAULT_HEIGHT)) == NULL) {
         perror("mgr: Can't open the screen.");
         exit(2);
     }
