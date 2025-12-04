@@ -22,6 +22,7 @@ completely broken and mostly broken:
 - set ROOTDIR in Configfile to the location you cloned the repo
 
     cd src/mgr
+    make depend
     make
     ./mgr
 

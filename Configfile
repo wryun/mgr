@@ -1,4 +1,4 @@
-version=	0.70-alpha
+VERSION=	0.70-alpha
 
 ROOTDIR=/home/jamesh/a
 
@@ -14,7 +14,7 @@ MANDIR=	$(ROOTDIR)/mgr/man
 XBDDIR=	$(ROOTDIR)/mgr/mgrbd
 
 DEFAULT_HEIGHT=800
-DEFAULT_WIDTH=1300
+DEFAULT_WIDTH=1280
 
 DEFAULT_FONT=	$(FONTDIR)/is8859-1-8x14
 EXAMPLES=	examples
